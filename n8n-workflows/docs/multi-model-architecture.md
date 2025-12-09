@@ -8,26 +8,33 @@ This document describes the multi-model LLM orchestration strategy.
 
 ## Overview
 
-The Content Repurposing Engine uses a **3-model ensemble approach**:
+The Content Repurposing Engine uses a **parallel generation + curation approach**:
 
-| Model      | Provider | Role                          |
-| ---------- | -------- | ----------------------------- |
-| **GLM-4**  | Zhipu AI | Idea extraction (creative)    |
-| **Groq**   | Groq     | Content generation (fast)     |
-| **Gemini** | Google   | Curation, ranking, web search |
+| Model       | Provider             | Role                                      |
+| ----------- | -------------------- | ----------------------------------------- |
+| **GLM-4.6** | Zhipu AI             | Parallel generator (ideas + content)      |
+| **Kimi-K2** | Moonshot AI via Groq | Parallel generator (ideas + content)      |
+| **Gemini**  | Google               | Curator, ranker, web search, final output |
+
+**How it works:**
+
+1. Both GLM-4.6 and Kimi-K2 independently generate ideas and content
+2. Gemini compares both outputs and curates the best
+3. Gemini can search the web for references if needed
+4. Final output is the best-of-both combined
 
 ---
 
 ## Model Roles
 
-### GLM-4 (Idea Extraction)
+### GLM-4.6 (Parallel Generator A)
 
-| Attribute | Value                                              |
-| --------- | -------------------------------------------------- |
-| Provider  | Zhipu AI                                           |
-| Model     | `glm-4-plus` or `glm-4.6`                          |
-| Role      | Creative idea extraction from transcripts          |
-| Strengths | Nuanced understanding, creative insight extraction |
+| Attribute | Value                                     |
+| --------- | ----------------------------------------- |
+| Provider  | Zhipu AI                                  |
+| Model     | `glm-4.6`                                 |
+| Role      | Creative generation (ideas + all content) |
+| Strengths | Nuanced understanding, creative writing   |
 
 **API Endpoints (use the one matching your account):**
 | Account Type | Endpoint |
@@ -35,52 +42,56 @@ The Content Repurposing Engine uses a **3-model ensemble approach**:
 | CodePlan (z.ai) | `https://api.z.ai/api/paas/v4/chat/completions` |
 | BigModel (China) | `https://open.bigmodel.cn/api/paas/v4/chat/completions` |
 
-**Used for:**
+**Generates:**
 
-- Idea extraction from transcripts
-- Identifying key insights, quotes, frameworks, stories
+- Idea extraction (key ideas, quotes, frameworks, stories)
+- 5 Tweets
+- 3 LinkedIn posts
+- 1 Newsletter section
 
 ---
 
-### Groq (Content Generation)
+### Kimi-K2 (Parallel Generator B)
 
 | Attribute | Value                                             |
 | --------- | ------------------------------------------------- |
-| Provider  | Groq                                              |
-| Model     | `llama-3.1-70b-versatile` or `mixtral-8x7b-32768` |
+| Provider  | Moonshot AI (via Groq)                            |
+| Model     | `moonshotai/kimi-k2-instruct-0905`                |
 | Endpoint  | `https://api.groq.com/openai/v1/chat/completions` |
-| Role      | Fast content generation                           |
-| Strengths | Extremely fast inference, good quality output     |
+| Role      | Creative generation (ideas + all content)         |
+| Strengths | Strong reasoning, different creative perspective  |
 
-**Free Tier:** 30 requests/minute, 14,400 requests/day
+**Free Tier:** 30 requests/minute via Groq
 
-**Used for:**
+**Generates:**
 
-- Tweet generation (5 tweets)
-- LinkedIn post generation (3 posts)
-- Newsletter generation (1 section)
+- Idea extraction (key ideas, quotes, frameworks, stories)
+- 5 Tweets
+- 3 LinkedIn posts
+- 1 Newsletter section
 
 ---
 
-### Gemini (Curator & Quality Gate)
+### Gemini (Curator & Editor)
 
-| Attribute | Value                                       |
-| --------- | ------------------------------------------- |
-| Provider  | Google AI                                   |
-| Model     | `gemini-1.5-flash`                          |
-| Endpoint  | Native n8n node                             |
-| Role      | Quality curation, ranking, and web search   |
-| Strengths | Fast, analytical, grounding with web search |
+| Attribute | Value                                      |
+| --------- | ------------------------------------------ |
+| Provider  | Google AI                                  |
+| Model     | `gemini-1.5-flash`                         |
+| Endpoint  | Native n8n node                            |
+| Role      | Curate, rank, web search, finalize         |
+| Strengths | Fast analytical, grounding with web search |
 
 **Free Tier:** 15 RPM, 1M tokens/day
 
-**Used for:**
+**Responsibilities:**
 
-- Quality scoring (1-5 rubric on 5 dimensions)
-- Content refinement suggestions
-- **Web search for references/fact-checking**
-- Final quality gate pass/fail
-- Curating best outputs when multiple exist
+- Compare outputs from GLM-4.6 and Kimi-K2
+- Pick the best version of each content piece
+- Optionally merge/combine best elements from both
+- Search web for references to validate claims
+- Quality score final selections
+- Produce the final curated output
 
 ---
 
@@ -165,7 +176,7 @@ Since n8n doesn't have a native GLM-4 node, use **HTTP Request**:
 
 ---
 
-### HTTP Request Node for Groq
+### HTTP Request Node for Kimi-K2 (via Groq)
 
 | Setting        | Value                                             |
 | -------------- | ------------------------------------------------- |
@@ -176,11 +187,11 @@ Since n8n doesn't have a native GLM-4 node, use **HTTP Request**:
 | Header Value   | `Bearer YOUR_GROQ_API_KEY`                        |
 | Content-Type   | application/json                                  |
 
-### Groq Request Body
+### Kimi-K2 Request Body
 
 ```json
 {
-  "model": "llama-3.1-70b-versatile",
+  "model": "moonshotai/kimi-k2-instruct-0905",
   "messages": [
     {
       "role": "system",
@@ -192,11 +203,11 @@ Since n8n doesn't have a native GLM-4 node, use **HTTP Request**:
     }
   ],
   "temperature": 0.7,
-  "max_tokens": 2048
+  "max_tokens": 4096
 }
 ```
 
-### Groq Credential Setup
+### Groq/Kimi-K2 Credential Setup
 
 1. Go to [console.groq.com](https://console.groq.com)
 2. Create API key
