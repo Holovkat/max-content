@@ -7,12 +7,13 @@
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [0, 0]
+      "position": [0, 0],
+      "notes": "📥 TRIGGER: This workflow is called by the main Ingestion workflow.\n\nExpected input data:\n- video_id, video_title, video_url\n- niche, target_audience, tone\n- tweet_count, linkedin_count\n- transcript"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "url": "https://api.z.ai/api/coding/paas/v4/chat/completions",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -21,12 +22,16 @@
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a senior content strategist. Extract high-value insights from transcripts. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Video: {{ $json.video_title }}\\nNiche: {{ $json.niche }}\\nAudience: {{ $json.target_audience }}\\nTone: {{ $json.tone }}\\n\\nTRANSCRIPT:\\n{{ $json.transcript }}\\n\\nExtract and return JSON with: key_ideas (4-6 items with title, insight, evidence), quotable_moments (3-5), frameworks (1-3), stories (1-2).\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
+        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a senior content strategist. Extract high-value insights from transcripts. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Video: {{ $json.video_title }}\\nNiche: {{ $json.niche }}\\nAudience: {{ $json.target_audience }}\\nTone: {{ $json.tone }}\\n\\nTRANSCRIPT:\\n{{ $json.transcript }}\\n\\nExtract and return JSON with: key_ideas (4-6 items with title, insight, evidence), quotable_moments (3-5), frameworks (1-3), stories (1-2).\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
         "options": {
           "timeout": 60000
         }
@@ -42,7 +47,8 @@
           "name": "GLM-4 API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'GLM-4 API'\n2. Header Name: Authorization\n3. Header Value: Bearer YOUR_Z_AI_API_KEY\n\nEndpoint: Z.AI Coding Plan\nModel: GLM-4.6"
     },
     {
       "parameters": {
@@ -61,7 +67,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a senior content strategist. Extract high-value insights from transcripts. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Video: {{ $json.video_title }}\\nNiche: {{ $json.niche }}\\nAudience: {{ $json.target_audience }}\\nTone: {{ $json.tone }}\\n\\nTRANSCRIPT:\\n{{ $json.transcript }}\\n\\nExtract and return JSON with: key_ideas (4-6 items with title, insight, evidence), quotable_moments (3-5), frameworks (1-3), stories (1-2).\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a senior content strategist. Extract high-value insights from transcripts. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Video: {{ $json.video_title }}\\nNiche: {{ $json.niche }}\\nAudience: {{ $json.target_audience }}\\nTone: {{ $json.tone }}\\n\\nTRANSCRIPT:\\n{{ $json.transcript }}\\n\\nExtract and return JSON with: key_ideas (4-6 items with title, insight, evidence), quotable_moments (3-5), frameworks (1-3), stories (1-2).\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
         "options": {
           "timeout": 60000
         }
@@ -77,7 +83,8 @@
           "name": "Groq API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Groq API'\n2. Header Name: Authorization\n3. Header Value: Bearer YOUR_GROQ_API_KEY\n\nGet key from: console.groq.com\nModel: Moonshot Kimi-K2"
     },
     {
       "parameters": {
@@ -87,7 +94,8 @@
       "name": "Merge & Parse Ideas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 0]
+      "position": [440, 0],
+      "notes": "📋 AUTO-CONFIGURED:\n\nThis node merges responses from both AI providers and parses the JSON.\n\nNo configuration needed - just verify output after testing."
     },
     {
       "parameters": {
@@ -105,6 +113,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
+            "status": "✅",
             "idea_id": "={{ $json.video_id }}-ideas",
             "video_id": "={{ $json.video_id }}",
             "glm_ideas": "={{ JSON.stringify($json.ideas_glm) }}",
@@ -124,7 +133,8 @@
           "id": "",
           "name": ""
         }
-      }
+      },
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select 'Content Repurposing Engine' spreadsheet\n3. Select 'Ideas_Extracted' sheet\n\nRequired columns in sheet:\nstatus | idea_id | video_id | glm_ideas | kimi_ideas | extracted_at"
     },
     {
       "parameters": {},
@@ -132,7 +142,8 @@
       "name": "Return Output",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [880, 0]
+      "position": [880, 0],
+      "notes": "📤 OUTPUT:\n\nReturns extracted ideas to the calling workflow.\n\nData includes:\n- ideas_glm: Ideas extracted by GLM-4.6\n- ideas_kimi: Ideas extracted by Kimi-K2\n- All original metadata"
     }
   ],
   "connections": {
@@ -199,11 +210,15 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "workflow-error-handler"
+    "errorWorkflow": ""
   },
   "staticData": null,
   "tags": ["content-generation"],
   "triggerCount": 0,
   "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "1"
+  "versionId": "2",
+  "pinData": {},
+  "meta": {
+    "instanceId": ""
+  }
 }

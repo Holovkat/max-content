@@ -7,12 +7,13 @@
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [0, 0]
+      "position": [0, 0],
+      "notes": "📥 TRIGGER: Called by Idea Extraction workflow.\n\nExpected input:\n- All original metadata (video_id, video_title, etc.)\n- ideas_glm: Ideas from GLM-4.6\n- ideas_kimi: Ideas from Kimi-K2"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "url": "https://api.z.ai/api/coding/paas/v4/chat/completions",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -21,12 +22,16 @@
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
+        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
         "options": {
           "timeout": 60000
         }
@@ -42,7 +47,8 @@
           "name": "GLM-4 API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIG: Uses GLM-4 API credential\nEndpoint: Z.AI Coding Plan\nGenerates tweet content"
     },
     {
       "parameters": {
@@ -61,7 +67,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
         "options": {
           "timeout": 60000
         }
@@ -77,12 +83,13 @@
           "name": "Groq API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIG: Uses Groq API credential\nModel: Kimi-K2\nGenerates tweet content"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "url": "https://api.z.ai/api/coding/paas/v4/chat/completions",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -91,12 +98,16 @@
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
+        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a LinkedIn content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
         "options": {
           "timeout": 60000
         }
@@ -112,7 +123,8 @@
           "name": "GLM-4 API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIG: Uses GLM-4 API credential\nGenerates LinkedIn posts"
     },
     {
       "parameters": {
@@ -131,7 +143,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a LinkedIn content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
         "options": {
           "timeout": 60000
         }
@@ -147,12 +159,13 @@
           "name": "Groq API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIG: Uses Groq API credential\nGenerates LinkedIn posts"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "url": "https://api.z.ai/api/coding/paas/v4/chat/completions",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -161,12 +174,16 @@
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
+        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
         "options": {
           "timeout": 60000
         }
@@ -182,7 +199,8 @@
           "name": "GLM-4 API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIG: Uses GLM-4 API credential\nGenerates newsletter content"
     },
     {
       "parameters": {
@@ -201,7 +219,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
         "options": {
           "timeout": 60000
         }
@@ -217,7 +235,8 @@
           "name": "Groq API"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIG: Uses Groq API credential\nGenerates newsletter content"
     },
     {
       "parameters": {
@@ -227,7 +246,8 @@
       "name": "Merge All Content",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [500, 50]
+      "position": [500, 50],
+      "notes": "📋 AUTO-CONFIGURED:\n\nMerges all 6 API responses into a single object.\n\nOutput includes:\n- tweets_glm, tweets_kimi\n- linkedin_glm, linkedin_kimi\n- newsletter_glm, newsletter_kimi"
     },
     {
       "parameters": {},
@@ -235,7 +255,8 @@
       "name": "Return Output",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [720, 50]
+      "position": [720, 50],
+      "notes": "📤 OUTPUT:\n\nReturns merged content to calling workflow.\nNext step: Curation workflow compares and picks best."
     }
   ],
   "connections": {
@@ -355,11 +376,15 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "workflow-error-handler"
+    "errorWorkflow": ""
   },
   "staticData": null,
   "tags": ["content-generation"],
   "triggerCount": 0,
   "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "1"
+  "versionId": "2",
+  "pinData": {},
+  "meta": {
+    "instanceId": ""
+  }
 }

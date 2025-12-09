@@ -98,16 +98,20 @@ All content rows use emoji status indicators:
 
 ## Credential Setup
 
-### GLM-4 API (Header Auth)
+### GLM-4 API (Header Auth) - Z.AI Coding Plan
 
 1. Go to **Settings → Credentials → Add Credential**
 2. Type: **Header Auth**
 3. Configure:
    - Name: `GLM-4 API`
    - Header Name: `Authorization`
-   - Header Value: `Bearer YOUR_GLM4_API_KEY`
+   - Header Value: `Bearer YOUR_Z_AI_API_KEY`
 
-### Groq API (Header Auth)
+**Endpoint Used:** `https://api.z.ai/api/coding/paas/v4/chat/completions`
+
+**Note:** The workflows also send `Accept-Language: en-US,en` header automatically.
+
+### Groq API (Header Auth) - Kimi-K2
 
 1. Add another **Header Auth** credential
 2. Configure:
@@ -117,10 +121,14 @@ All content rows use emoji status indicators:
 
 Get key from: [console.groq.com](https://console.groq.com)
 
+**Model Used:** `moonshotai/kimi-k2-instruct-0905`
+
 ### Gemini API
 
 1. Add **Google Gemini** credential
 2. Enter your API key from [aistudio.google.com](https://aistudio.google.com)
+
+**Model Used:** `gemini-1.5-flash`
 
 ### Google Sheets OAuth
 
