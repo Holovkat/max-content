@@ -1,0 +1,214 @@
+{
+  "name": "Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error_id",
+              "name": "error_id",
+              "value": "={{ Date.now() }}-error",
+              "type": "string"
+            },
+            {
+              "id": "workflow_name",
+              "name": "workflow_name",
+              "value": "={{ $json.workflow?.name || 'Unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "node_name",
+              "name": "node_name",
+              "value": "={{ $json.execution?.lastNodeExecuted || 'Unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "error_message",
+              "name": "error_message",
+              "value": "={{ $json.execution?.error?.message || JSON.stringify($json) }}",
+              "type": "string"
+            },
+            {
+              "id": "error_stack",
+              "name": "error_stack",
+              "value": "={{ $json.execution?.error?.stack || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "execution_id",
+              "name": "execution_id",
+              "value": "={{ $json.execution?.id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "format-error",
+      "name": "Format Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Error_Logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "error_id": "={{ $json.error_id }}",
+            "workflow_name": "={{ $json.workflow_name }}",
+            "node_name": "={{ $json.node_name }}",
+            "error_message": "={{ $json.error_message }}",
+            "error_stack": "={{ $json.error_stack }}",
+            "execution_id": "={{ $json.execution_id }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "status": "new"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-to-sheets",
+      "name": "Log Error to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [440, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.EMAIL_FROM || 'noreply@example.com' }}",
+        "toEmail": "={{ $env.EMAIL_TO || 'admin@example.com' }}",
+        "subject": "=❌ Workflow Error: {{ $json.workflow_name }} - {{ $json.node_name }}",
+        "emailType": "text",
+        "message": "=Error in Content Repurposing Engine\n\n📋 Details:\n- Workflow: {{ $json.workflow_name }}\n- Node: {{ $json.node_name }}\n- Time: {{ $json.timestamp }}\n- Execution ID: {{ $json.execution_id }}\n\n❌ Error:\n{{ $json.error_message }}\n\n🔗 Check Error_Logs sheet for full details."
+      },
+      "id": "send-email",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": ""
+        }
+      },
+      "disabled": true,
+      "notes": "Enable this node and configure SMTP credentials to receive error emails"
+    },
+    {
+      "parameters": {
+        "values": {
+          "boolean": [
+            {
+              "name": "success",
+              "value": false
+            }
+          ],
+          "string": [
+            {
+              "name": "error_id",
+              "value": "={{ $json.error_id }}"
+            },
+            {
+              "name": "message",
+              "value": "Error logged. Check Error_Logs sheet for details."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "return-response",
+      "name": "Return Error Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error": {
+      "main": [
+        [
+          {
+            "node": "Log Error to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error to Sheets": {
+      "main": [
+        [
+          {
+            "node": "Send Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Error Email": {
+      "main": [
+        [
+          {
+            "node": "Return Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["error-handling"],
+  "triggerCount": 1,
+  "updatedAt": "2024-12-09T00:00:00.000Z",
+  "versionId": "1"
+}

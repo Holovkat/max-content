@@ -1,0 +1,209 @@
+{
+  "name": "Idea Extraction (Parallel)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "workflow-trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a senior content strategist. Extract high-value insights from transcripts. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Video: {{ $json.video_title }}\\nNiche: {{ $json.niche }}\\nAudience: {{ $json.target_audience }}\\nTone: {{ $json.tone }}\\n\\nTRANSCRIPT:\\n{{ $json.transcript }}\\n\\nExtract and return JSON with: key_ideas (4-6 items with title, insight, evidence), quotable_moments (3-5), frameworks (1-3), stories (1-2).\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "glm-extract",
+      "name": "Extract Ideas (GLM-4.6)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, -100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "GLM-4 API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a senior content strategist. Extract high-value insights from transcripts. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Video: {{ $json.video_title }}\\nNiche: {{ $json.niche }}\\nAudience: {{ $json.target_audience }}\\nTone: {{ $json.tone }}\\n\\nTRANSCRIPT:\\n{{ $json.transcript }}\\n\\nExtract and return JSON with: key_ideas (4-6 items with title, insight, evidence), quotable_moments (3-5), frameworks (1-3), stories (1-2).\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "kimi-extract",
+      "name": "Extract Ideas (Kimi-K2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Groq API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse GLM-4.6 response\nconst glmOutput = $('Extract Ideas (GLM-4.6)').first().json;\nconst glmContent = glmOutput.choices?.[0]?.message?.content || '';\n\n// Parse Kimi-K2 response\nconst kimiOutput = $('Extract Ideas (Kimi-K2)').first().json;\nconst kimiContent = kimiOutput.choices?.[0]?.message?.content || '';\n\n// Get input metadata\nconst input = $('Execute Workflow Trigger').first().json;\n\nfunction parseJson(content, source) {\n  try {\n    const cleaned = content.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n    const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n    if (match) {\n      return { source, data: JSON.parse(match[0]), error: null };\n    }\n    throw new Error('No JSON found');\n  } catch (e) {\n    return { source, data: null, error: e.message };\n  }\n}\n\nconst glmParsed = parseJson(glmContent, 'GLM-4.6');\nconst kimiParsed = parseJson(kimiContent, 'Kimi-K2');\n\nreturn [{\n  json: {\n    video_id: input.video_id,\n    video_title: input.video_title,\n    video_url: input.video_url,\n    niche: input.niche,\n    target_audience: input.target_audience,\n    tone: input.tone,\n    tweet_count: input.tweet_count,\n    linkedin_count: input.linkedin_count,\n    transcript: input.transcript,\n    \n    ideas_glm: glmParsed,\n    ideas_kimi: kimiParsed,\n    \n    extracted_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "merge-parse",
+      "name": "Merge & Parse Ideas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Ideas_Extracted"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idea_id": "={{ $json.video_id }}-ideas",
+            "video_id": "={{ $json.video_id }}",
+            "glm_ideas": "={{ JSON.stringify($json.ideas_glm) }}",
+            "kimi_ideas": "={{ JSON.stringify($json.ideas_kimi) }}",
+            "extracted_at": "={{ $json.extracted_at }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "store-ideas",
+      "name": "Store Ideas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [660, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "return-output",
+      "name": "Return Output",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Ideas (GLM-4.6)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Ideas (Kimi-K2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Ideas (GLM-4.6)": {
+      "main": [
+        [
+          {
+            "node": "Merge & Parse Ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Ideas (Kimi-K2)": {
+      "main": [
+        [
+          {
+            "node": "Merge & Parse Ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge & Parse Ideas": {
+      "main": [
+        [
+          {
+            "node": "Store Ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Ideas": {
+      "main": [
+        [
+          {
+            "node": "Return Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "workflow-error-handler"
+  },
+  "staticData": null,
+  "tags": ["content-generation"],
+  "triggerCount": 0,
+  "updatedAt": "2024-12-09T00:00:00.000Z",
+  "versionId": "1"
+}

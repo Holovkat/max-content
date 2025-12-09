@@ -1,0 +1,161 @@
+{
+  "name": "Content Curation (Gemini)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "workflow-trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gemini-1.5-flash"
+        },
+        "options": {
+          "temperature": 0.4,
+          "maxOutputTokens": 8192
+        }
+      },
+      "id": "gemini-curate",
+      "name": "Curate Content",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [220, 0],
+      "credentials": {
+        "googleGeminiApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Curator - an editorial director selecting the best content.\n\n## GENERATOR A (GLM-4.6) OUTPUTS:\n\nTweets: {{ JSON.stringify($json.tweets_glm) }}\nLinkedIn: {{ JSON.stringify($json.linkedin_glm) }}\nNewsletter: {{ JSON.stringify($json.newsletter_glm) }}\n\n## GENERATOR B (Kimi-K2) OUTPUTS:\n\nTweets: {{ JSON.stringify($json.tweets_kimi) }}\nLinkedIn: {{ JSON.stringify($json.linkedin_kimi) }}\nNewsletter: {{ JSON.stringify($json.newsletter_kimi) }}\n\n## TASK\n\nFor each content piece, score both versions 1-5 on:\n1. Hook Clarity\n2. Specificity\n3. Voice Authenticity\n4. Value Density\n5. CTA Naturalness\n\nPick the best version (or combine elements from both).\n\nReturn ONLY JSON:\n{\n  \"curated_tweets\": [\n    { \"content\": \"final tweet text\", \"source\": \"GLM|Kimi|Combined\", \"scores\": { \"glm\": N, \"kimi\": N } }\n  ],\n  \"curated_linkedin\": [\n    { \"hook\": \"\", \"body\": \"\", \"cta\": \"\", \"source\": \"GLM|Kimi|Combined\", \"scores\": { \"glm\": N, \"kimi\": N } }\n  ],\n  \"curated_newsletter\": {\n    \"subject\": \"\", \"body\": \"\", \"source\": \"GLM|Kimi|Combined\", \"scores\": { \"glm\": N, \"kimi\": N }\n  },\n  \"summary\": {\n    \"glm_wins\": N,\n    \"kimi_wins\": N,\n    \"combined\": N\n  }\n}"
+      },
+      "id": "curation-prompt",
+      "name": "Curation Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiOutput = $('Curate Content').first().json;\nconst response = geminiOutput.text || geminiOutput.content || '';\nconst input = $('Execute Workflow Trigger').first().json;\n\nlet curated;\ntry {\n  const cleaned = response.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n  const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    curated = JSON.parse(match[0]);\n  } else {\n    throw new Error('No JSON found');\n  }\n} catch (e) {\n  curated = { error: e.message, raw: response.substring(0, 500) };\n}\n\nreturn [{\n  json: {\n    video_id: input.video_id,\n    video_title: input.video_title,\n    curated: curated,\n    curated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "parse-curation",
+      "name": "Parse Curation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Generated_Content"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content_id": "={{ $json.video_id }}-curated",
+            "video_id": "={{ $json.video_id }}",
+            "curated_tweets": "={{ JSON.stringify($json.curated.curated_tweets) }}",
+            "curated_linkedin": "={{ JSON.stringify($json.curated.curated_linkedin) }}",
+            "curated_newsletter": "={{ JSON.stringify($json.curated.curated_newsletter) }}",
+            "summary": "={{ JSON.stringify($json.curated.summary) }}",
+            "status": "curated",
+            "created_at": "={{ $json.curated_at }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "store-curated",
+      "name": "Store Curated Content",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [660, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "return-output",
+      "name": "Return Output",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Curate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Curate Content": {
+      "main": [
+        [
+          {
+            "node": "Parse Curation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Curation": {
+      "main": [
+        [
+          {
+            "node": "Store Curated Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Curated Content": {
+      "main": [
+        [
+          {
+            "node": "Return Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "workflow-error-handler"
+  },
+  "staticData": null,
+  "tags": ["content-generation", "curation"],
+  "triggerCount": 0,
+  "updatedAt": "2024-12-09T00:00:00.000Z",
+  "versionId": "1"
+}

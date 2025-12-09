@@ -5,6 +5,7 @@
       "parameters": {
         "formTitle": "Content Repurposing Engine",
         "formDescription": "Transform video transcripts into platform-ready social content",
+        "responseMode": "responseNode",
         "formFields": {
           "values": [
             {
@@ -100,6 +101,12 @@
         "assignments": {
           "assignments": [
             {
+              "id": "status",
+              "name": "status",
+              "value": "⏳",
+              "type": "string"
+            },
+            {
               "id": "video_id",
               "name": "video_id",
               "value": "={{ Date.now() }}-{{ $runIndex }}",
@@ -184,6 +191,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
+            "status": "={{ $json.status }}",
             "video_id": "={{ $json.video_id }}",
             "video_title": "={{ $json.video_title }}",
             "video_url": "={{ $json.video_url }}",
@@ -205,6 +213,124 @@
           "name": ""
         }
       }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "run-idea-extraction",
+      "name": "Run Idea Extraction",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [660, 0],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "run-content-generation",
+      "name": "Run Content Generation",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [880, 0],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "run-curation",
+      "name": "Run Curation",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1100, 0],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Set Metadata').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
+      },
+      "id": "build-response",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Raw_Transcripts"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}"
+          }
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "video_id",
+              "lookupValue": "={{ $json.video_id }}"
+            }
+          ]
+        }
+      },
+      "id": "update-status",
+      "name": "Update Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1540, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.message }}"
+      },
+      "id": "respond-form",
+      "name": "Respond to Form",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1760, 0]
     }
   ],
   "connections": {
@@ -229,14 +355,81 @@
           }
         ]
       ]
+    },
+    "Store Raw Transcript": {
+      "main": [
+        [
+          {
+            "node": "Run Idea Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Idea Extraction": {
+      "main": [
+        [
+          {
+            "node": "Run Content Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Content Generation": {
+      "main": [
+        [
+          {
+            "node": "Run Curation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Curation": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status": {
+      "main": [
+        [
+          {
+            "node": "Respond to Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "workflow-error-handler"
   },
   "staticData": null,
-  "tags": [],
+  "tags": ["main"],
   "triggerCount": 1,
   "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "1"
+  "versionId": "2"
 }
