@@ -1,5 +1,5 @@
 {
-  "name": "Content Curation (Gemini)",
+  "name": "workflow-curation",
   "nodes": [
     {
       "parameters": {},
@@ -67,21 +67,13 @@
         "sheetName": {
           "__rl": true,
           "mode": "list",
-          "value": "Generated_Content"
+          "value": "Curated_Content"
         },
         "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "status": "={{ $json.curated.error ? '❌' : '✅' }}",
-            "content_id": "={{ $json.video_id }}-curated",
-            "video_id": "={{ $json.video_id }}",
-            "curated_tweets": "={{ JSON.stringify($json.curated.curated_tweets || []) }}",
-            "curated_linkedin": "={{ JSON.stringify($json.curated.curated_linkedin || []) }}",
-            "curated_newsletter": "={{ JSON.stringify($json.curated.curated_newsletter || {}) }}",
-            "summary": "={{ JSON.stringify($json.curated.summary || {}) }}",
-            "error": "={{ $json.curated.error || '' }}",
-            "created_at": "={{ $json.curated_at }}"
-          }
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
         },
         "options": {}
       },
@@ -96,7 +88,7 @@
           "name": ""
         }
       },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select 'Content Repurposing Engine' spreadsheet\n3. Select 'Generated_Content' sheet\n\nRequired columns:\nstatus | content_id | video_id | curated_tweets | curated_linkedin | curated_newsletter | summary | error | created_at"
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Curated_Content' sheet\n\nAuto-maps all input fields to columns."
     },
     {
       "parameters": {},
@@ -159,8 +151,7 @@
     "errorWorkflow": ""
   },
   "staticData": null,
-  "tags": ["content-generation", "curation"],
+  "tags": ["curation"],
   "triggerCount": 0,
-  "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "5"
+  "versionId": "6"
 }

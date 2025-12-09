@@ -1,5 +1,5 @@
 {
-  "name": "Content Generation (Parallel)",
+  "name": "workflow-content-generation",
   "nodes": [
     {
       "parameters": {},
@@ -183,7 +183,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
+        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a newsletter section for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"email subject\\\", \\\"preview\\\": \\\"preview text\\\", \\\"body\\\": \\\"full content\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
         "options": {
           "timeout": 60000
         }
@@ -219,7 +219,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a newsletter section for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"email subject\\\", \\\"preview\\\": \\\"preview text\\\", \\\"body\\\": \\\"full content\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
         "options": {
           "timeout": 60000
         }
@@ -240,14 +240,48 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse all outputs\nconst input = $('Execute Workflow Trigger').first().json;\n\nfunction parseContent(node, type) {\n  try {\n    const output = $(node).first().json;\n    const content = output.choices?.[0]?.message?.content || '';\n    const cleaned = content.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n    const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n    if (match) {\n      return JSON.parse(match[0]);\n    }\n  } catch (e) {\n    console.log(`Parse error for ${node}: ${e.message}`);\n  }\n  return null;\n}\n\nconst allContent = {\n  video_id: input.video_id,\n  video_title: input.video_title,\n  \n  tweets_glm: parseContent('Tweets (GLM-4.6)', 'tweets'),\n  tweets_kimi: parseContent('Tweets (Kimi-K2)', 'tweets'),\n  \n  linkedin_glm: parseContent('LinkedIn (GLM-4.6)', 'linkedin'),\n  linkedin_kimi: parseContent('LinkedIn (Kimi-K2)', 'linkedin'),\n  \n  newsletter_glm: parseContent('Newsletter (GLM-4.6)', 'newsletter'),\n  newsletter_kimi: parseContent('Newsletter (Kimi-K2)', 'newsletter'),\n  \n  generated_at: new Date().toISOString()\n};\n\nreturn [{ json: allContent }];"
+        "jsCode": "// Get input metadata\nconst input = $('Execute Workflow Trigger').first().json;\n\n// Parse function\nfunction parseContent(nodeName, key) {\n  try {\n    const output = $(nodeName).first().json;\n    const content = output.choices?.[0]?.message?.content || '';\n    const cleaned = content.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n    const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n    if (match) {\n      return JSON.parse(match[0]);\n    }\n    return { error: 'No JSON found' };\n  } catch (e) {\n    return { error: e.message };\n  }\n}\n\nreturn [{\n  json: {\n    video_id: input.video_id,\n    video_title: input.video_title,\n    \n    // Parsed content from both models\n    tweets_glm: parseContent('Tweets (GLM-4.6)', 'tweets'),\n    tweets_kimi: parseContent('Tweets (Kimi-K2)', 'tweets'),\n    linkedin_glm: parseContent('LinkedIn (GLM-4.6)', 'posts'),\n    linkedin_kimi: parseContent('LinkedIn (Kimi-K2)', 'posts'),\n    newsletter_glm: parseContent('Newsletter (GLM-4.6)', 'newsletter'),\n    newsletter_kimi: parseContent('Newsletter (Kimi-K2)', 'newsletter'),\n    \n    generated_at: new Date().toISOString()\n  }\n}];"
       },
       "id": "merge-content",
       "name": "Merge All Content",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [500, 50],
-      "notes": "📋 AUTO-CONFIGURED:\n\nMerges all 6 API responses into a single object.\n\nOutput includes:\n- tweets_glm, tweets_kimi\n- linkedin_glm, linkedin_kimi\n- newsletter_glm, newsletter_kimi"
+      "position": [440, 50],
+      "notes": "📋 AUTO-CONFIGURED:\n\nMerges content from all 6 parallel API calls.\nParses JSON from each response."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Generated_Content"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "store-content",
+      "name": "Store Generated Content",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [660, 50],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      },
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Generated_Content' sheet\n\nAuto-maps all input fields to columns."
     },
     {
       "parameters": {},
@@ -255,124 +289,31 @@
       "name": "Return Output",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [720, 50],
-      "notes": "📤 OUTPUT:\n\nReturns merged content to calling workflow.\nNext step: Curation workflow compares and picks best."
+      "position": [880, 50],
+      "notes": "📤 OUTPUT:\n\nReturns all generated content to the curation workflow."
     }
   ],
   "connections": {
     "Execute Workflow Trigger": {
       "main": [
         [
-          {
-            "node": "Tweets (GLM-4.6)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Tweets (Kimi-K2)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "LinkedIn (GLM-4.6)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "LinkedIn (Kimi-K2)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Newsletter (GLM-4.6)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Newsletter (Kimi-K2)",
-            "type": "main",
-            "index": 0
-          }
+          {"node": "Tweets (GLM-4.6)", "type": "main", "index": 0},
+          {"node": "Tweets (Kimi-K2)", "type": "main", "index": 0},
+          {"node": "LinkedIn (GLM-4.6)", "type": "main", "index": 0},
+          {"node": "LinkedIn (Kimi-K2)", "type": "main", "index": 0},
+          {"node": "Newsletter (GLM-4.6)", "type": "main", "index": 0},
+          {"node": "Newsletter (Kimi-K2)", "type": "main", "index": 0}
         ]
       ]
     },
-    "Tweets (GLM-4.6)": {
-      "main": [
-        [
-          {
-            "node": "Merge All Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tweets (Kimi-K2)": {
-      "main": [
-        [
-          {
-            "node": "Merge All Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "LinkedIn (GLM-4.6)": {
-      "main": [
-        [
-          {
-            "node": "Merge All Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "LinkedIn (Kimi-K2)": {
-      "main": [
-        [
-          {
-            "node": "Merge All Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Newsletter (GLM-4.6)": {
-      "main": [
-        [
-          {
-            "node": "Merge All Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Newsletter (Kimi-K2)": {
-      "main": [
-        [
-          {
-            "node": "Merge All Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge All Content": {
-      "main": [
-        [
-          {
-            "node": "Return Output",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+    "Tweets (GLM-4.6)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
+    "Tweets (Kimi-K2)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
+    "LinkedIn (GLM-4.6)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
+    "LinkedIn (Kimi-K2)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
+    "Newsletter (GLM-4.6)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
+    "Newsletter (Kimi-K2)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
+    "Merge All Content": {"main": [[{"node": "Store Generated Content", "type": "main", "index": 0}]]},
+    "Store Generated Content": {"main": [[{"node": "Return Output", "type": "main", "index": 0}]]}
   },
   "settings": {
     "executionOrder": "v1",
@@ -381,10 +322,5 @@
   "staticData": null,
   "tags": ["content-generation"],
   "triggerCount": 0,
-  "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "2",
-  "pinData": {},
-  "meta": {
-    "instanceId": ""
-  }
+  "versionId": "2"
 }

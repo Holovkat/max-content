@@ -1,5 +1,5 @@
 {
-  "name": "Idea Extraction (Parallel)",
+  "name": "workflow-idea-extraction",
   "nodes": [
     {
       "parameters": {},
@@ -111,15 +111,10 @@
           "value": "Ideas_Extracted"
         },
         "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "status": "✅",
-            "idea_id": "={{ $json.video_id }}-ideas",
-            "video_id": "={{ $json.video_id }}",
-            "glm_ideas": "={{ JSON.stringify($json.ideas_glm) }}",
-            "kimi_ideas": "={{ JSON.stringify($json.ideas_kimi) }}",
-            "extracted_at": "={{ $json.extracted_at }}"
-          }
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
         },
         "options": {}
       },
@@ -134,7 +129,7 @@
           "name": ""
         }
       },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select 'Content Repurposing Engine' spreadsheet\n3. Select 'Ideas_Extracted' sheet\n\nRequired columns in sheet:\nstatus | idea_id | video_id | glm_ideas | kimi_ideas | extracted_at"
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Ideas_Extracted' sheet\n\nAuto-maps all input fields to columns."
     },
     {
       "parameters": {},
@@ -213,12 +208,7 @@
     "errorWorkflow": ""
   },
   "staticData": null,
-  "tags": ["content-generation"],
+  "tags": ["idea-extraction"],
   "triggerCount": 0,
-  "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "2",
-  "pinData": {},
-  "meta": {
-    "instanceId": ""
-  }
+  "versionId": "2"
 }

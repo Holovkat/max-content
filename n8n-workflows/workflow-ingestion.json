@@ -1,245 +1,431 @@
 {
-  "name": "Content Repurposing Engine",
+  "name": "workflow-ingestion",
   "nodes": [
     {
       "parameters": {
+        "path": "1814acb3-4d73-4ba2-b711-bd1d6c39d559",
         "formTitle": "Content Repurposing Engine",
         "formDescription": "Transform video transcripts into platform-ready social content",
-        "responseMode": "responseNode",
         "formFields": {
           "values": [
             {
               "fieldLabel": "Video Title",
-              "fieldType": "text",
-              "requiredField": true,
-              "placeholder": "e.g., How to Automate Any Business With AI"
+              "placeholder": "e.g., How to Automate Any Business With AI",
+              "requiredField": true
             },
             {
               "fieldLabel": "Video URL",
-              "fieldType": "text",
-              "requiredField": false,
               "placeholder": "https://youtube.com/..."
             },
             {
               "fieldLabel": "Transcript",
               "fieldType": "textarea",
-              "requiredField": true,
-              "placeholder": "Paste your video transcript here..."
+              "placeholder": "Paste your video transcript here...",
+              "requiredField": true
             },
             {
               "fieldLabel": "Content Niche",
               "fieldType": "dropdown",
-              "requiredField": false,
               "fieldOptions": {
                 "values": [
-                  { "option": "AI/Business" },
-                  { "option": "Entrepreneurship" },
-                  { "option": "Tech/Software" },
-                  { "option": "Marketing" },
-                  { "option": "Finance" },
-                  { "option": "Health/Wellness" },
-                  { "option": "Education" },
-                  { "option": "Other" }
+                  {
+                    "option": "AI/Business"
+                  },
+                  {
+                    "option": "Entrepreneurship"
+                  },
+                  {
+                    "option": "Tech/Software"
+                  },
+                  {
+                    "option": "Marketing"
+                  },
+                  {
+                    "option": "Finance"
+                  },
+                  {
+                    "option": "Health/Wellness"
+                  },
+                  {
+                    "option": "Education"
+                  },
+                  {
+                    "option": "Other"
+                  }
                 ]
               }
             },
             {
               "fieldLabel": "Target Audience",
               "fieldType": "dropdown",
-              "requiredField": false,
               "fieldOptions": {
                 "values": [
-                  { "option": "Entrepreneurs" },
-                  { "option": "Agency Owners" },
-                  { "option": "Developers" },
-                  { "option": "Executives" },
-                  { "option": "Beginners" },
-                  { "option": "Advanced Practitioners" },
-                  { "option": "General Audience" }
+                  {
+                    "option": "Entrepreneurs"
+                  },
+                  {
+                    "option": "Agency Owners"
+                  },
+                  {
+                    "option": "Developers"
+                  },
+                  {
+                    "option": "Executives"
+                  },
+                  {
+                    "option": "Beginners"
+                  },
+                  {
+                    "option": "Advanced Practitioners"
+                  },
+                  {
+                    "option": "General Audience"
+                  }
                 ]
               }
             },
             {
               "fieldLabel": "Tone",
               "fieldType": "dropdown",
-              "requiredField": false,
               "fieldOptions": {
                 "values": [
-                  { "option": "practical" },
-                  { "option": "inspirational" },
-                  { "option": "controversial" },
-                  { "option": "educational" },
-                  { "option": "conversational" }
+                  {
+                    "option": "practical"
+                  },
+                  {
+                    "option": "inspirational"
+                  },
+                  {
+                    "option": "controversial"
+                  },
+                  {
+                    "option": "educational"
+                  },
+                  {
+                    "option": "conversational"
+                  }
                 ]
               }
             },
             {
               "fieldLabel": "Tweet Count",
               "fieldType": "number",
-              "requiredField": false,
               "placeholder": "5"
             },
             {
               "fieldLabel": "LinkedIn Count",
               "fieldType": "number",
-              "requiredField": false,
               "placeholder": "3"
             }
           ]
-        }
+        },
+        "responseMode": "responseNode",
+        "options": {}
       },
-      "id": "form-trigger",
+      "id": "036a3afc-cb2e-4db8-92b8-7be63d1e5df1",
       "name": "Form Trigger",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2,
-      "position": [0, 0]
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "http://fms-n8n:5678/api/v1/workflows",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "options": {}
-      },
-      "id": "get-workflows",
-      "name": "Get Workflow IDs",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [220, 0],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "n8n API"
-        }
-      },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'n8n API'\n2. Header Name: X-N8N-API-KEY\n3. Header Value: YOUR_N8N_API_KEY\n\nGenerate API key: Settings → n8n API → Create API key\n\nURL: http://fms-n8n:5678 (Docker container name)"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Get form input\nconst formData = $('Form Trigger').first().json;\n\n// Get workflow list from API\nconst workflowsResponse = $('Get Workflow IDs').first().json;\nconst workflows = workflowsResponse.data || [];\n\n// Helper function to find workflow ID by name\nfunction getWorkflowId(name) {\n  const workflow = workflows.find(w => w.name === name);\n  return workflow ? workflow.id : null;\n}\n\n// Resolve workflow IDs (using actual n8n workflow names)\nconst ideaExtractionId = getWorkflowId('workflow-idea-extraction');\nconst contentGenerationId = getWorkflowId('workflow-content-generation');\nconst curationId = getWorkflowId('workflow-curation');\n\n// Check if all workflows found\nconst missingWorkflows = [];\nif (!ideaExtractionId) missingWorkflows.push('workflow-idea-extraction');\nif (!contentGenerationId) missingWorkflows.push('workflow-content-generation');\nif (!curationId) missingWorkflows.push('workflow-curation');\n\nif (missingWorkflows.length > 0) {\n  throw new Error(`Missing workflows: ${missingWorkflows.join(', ')}. Please import them first.`);\n}\n\nreturn [{\n  json: {\n    // Original form data\n    status: '⏳',\n    video_id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,\n    video_title: formData['Video Title'],\n    video_url: formData['Video URL'] || '',\n    transcript: formData['Transcript'],\n    niche: formData['Content Niche'] || 'AI/Business',\n    target_audience: formData['Target Audience'] || 'Entrepreneurs',\n    tone: formData['Tone'] || 'practical',\n    tweet_count: formData['Tweet Count'] || 5,\n    linkedin_count: formData['LinkedIn Count'] || 3,\n    created_at: new Date().toISOString(),\n    \n    // Resolved workflow IDs as simple strings\n    wf_idea_extraction: ideaExtractionId,\n    wf_content_generation: contentGenerationId,\n    wf_curation: curationId\n  }\n}];"
-      },
-      "id": "prepare-data",
-      "name": "Prepare Data & Resolve IDs",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [440, 0],
-      "notes": "📋 AUTO-CONFIGURED:\n\nLooks for workflows named:\n- workflow-idea-extraction\n- workflow-content-generation\n- workflow-curation"
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "1814acb3-4d73-4ba2-b711-bd1d6c39d559"
     },
     {
       "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
+          "value": "1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI",
           "mode": "list",
-          "value": ""
+          "cachedResultName": "ContentCreator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
+          "value": "gid=0",
           "mode": "list",
-          "value": "Raw_Transcripts"
+          "cachedResultName": "Raw_Transcripts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI/edit#gid=0"
         },
         "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "status": "={{ $json.status }}",
-            "video_id": "={{ $json.video_id }}",
-            "video_title": "={{ $json.video_title }}",
-            "video_url": "={{ $json.video_url }}",
-            "transcript": "={{ $json.transcript }}",
-            "metadata": "={{ JSON.stringify({ niche: $json.niche, target_audience: $json.target_audience, tone: $json.tone, tweet_count: $json.tweet_count, linkedin_count: $json.linkedin_count }) }}",
-            "created_at": "={{ $json.created_at }}"
-          }
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Video Title",
+              "displayName": "Video Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video URL",
+              "displayName": "Video URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content Niche",
+              "displayName": "Content Niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Target Audience",
+              "displayName": "Target Audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tone",
+              "displayName": "Tone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tweet Count",
+              "displayName": "Tweet Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn Count",
+              "displayName": "LinkedIn Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "submittedAt",
+              "displayName": "submittedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "formMode",
+              "displayName": "formMode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "video_id",
+              "displayName": "video_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "video_title",
+              "displayName": "video_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "video_url",
+              "displayName": "video_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "transcript",
+              "displayName": "transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "target_audience",
+              "displayName": "target_audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tone",
+              "displayName": "tone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tweet_count",
+              "displayName": "tweet_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_count",
+              "displayName": "linkedin_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "wf_idea_extraction",
+              "displayName": "wf_idea_extraction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "wf_content_generation",
+              "displayName": "wf_content_generation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "wf_curation",
+              "displayName": "wf_curation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
         },
         "options": {}
       },
-      "id": "store-transcript",
+      "id": "8010e24c-442d-46c1-8406-afef20817f8b",
       "name": "Store Raw Transcript",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [660, 0],
+      "position": [
+        600,
+        0
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "",
-          "name": ""
+          "id": "gT63GqZ01vMEYBvV",
+          "name": "Google Sheets account"
         }
       },
       "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Raw_Transcripts' sheet"
     },
     {
       "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "={{ $json.wf_idea_extraction }}"
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
+        "jsCode": "const input = $('Prepare Data').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
       },
-      "id": "run-idea-extraction",
-      "name": "Run Idea Extraction",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [880, 0],
-      "onError": "continueErrorOutput",
-      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID from: $json.wf_idea_extraction\nResolved dynamically by name lookup"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "={{ $json.wf_content_generation }}"
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "id": "run-content-generation",
-      "name": "Run Content Generation",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [1100, 0],
-      "onError": "continueErrorOutput",
-      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID from: $json.wf_content_generation\nResolved dynamically by name lookup"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "={{ $json.wf_curation }}"
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "id": "run-curation",
-      "name": "Run Curation",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [1320, 0],
-      "onError": "continueErrorOutput",
-      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID from: $json.wf_curation\nResolved dynamically by name lookup"
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $('Prepare Data & Resolve IDs').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
-      },
-      "id": "build-response",
+      "id": "e2005096-669c-4060-bc66-85c6d1ad9f3c",
       "name": "Build Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, 0]
+      "position": [
+        1540,
+        0
+      ]
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
+          "value": "1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI",
           "mode": "list",
-          "value": ""
+          "cachedResultName": "ContentCreator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
@@ -247,75 +433,161 @@
           "value": "Raw_Transcripts"
         },
         "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "status": "={{ $json.status }}"
-          }
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
         },
         "options": {
           "cellFormat": "USER_ENTERED"
-        },
-        "filtersUI": {
-          "values": [
-            {
-              "lookupColumn": "video_id",
-              "lookupValue": "={{ $json.video_id }}"
-            }
-          ]
         }
       },
-      "id": "update-status",
+      "id": "13586be7-ce2e-4c90-9bce-c43299387b2b",
       "name": "Update Status",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [1760, 0],
+      "position": [
+        1760,
+        0
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "",
-          "name": ""
+          "id": "gT63GqZ01vMEYBvV",
+          "name": "Google Sheets account"
         }
       }
     },
     {
       "parameters": {
         "respondWith": "text",
-        "responseBody": "={{ $json.message }}"
+        "responseBody": "={{ $json.message }}",
+        "options": {}
       },
-      "id": "respond-form",
+      "id": "7ddef410-5c6e-4b14-8484-40472f744cbe",
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1980, 0]
+      "position": [
+        1980,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "0MUZHto1l05ctN9J",
+          "mode": "list",
+          "cachedResultName": "workflow-idea-extraction"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        840,
+        0
+      ],
+      "id": "67c4d7ec-940a-414d-a81f-75663108b072",
+      "name": "Run Idea Extraction"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "MdmOYAQB4JXFGhUz",
+          "mode": "list",
+          "cachedResultName": "workflow-content-generation"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1080,
+        0
+      ],
+      "id": "e4540b00-573f-4663-ae92-0772e3d2a0c4",
+      "name": "Run Content Generation"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "xTR34CLSKg8rGdoX",
+          "mode": "list",
+          "cachedResultName": "workflow-curation"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        0
+      ],
+      "id": "f6785bb5-6197-4574-8bfc-6d048d1baafe",
+      "name": "Run Curation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get form input\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    // Original form data\n    status: '⏳',\n    video_id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,\n    video_title: formData['Video Title'],\n    video_url: formData['Video URL'] || '',\n    transcript: formData['Transcript'],\n    niche: formData['Content Niche'] || 'AI/Business',\n    target_audience: formData['Target Audience'] || 'Entrepreneurs',\n    tone: formData['Tone'] || 'practical',\n    tweet_count: formData['Tweet Count'] || 5,\n    linkedin_count: formData['LinkedIn Count'] || 3,\n    created_at: new Date().toISOString(),\n  }\n}];"
+      },
+      "id": "e634c59d-4851-4bfd-8b9b-6d40e9323b09",
+      "name": "Prepare Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        0
+      ],
+      "notes": "📋 AUTO-CONFIGURED:\n\nLooks for workflows named:\n- workflow-idea-extraction\n- workflow-content-generation\n- workflow-curation"
+    },
+    {
+      "parameters": {
+        "content": "## Data Cleanse\n\n\nFormat the data  for the require output",
+        "height": 440,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        280,
+        -200
+      ],
+      "typeVersion": 1,
+      "id": "df9acd43-70b9-4235-822c-7e5ec4c481db",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## AI Agents \n\n**1** Determines the key point an ideas ; two agents are tasked with  identifying the topic contents, key points and outcomes based on the input\n**2** Determines the  content to generate; two agents are tasked with generating content based on the input \n**3** Finally another agent is tasked with determining the the best of all of the content produced and generates the output for the appropriate platforms",
+        "height": 440,
+        "width": 720,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        760,
+        -200
+      ],
+      "typeVersion": 1,
+      "id": "e9f173d2-0ad4-4414-93c3-e29a57fa7411",
+      "name": "Sticky Note1"
     }
   ],
+  "pinData": {},
   "connections": {
     "Form Trigger": {
       "main": [
         [
           {
-            "node": "Get Workflow IDs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Workflow IDs": {
-      "main": [
-        [
-          {
-            "node": "Prepare Data & Resolve IDs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Data & Resolve IDs": {
-      "main": [
-        [
-          {
-            "node": "Store Raw Transcript",
+            "node": "Prepare Data",
             "type": "main",
             "index": 0
           }
@@ -327,6 +599,28 @@
         [
           {
             "node": "Run Idea Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status": {
+      "main": [
+        [
+          {
+            "node": "Respond to Form",
             "type": "main",
             "index": 0
           }
@@ -366,22 +660,11 @@
         ]
       ]
     },
-    "Build Response": {
+    "Prepare Data": {
       "main": [
         [
           {
-            "node": "Update Status",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Status": {
-      "main": [
-        [
-          {
-            "node": "Respond to Form",
+            "node": "Store Raw Transcript",
             "type": "main",
             "index": 0
           }
@@ -389,13 +672,14 @@
       ]
     }
   },
+  "active": true,
   "settings": {
-    "executionOrder": "v1",
-    "errorWorkflow": ""
+    "executionOrder": "v1"
   },
-  "staticData": null,
-  "tags": ["main"],
-  "triggerCount": 1,
-  "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "5"
+  "versionId": "3468921d-2622-4640-a7ff-55de97a0c105",
+  "meta": {
+    "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
+  },
+  "id": "jHMlRu9wdVGWkonG",
+  "tags": []
 }
