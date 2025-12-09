@@ -1,0 +1,242 @@
+{
+  "name": "Content Repurposing Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Content Repurposing Engine",
+        "formDescription": "Transform video transcripts into platform-ready social content",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Video Title",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "e.g., How to Automate Any Business With AI"
+            },
+            {
+              "fieldLabel": "Video URL",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "https://youtube.com/..."
+            },
+            {
+              "fieldLabel": "Transcript",
+              "fieldType": "textarea",
+              "requiredField": true,
+              "placeholder": "Paste your video transcript here..."
+            },
+            {
+              "fieldLabel": "Content Niche",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  { "option": "AI/Business" },
+                  { "option": "Entrepreneurship" },
+                  { "option": "Tech/Software" },
+                  { "option": "Marketing" },
+                  { "option": "Finance" },
+                  { "option": "Health/Wellness" },
+                  { "option": "Education" },
+                  { "option": "Other" }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Target Audience",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  { "option": "Entrepreneurs" },
+                  { "option": "Agency Owners" },
+                  { "option": "Developers" },
+                  { "option": "Executives" },
+                  { "option": "Beginners" },
+                  { "option": "Advanced Practitioners" },
+                  { "option": "General Audience" }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Tone",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  { "option": "practical" },
+                  { "option": "inspirational" },
+                  { "option": "controversial" },
+                  { "option": "educational" },
+                  { "option": "conversational" }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Tweet Count",
+              "fieldType": "number",
+              "requiredField": false,
+              "placeholder": "5"
+            },
+            {
+              "fieldLabel": "LinkedIn Count",
+              "fieldType": "number",
+              "requiredField": false,
+              "placeholder": "3"
+            }
+          ]
+        }
+      },
+      "id": "form-trigger",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "video_id",
+              "name": "video_id",
+              "value": "={{ Date.now() }}-{{ $runIndex }}",
+              "type": "string"
+            },
+            {
+              "id": "video_title",
+              "name": "video_title",
+              "value": "={{ $json['Video Title'] }}",
+              "type": "string"
+            },
+            {
+              "id": "video_url",
+              "name": "video_url",
+              "value": "={{ $json['Video URL'] || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "transcript",
+              "name": "transcript",
+              "value": "={{ $json['Transcript'] }}",
+              "type": "string"
+            },
+            {
+              "id": "niche",
+              "name": "niche",
+              "value": "={{ $json['Content Niche'] || 'AI/Business' }}",
+              "type": "string"
+            },
+            {
+              "id": "target_audience",
+              "name": "target_audience",
+              "value": "={{ $json['Target Audience'] || 'Entrepreneurs' }}",
+              "type": "string"
+            },
+            {
+              "id": "tone",
+              "name": "tone",
+              "value": "={{ $json['Tone'] || 'practical' }}",
+              "type": "string"
+            },
+            {
+              "id": "tweet_count",
+              "name": "tweet_count",
+              "value": "={{ $json['Tweet Count'] || 5 }}",
+              "type": "number"
+            },
+            {
+              "id": "linkedin_count",
+              "name": "linkedin_count",
+              "value": "={{ $json['LinkedIn Count'] || 3 }}",
+              "type": "number"
+            },
+            {
+              "id": "created_at",
+              "name": "created_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-metadata",
+      "name": "Set Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Raw_Transcripts"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "video_id": "={{ $json.video_id }}",
+            "video_title": "={{ $json.video_title }}",
+            "video_url": "={{ $json.video_url }}",
+            "transcript": "={{ $json.transcript }}",
+            "metadata": "={{ JSON.stringify({ niche: $json.niche, target_audience: $json.target_audience, tone: $json.tone, tweet_count: $json.tweet_count, linkedin_count: $json.linkedin_count }) }}",
+            "created_at": "={{ $json.created_at }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "store-transcript",
+      "name": "Store Raw Transcript",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [440, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Metadata": {
+      "main": [
+        [
+          {
+            "node": "Store Raw Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-12-09T00:00:00.000Z",
+  "versionId": "1"
+}
