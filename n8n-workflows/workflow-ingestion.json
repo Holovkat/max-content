@@ -96,84 +96,35 @@
     },
     {
       "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "assignments": {
-          "assignments": [
-            {
-              "id": "status",
-              "name": "status",
-              "value": "⏳",
-              "type": "string"
-            },
-            {
-              "id": "video_id",
-              "name": "video_id",
-              "value": "={{ Date.now() }}-{{ $runIndex }}",
-              "type": "string"
-            },
-            {
-              "id": "video_title",
-              "name": "video_title",
-              "value": "={{ $json['Video Title'] }}",
-              "type": "string"
-            },
-            {
-              "id": "video_url",
-              "name": "video_url",
-              "value": "={{ $json['Video URL'] || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "transcript",
-              "name": "transcript",
-              "value": "={{ $json['Transcript'] }}",
-              "type": "string"
-            },
-            {
-              "id": "niche",
-              "name": "niche",
-              "value": "={{ $json['Content Niche'] || 'AI/Business' }}",
-              "type": "string"
-            },
-            {
-              "id": "target_audience",
-              "name": "target_audience",
-              "value": "={{ $json['Target Audience'] || 'Entrepreneurs' }}",
-              "type": "string"
-            },
-            {
-              "id": "tone",
-              "name": "tone",
-              "value": "={{ $json['Tone'] || 'practical' }}",
-              "type": "string"
-            },
-            {
-              "id": "tweet_count",
-              "name": "tweet_count",
-              "value": "={{ $json['Tweet Count'] || 5 }}",
-              "type": "number"
-            },
-            {
-              "id": "linkedin_count",
-              "name": "linkedin_count",
-              "value": "={{ $json['LinkedIn Count'] || 3 }}",
-              "type": "number"
-            },
-            {
-              "id": "created_at",
-              "name": "created_at",
-              "value": "={{ $now.toISO() }}",
-              "type": "string"
-            }
-          ]
+        "method": "GET",
+        "url": "={{ $env.N8N_HOST || 'http://localhost:5678' }}/api/v1/workflows",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "get-workflows",
+      "name": "Get Workflow IDs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "n8n API"
         }
       },
-      "id": "set-metadata",
-      "name": "Set Metadata",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
-      "position": [220, 0]
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'n8n API'\n2. Header Name: X-N8N-API-KEY\n3. Header Value: YOUR_N8N_API_KEY\n\nGenerate API key in n8n:\nSettings → n8n API → Create API key"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get form input\nconst formData = $('Form Trigger').first().json;\n\n// Get workflow list from API\nconst workflowsResponse = $('Get Workflow IDs').first().json;\nconst workflows = workflowsResponse.data || [];\n\n// Helper function to find workflow ID by name\nfunction getWorkflowId(name) {\n  const workflow = workflows.find(w => w.name === name);\n  return workflow ? workflow.id : null;\n}\n\n// Resolve workflow IDs\nconst workflowIds = {\n  ideaExtraction: getWorkflowId('Idea Extraction (Parallel)'),\n  contentGeneration: getWorkflowId('Content Generation (Parallel)'),\n  curation: getWorkflowId('Content Curation (Gemini)')\n};\n\n// Check if all workflows found\nconst missingWorkflows = [];\nif (!workflowIds.ideaExtraction) missingWorkflows.push('Idea Extraction (Parallel)');\nif (!workflowIds.contentGeneration) missingWorkflows.push('Content Generation (Parallel)');\nif (!workflowIds.curation) missingWorkflows.push('Content Curation (Gemini)');\n\nif (missingWorkflows.length > 0) {\n  throw new Error(`Missing workflows: ${missingWorkflows.join(', ')}. Please import them first.`);\n}\n\nreturn [{\n  json: {\n    // Original form data\n    status: '⏳',\n    video_id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,\n    video_title: formData['Video Title'],\n    video_url: formData['Video URL'] || '',\n    transcript: formData['Transcript'],\n    niche: formData['Content Niche'] || 'AI/Business',\n    target_audience: formData['Target Audience'] || 'Entrepreneurs',\n    tone: formData['Tone'] || 'practical',\n    tweet_count: formData['Tweet Count'] || 5,\n    linkedin_count: formData['LinkedIn Count'] || 3,\n    created_at: new Date().toISOString(),\n    \n    // Resolved workflow IDs\n    workflow_ids: workflowIds\n  }\n}];"
+      },
+      "id": "prepare-data",
+      "name": "Prepare Data & Resolve IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "notes": "📋 AUTO-CONFIGURED:\n\nThis node:\n1. Gets form data\n2. Calls n8n API to list workflows\n3. Finds workflow IDs by name\n4. Returns prepared data with IDs"
     },
     {
       "parameters": {
@@ -206,20 +157,21 @@
       "name": "Store Raw Transcript",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [440, 0],
+      "position": [660, 0],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "",
           "name": ""
         }
-      }
+      },
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Raw_Transcripts' sheet"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "={{ $json.workflow_ids.ideaExtraction }}"
         },
         "options": {
           "waitForSubWorkflow": true
@@ -229,15 +181,16 @@
       "name": "Run Idea Extraction",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [660, 0],
-      "onError": "continueErrorOutput"
+      "position": [880, 0],
+      "onError": "continueErrorOutput",
+      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID resolved dynamically from:\n'Idea Extraction (Parallel)'"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "={{ $json.workflow_ids.contentGeneration }}"
         },
         "options": {
           "waitForSubWorkflow": true
@@ -247,15 +200,16 @@
       "name": "Run Content Generation",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [880, 0],
-      "onError": "continueErrorOutput"
+      "position": [1100, 0],
+      "onError": "continueErrorOutput",
+      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID resolved dynamically from:\n'Content Generation (Parallel)'"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "={{ $json.workflow_ids.curation }}"
         },
         "options": {
           "waitForSubWorkflow": true
@@ -265,18 +219,19 @@
       "name": "Run Curation",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1100, 0],
-      "onError": "continueErrorOutput"
+      "position": [1320, 0],
+      "onError": "continueErrorOutput",
+      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID resolved dynamically from:\n'Content Curation (Gemini)'"
     },
     {
       "parameters": {
-        "jsCode": "const input = $('Set Metadata').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
+        "jsCode": "const input = $('Prepare Data & Resolve IDs').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
       },
       "id": "build-response",
       "name": "Build Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 0]
+      "position": [1540, 0]
     },
     {
       "parameters": {
@@ -313,7 +268,7 @@
       "name": "Update Status",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [1540, 0],
+      "position": [1760, 0],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "",
@@ -330,7 +285,7 @@
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1760, 0]
+      "position": [1980, 0]
     }
   ],
   "connections": {
@@ -338,14 +293,25 @@
       "main": [
         [
           {
-            "node": "Set Metadata",
+            "node": "Get Workflow IDs",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Set Metadata": {
+    "Get Workflow IDs": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data & Resolve IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data & Resolve IDs": {
       "main": [
         [
           {
@@ -425,11 +391,11 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "workflow-error-handler"
+    "errorWorkflow": ""
   },
   "staticData": null,
   "tags": ["main"],
   "triggerCount": 1,
   "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "2"
+  "versionId": "3"
 }

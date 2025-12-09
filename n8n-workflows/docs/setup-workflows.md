@@ -128,7 +128,7 @@ Get key from: [console.groq.com](https://console.groq.com)
 1. Add **Google Gemini** credential
 2. Enter your API key from [aistudio.google.com](https://aistudio.google.com)
 
-**Model Used:** `gemini-1.5-flash`
+**Model Used:** `gemini-2.5-flash`
 
 ### Google Sheets OAuth
 
