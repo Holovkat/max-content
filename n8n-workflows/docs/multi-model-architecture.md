@@ -8,23 +8,26 @@ This document describes the multi-model LLM orchestration strategy.
 
 ## Overview
 
-The Content Repurposing Engine uses multiple AI models in an ensemble approach:
+The Content Repurposing Engine uses a **3-model ensemble approach**:
 
-1. **GLM-4 (z.ai)** - Creative extraction and generation
-2. **Gemini (Google)** - Curation, ranking, and quality gate
+| Model      | Provider | Role                          |
+| ---------- | -------- | ----------------------------- |
+| **GLM-4**  | Zhipu AI | Idea extraction (creative)    |
+| **Groq**   | Groq     | Content generation (fast)     |
+| **Gemini** | Google   | Curation, ranking, web search |
 
 ---
 
 ## Model Roles
 
-### GLM-4 (Creative Model)
+### GLM-4 (Idea Extraction)
 
-| Attribute | Value                                     |
-| --------- | ----------------------------------------- |
-| Provider  | Zhipu AI                                  |
-| Model     | `glm-4-plus` or `glm-4.6`                 |
-| Role      | Primary content extraction and generation |
-| Strengths | Creative writing, nuanced understanding   |
+| Attribute | Value                                              |
+| --------- | -------------------------------------------------- |
+| Provider  | Zhipu AI                                           |
+| Model     | `glm-4-plus` or `glm-4.6`                          |
+| Role      | Creative idea extraction from transcripts          |
+| Strengths | Nuanced understanding, creative insight extraction |
 
 **API Endpoints (use the one matching your account):**
 | Account Type | Endpoint |
@@ -35,26 +38,49 @@ The Content Repurposing Engine uses multiple AI models in an ensemble approach:
 **Used for:**
 
 - Idea extraction from transcripts
-- Tweet generation
-- LinkedIn post generation
-- Newsletter generation
+- Identifying key insights, quotes, frameworks, stories
 
-### Gemini (Curator Model)
+---
 
-| Attribute | Value                                           |
-| --------- | ----------------------------------------------- |
-| Provider  | Google AI                                       |
-| Model     | `gemini-1.5-flash`                              |
-| Endpoint  | Native n8n node                                 |
-| Role      | Quality curation and ranking                    |
-| Strengths | Fast, analytical, good at structured evaluation |
+### Groq (Content Generation)
+
+| Attribute | Value                                             |
+| --------- | ------------------------------------------------- |
+| Provider  | Groq                                              |
+| Model     | `llama-3.1-70b-versatile` or `mixtral-8x7b-32768` |
+| Endpoint  | `https://api.groq.com/openai/v1/chat/completions` |
+| Role      | Fast content generation                           |
+| Strengths | Extremely fast inference, good quality output     |
+
+**Free Tier:** 30 requests/minute, 14,400 requests/day
 
 **Used for:**
 
-- Quality scoring (1-5 rubric)
+- Tweet generation (5 tweets)
+- LinkedIn post generation (3 posts)
+- Newsletter generation (1 section)
+
+---
+
+### Gemini (Curator & Quality Gate)
+
+| Attribute | Value                                       |
+| --------- | ------------------------------------------- |
+| Provider  | Google AI                                   |
+| Model     | `gemini-1.5-flash`                          |
+| Endpoint  | Native n8n node                             |
+| Role      | Quality curation, ranking, and web search   |
+| Strengths | Fast, analytical, grounding with web search |
+
+**Free Tier:** 15 RPM, 1M tokens/day
+
+**Used for:**
+
+- Quality scoring (1-5 rubric on 5 dimensions)
 - Content refinement suggestions
-- Best-of selection when multiple outputs exist
+- **Web search for references/fact-checking**
 - Final quality gate pass/fail
+- Curating best outputs when multiple exist
 
 ---
 
@@ -135,9 +161,49 @@ Since n8n doesn't have a native GLM-4 node, use **HTTP Request**:
 2. Create **Header Auth** credential:
    - Name: `GLM-4 API`
    - Name: `Authorization`
-   - Value: `Bearer YOUR_API_KEY_HERE`
+   - Value: `Bearer YOUR_GLM4_API_KEY`
 
 ---
+
+### HTTP Request Node for Groq
+
+| Setting        | Value                                             |
+| -------------- | ------------------------------------------------- |
+| Method         | POST                                              |
+| URL            | `https://api.groq.com/openai/v1/chat/completions` |
+| Authentication | Header Auth                                       |
+| Header Name    | Authorization                                     |
+| Header Value   | `Bearer YOUR_GROQ_API_KEY`                        |
+| Content-Type   | application/json                                  |
+
+### Groq Request Body
+
+```json
+{
+  "model": "llama-3.1-70b-versatile",
+  "messages": [
+    {
+      "role": "system",
+      "content": "{{ $json.systemPrompt }}"
+    },
+    {
+      "role": "user",
+      "content": "{{ $json.userPrompt }}"
+    }
+  ],
+  "temperature": 0.7,
+  "max_tokens": 2048
+}
+```
+
+### Groq Credential Setup
+
+1. Go to [console.groq.com](https://console.groq.com)
+2. Create API key
+3. In n8n, create **Header Auth** credential:
+   - Name: `Groq API`
+   - Name: `Authorization`
+   - Value: `Bearer YOUR_GROQ_API_KEY`
 
 ## Workflow Flow
 
