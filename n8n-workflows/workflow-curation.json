@@ -13,7 +13,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{ $credentials.geminiApiKey }}",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key={{ $credentials.geminiApiKey }}",
         "authentication": "none",
         "sendBody": true,
         "specifyBody": "json",
@@ -27,7 +27,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [220, 0],
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Edit this node and replace the URL with your actual API key:\n   https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_GEMINI_API_KEY\n\nGet key from: aistudio.google.com\n\nModel: gemini-2.0-flash (FREE)\nEndpoint: v1beta"
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Edit this node and replace the URL with your actual API key:\n   ...generateContent?key=YOUR_GEMINI_API_KEY\n\nGet key from: aistudio.google.com\n\nModel: gemini-2.5-flash-lite-preview-06-17 (cost-efficient)\nAlternative: gemini-2.5-flash-preview-04-17 (more capable)"
     },
     {
       "parameters": {
