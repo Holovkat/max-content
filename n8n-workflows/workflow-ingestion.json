@@ -96,14 +96,35 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get form input\nconst formData = $input.first().json;\n\nreturn [{\n  json: {\n    status: '⏳',\n    video_id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,\n    video_title: formData['Video Title'],\n    video_url: formData['Video URL'] || '',\n    transcript: formData['Transcript'],\n    niche: formData['Content Niche'] || 'AI/Business',\n    target_audience: formData['Target Audience'] || 'Entrepreneurs',\n    tone: formData['Tone'] || 'practical',\n    tweet_count: formData['Tweet Count'] || 5,\n    linkedin_count: formData['LinkedIn Count'] || 3,\n    created_at: new Date().toISOString()\n  }\n}];"
+        "method": "GET",
+        "url": "http://fms-n8n:5678/api/v1/workflows",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "get-workflows",
+      "name": "Get Workflow IDs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "n8n API"
+        }
+      },
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'n8n API'\n2. Header Name: X-N8N-API-KEY\n3. Header Value: YOUR_N8N_API_KEY\n\nGenerate API key: Settings → n8n API → Create API key\n\nURL: http://fms-n8n:5678 (Docker container name)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get form input\nconst formData = $('Form Trigger').first().json;\n\n// Get workflow list from API\nconst workflowsResponse = $('Get Workflow IDs').first().json;\nconst workflows = workflowsResponse.data || [];\n\n// Helper function to find workflow ID by name\nfunction getWorkflowId(name) {\n  const workflow = workflows.find(w => w.name === name);\n  return workflow ? workflow.id : null;\n}\n\n// Resolve workflow IDs\nconst ideaExtractionId = getWorkflowId('Idea Extraction (Parallel)');\nconst contentGenerationId = getWorkflowId('Content Generation (Parallel)');\nconst curationId = getWorkflowId('Content Curation (Gemini)');\n\n// Check if all workflows found\nconst missingWorkflows = [];\nif (!ideaExtractionId) missingWorkflows.push('Idea Extraction (Parallel)');\nif (!contentGenerationId) missingWorkflows.push('Content Generation (Parallel)');\nif (!curationId) missingWorkflows.push('Content Curation (Gemini)');\n\nif (missingWorkflows.length > 0) {\n  throw new Error(`Missing workflows: ${missingWorkflows.join(', ')}. Please import them first.`);\n}\n\nreturn [{\n  json: {\n    // Original form data\n    status: '⏳',\n    video_id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,\n    video_title: formData['Video Title'],\n    video_url: formData['Video URL'] || '',\n    transcript: formData['Transcript'],\n    niche: formData['Content Niche'] || 'AI/Business',\n    target_audience: formData['Target Audience'] || 'Entrepreneurs',\n    tone: formData['Tone'] || 'practical',\n    tweet_count: formData['Tweet Count'] || 5,\n    linkedin_count: formData['LinkedIn Count'] || 3,\n    created_at: new Date().toISOString(),\n    \n    // Resolved workflow IDs as simple strings\n    wf_idea_extraction: ideaExtractionId,\n    wf_content_generation: contentGenerationId,\n    wf_curation: curationId\n  }\n}];"
       },
       "id": "prepare-data",
-      "name": "Prepare Data",
+      "name": "Prepare Data & Resolve IDs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0],
-      "notes": "📋 AUTO-CONFIGURED:\n\nPrepares form data with:\n- Unique video_id\n- Default values for optional fields"
+      "position": [440, 0],
+      "notes": "📋 AUTO-CONFIGURED:\n\nThis node:\n1. Gets form data\n2. Finds workflow IDs by name from API response\n3. Returns data with workflow IDs as simple string properties"
     },
     {
       "parameters": {
@@ -136,7 +157,7 @@
       "name": "Store Raw Transcript",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [440, 0],
+      "position": [660, 0],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "",
@@ -149,8 +170,8 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "={{ $json.wf_idea_extraction }}"
         },
         "options": {
           "waitForSubWorkflow": true
@@ -160,16 +181,16 @@
       "name": "Run Idea Extraction",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [660, 0],
+      "position": [880, 0],
       "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Click this node\n2. In 'Workflow' dropdown, select:\n   'Idea Extraction (Parallel)'\n\n(Import that workflow first!)"
+      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID from: $json.wf_idea_extraction\nResolved dynamically by name lookup"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "={{ $json.wf_content_generation }}"
         },
         "options": {
           "waitForSubWorkflow": true
@@ -179,16 +200,16 @@
       "name": "Run Content Generation",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [880, 0],
+      "position": [1100, 0],
       "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Click this node\n2. In 'Workflow' dropdown, select:\n   'Content Generation (Parallel)'\n\n(Import that workflow first!)"
+      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID from: $json.wf_content_generation\nResolved dynamically by name lookup"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "={{ $json.wf_curation }}"
         },
         "options": {
           "waitForSubWorkflow": true
@@ -198,19 +219,19 @@
       "name": "Run Curation",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1100, 0],
+      "position": [1320, 0],
       "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Click this node\n2. In 'Workflow' dropdown, select:\n   'Content Curation (Gemini)'\n\n(Import that workflow first!)"
+      "notes": "📋 AUTO-CONFIGURED:\n\nWorkflow ID from: $json.wf_curation\nResolved dynamically by name lookup"
     },
     {
       "parameters": {
-        "jsCode": "const input = $('Prepare Data').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
+        "jsCode": "const input = $('Prepare Data & Resolve IDs').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
       },
       "id": "build-response",
       "name": "Build Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 0]
+      "position": [1540, 0]
     },
     {
       "parameters": {
@@ -247,7 +268,7 @@
       "name": "Update Status",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [1540, 0],
+      "position": [1760, 0],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "",
@@ -264,7 +285,7 @@
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1760, 0]
+      "position": [1980, 0]
     }
   ],
   "connections": {
@@ -272,14 +293,25 @@
       "main": [
         [
           {
-            "node": "Prepare Data",
+            "node": "Get Workflow IDs",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepare Data": {
+    "Get Workflow IDs": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data & Resolve IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data & Resolve IDs": {
       "main": [
         [
           {
@@ -365,5 +397,5 @@
   "tags": ["main"],
   "triggerCount": 1,
   "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "4"
+  "versionId": "5"
 }
