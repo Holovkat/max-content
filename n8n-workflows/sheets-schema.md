@@ -25,10 +25,24 @@ Stores the original video transcripts and metadata.
 | E      | metadata    | JSON string   | No       | Additional metadata (niche, audience, etc.)          |
 | F      | created_at  | ISO timestamp | Yes      | When the transcript was ingested                     |
 
+**Metadata JSON Structure:**
+
+```json
+{
+  "niche": "AI/Business",
+  "target_audience": "Entrepreneurs",
+  "tone": "practical",
+  "platforms": ["twitter", "linkedin", "newsletter"],
+  "tweet_count": 5,
+  "linkedin_count": 3,
+  "newsletter_count": 1
+}
+```
+
 **Example Row:**
 
 ```
-| 1733712000000-0 | How to Automate Any Business | https://youtu.be/xxx | "Today I'm going to..." | {"niche":"AI/Business"} | 2024-12-09T00:00:00.000Z |
+| 1733712000000-0 | How to Automate Any Business | https://youtu.be/xxx | "Today I'm going to..." | {"niche":"AI/Business","target_audience":"Entrepreneurs",...} | 2024-12-09T00:00:00.000Z |
 ```
 
 ---
@@ -199,7 +213,15 @@ When configuring Google Sheets nodes in n8n, use these mappings:
   video_title: {{ $json.video_title }},
   video_url: {{ $json.video_url || '' }},
   transcript: {{ $json.transcript }},
-  metadata: {{ JSON.stringify({ niche: $json.niche }) }},
+  metadata: {{ JSON.stringify({
+    niche: $json.niche || 'AI/Business',
+    target_audience: $json.target_audience || 'Entrepreneurs',
+    tone: $json.tone || 'practical',
+    platforms: $json.platforms || ['twitter', 'linkedin', 'newsletter'],
+    tweet_count: $json.tweet_count || 5,
+    linkedin_count: $json.linkedin_count || 3,
+    newsletter_count: $json.newsletter_count || 1
+  }) }},
   created_at: {{ $now.toISO() }}
 }
 ```
