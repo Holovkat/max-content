@@ -97,7 +97,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.N8N_HOST || 'http://localhost:5678' }}/api/v1/workflows",
+        "url": "http://localhost:5678/api/v1/workflows",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "options": {}
@@ -113,7 +113,7 @@
           "name": "n8n API"
         }
       },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'n8n API'\n2. Header Name: X-N8N-API-KEY\n3. Header Value: YOUR_N8N_API_KEY\n\nGenerate API key in n8n:\nSettings → n8n API → Create API key"
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'n8n API'\n2. Header Name: X-N8N-API-KEY\n3. Header Value: YOUR_N8N_API_KEY\n\nGenerate API key: Settings → n8n API → Create API key\n\n⚠️ If n8n is not on localhost:5678, update the URL!"
     },
     {
       "parameters": {
