@@ -13,8 +13,18 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key={{ $credentials.geminiApiKey }}",
-        "authentication": "none",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are the Curator - an editorial director selecting the best content.\\n\\nRespond in the same language as the input content. If language cannot be determined, default to English.\\n\\n## GENERATOR A (GLM-4.6) OUTPUTS:\\n\\nTweets: {{ JSON.stringify($json.tweets_glm) }}\\nLinkedIn: {{ JSON.stringify($json.linkedin_glm) }}\\nNewsletter: {{ JSON.stringify($json.newsletter_glm) }}\\n\\n## GENERATOR B (Kimi-K2) OUTPUTS:\\n\\nTweets: {{ JSON.stringify($json.tweets_kimi) }}\\nLinkedIn: {{ JSON.stringify($json.linkedin_kimi) }}\\nNewsletter: {{ JSON.stringify($json.newsletter_kimi) }}\\n\\n## TASK\\n\\nFor each content piece, score both versions 1-5 on:\\n1. Hook Clarity\\n2. Specificity\\n3. Voice Authenticity\\n4. Value Density\\n5. CTA Naturalness\\n\\nPick the best version (or combine elements from both).\\n\\nReturn ONLY JSON:\\n{\\n  \\\"curated_tweets\\\": [\\n    { \\\"content\\\": \\\"final tweet text\\\", \\\"source\\\": \\\"GLM|Kimi|Combined\\\", \\\"scores\\\": { \\\"glm\\\": N, \\\"kimi\\\": N } }\\n  ],\\n  \\\"curated_linkedin\\\": [\\n    { \\\"hook\\\": \\\"\\\", \\\"body\\\": \\\"\\\", \\\"cta\\\": \\\"\\\", \\\"source\\\": \\\"GLM|Kimi|Combined\\\", \\\"scores\\\": { \\\"glm\\\": N, \\\"kimi\\\": N } }\\n  ],\\n  \\\"curated_newsletter\\\": {\\n    \\\"subject\\\": \\\"\\\", \\\"body\\\": \\\"\\\", \\\"source\\\": \\\"GLM|Kimi|Combined\\\", \\\"scores\\\": { \\\"glm\\\": N, \\\"kimi\\\": N }\\n  },\\n  \\\"summary\\\": {\\n    \\\"glm_wins\\\": N,\\n    \\\"kimi_wins\\\": N,\\n    \\\"combined\\\": N\\n  }\\n}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.4,\n    \"maxOutputTokens\": 8192\n  }\n}",
@@ -27,7 +37,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [220, 0],
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Edit this node and replace the URL with your actual API key:\n   ...generateContent?key=YOUR_GEMINI_API_KEY\n\nGet key from: aistudio.google.com\n\nModel: gemini-2.5-flash-lite-preview-06-17 (cost-efficient)\nAlternative: gemini-2.5-flash-preview-04-17 (more capable)"
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Gemini API"
+        }
+      },
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Gemini API'\n2. Header Name: x-goog-api-key\n3. Header Value: YOUR_GEMINI_API_KEY\n\nGet key from: aistudio.google.com\n\nModel: gemini-2.5-flash\nEndpoint: v1beta"
     },
     {
       "parameters": {
@@ -146,5 +162,5 @@
   "tags": ["content-generation", "curation"],
   "triggerCount": 0,
   "updatedAt": "2024-12-09T00:00:00.000Z",
-  "versionId": "4"
+  "versionId": "5"
 }
