@@ -1,14 +1,19 @@
 # Workflow Setup: Idea Extraction
 
-## Shard 06 - Implementation Guide
+## Shard 06 - Implementation Guide (Multi-Model)
 
-This document provides instructions for adding the Idea Extraction nodes to your workflow.
+This document provides instructions for adding the Idea Extraction nodes using **GLM-4 as the creative model** and **Gemini as the curator**.
 
 ---
 
 ## Overview
 
-The idea extraction phase uses Gemini to analyze the transcript and extract:
+The idea extraction phase uses a **multi-model approach**:
+
+- **GLM-4 (z.ai)** - Creative extraction of ideas from transcript
+- **Gemini** - Curates and validates the extracted ideas
+
+Extracts:
 
 - **Key Ideas** (4-6) - Core insights for content
 - **Quotable Moments** (3-5) - Memorable phrases
@@ -22,45 +27,76 @@ The idea extraction phase uses Gemini to analyze the transcript and extract:
 Add these nodes after `Store Raw Transcript`:
 
 ```
-┌─────────────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Store Raw          │────▶│  Extract     │────▶│  Parse      │────▶│  Store      │
-│  Transcript         │     │  Ideas       │     │  Ideas      │     │  Ideas      │
-│  (existing)         │     │  (Gemini)    │     │  (Code)     │     │  (Sheets)   │
-└─────────────────────┘     └──────────────┘     └─────────────┘     └─────────────┘
+┌─────────────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Store Raw          │────▶│  Extract     │────▶│  Parse      │────▶│  Curate     │────▶│  Store      │
+│  Transcript         │     │  Ideas       │     │  GLM-4      │     │  Ideas      │     │  Ideas      │
+│  (existing)         │     │  (GLM-4)     │     │  Response   │     │  (Gemini)   │     │  (Sheets)   │
+└─────────────────────┘     └──────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
 ---
 
-## Node 1: Extract Ideas (Gemini)
+## Node 1: Extract Ideas (GLM-4 via HTTP Request)
 
 ### Setup
 
-1. Add **Google Gemini Chat Model** node after `Store Raw Transcript`
-2. Name: `Extract Ideas`
-3. Connect credential: Your Gemini API credential
+1. Add **HTTP Request** node after `Store Raw Transcript`
+2. Name: `Extract Ideas (GLM-4)`
 
 ### Configuration
 
-| Setting           | Value              |
-| ----------------- | ------------------ |
-| Model             | `gemini-1.5-flash` |
-| Temperature       | `0.7`              |
-| Max Output Tokens | `4096`             |
+| Setting        | Value                                           |
+| -------------- | ----------------------------------------------- |
+| Method         | POST                                            |
+| URL            | `https://api.z.ai/api/paas/v4/chat/completions` |
+| Authentication | Header Auth                                     |
+| Content-Type   | JSON                                            |
 
-### Prompt
+### Header Auth Credential
 
-Copy the content from `prompts/idea-extraction.md` into the User Message field.
+1. Go to **Settings → Credentials → Add Credential**
+2. Select **Header Auth**
+3. Name: `GLM-4 API`
+4. Name field: `Authorization`
+5. Value field: `Bearer YOUR_GLM4_API_KEY`
 
-**Variable substitution in n8n:**
-Replace the template variables with n8n expressions:
+### Request Body (JSON)
 
-| Template              | n8n Expression                |
-| --------------------- | ----------------------------- |
-| `{{video_title}}`     | `{{ $json.video_title }}`     |
-| `{{niche}}`           | `{{ $json.niche }}`           |
-| `{{target_audience}}` | `{{ $json.target_audience }}` |
-| `{{tone}}`            | `{{ $json.tone }}`            |
-| `{{transcript}}`      | `{{ $json.transcript }}`      |
+```json
+{
+  "model": "glm-4-plus",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a senior content strategist at The Atlantic who deeply understands the AI automation and startup space. Extract high-value, repurposable insights from video transcripts."
+    },
+    {
+      "role": "user",
+      "content": "Video Title: {{ $json.video_title }}\nContent Niche: {{ $json.niche }}\nTarget Audience: {{ $json.target_audience }}\nTone: {{ $json.tone }}\n\nTRANSCRIPT:\n{{ $json.transcript }}\n\nExtract and return ONLY valid JSON with: key_ideas (4-6), quotable_moments (3-5), frameworks (1-3), stories (1-2). Each key_idea needs: title, insight, evidence, platforms array."
+    }
+  ],
+  "temperature": 0.7,
+  "max_tokens": 4096
+}
+```
+
+### Response Handling
+
+The GLM-4 response will be in:
+
+```
+{{ $json.choices[0].message.content }}
+```
+
+### Variable Substitution Reference
+
+| Template                      | n8n Expression                |
+| ----------------------------- | ----------------------------- |
+| `{{ $json.video_title }}`     | Video title from Set Metadata |
+| `{{ $json.niche }}`           | Content niche                 |
+| `{{ $json.target_audience }}` | Target audience               |
+| `{{ $json.tone }}`            | Tone preference               |
+| `{{ $json.transcript }}`      | Full transcript               |
 
 ### Full Prompt (n8n ready)
 

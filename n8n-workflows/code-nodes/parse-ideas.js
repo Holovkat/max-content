@@ -1,16 +1,21 @@
 /**
  * Parse Ideas JSON
  * 
- * This code node parses the Gemini response and extracts the structured ideas.
+ * This code node parses the GLM-4 response and extracts the structured ideas.
  * It handles various response formats and provides fallback for parsing errors.
  * 
- * Input: Gemini response with JSON containing key_ideas, quotable_moments, frameworks, stories
+ * Input: GLM-4 HTTP response with JSON containing key_ideas, quotable_moments, frameworks, stories
  * Output: Structured object with parsed ideas and metadata from earlier nodes
  */
 
-// Get the Gemini response - handle different response structures
-const geminiOutput = $input.all()[0].json;
-const response = geminiOutput.text || geminiOutput.content || geminiOutput.message?.content || '';
+// Get the GLM-4 response - handle OpenAI-compatible format
+const httpOutput = $input.all()[0].json;
+
+// GLM-4 uses OpenAI-compatible format: choices[0].message.content
+const response = httpOutput.choices?.[0]?.message?.content 
+  || httpOutput.text 
+  || httpOutput.content 
+  || '';
 
 // Get metadata from earlier in the workflow (Set Metadata node)
 const metadata = $('Set Metadata').first().json;
