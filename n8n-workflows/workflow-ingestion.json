@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "path": "1814acb3-4d73-4ba2-b711-bd1d6c39d559",
+        "path": "content-repurposing-engine",
         "formTitle": "Content Repurposing Engine",
         "formDescription": "Transform video transcripts into platform-ready social content",
         "formFields": {
@@ -28,30 +28,14 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  {
-                    "option": "AI/Business"
-                  },
-                  {
-                    "option": "Entrepreneurship"
-                  },
-                  {
-                    "option": "Tech/Software"
-                  },
-                  {
-                    "option": "Marketing"
-                  },
-                  {
-                    "option": "Finance"
-                  },
-                  {
-                    "option": "Health/Wellness"
-                  },
-                  {
-                    "option": "Education"
-                  },
-                  {
-                    "option": "Other"
-                  }
+                  { "option": "AI/Business" },
+                  { "option": "Entrepreneurship" },
+                  { "option": "Tech/Software" },
+                  { "option": "Marketing" },
+                  { "option": "Finance" },
+                  { "option": "Health/Wellness" },
+                  { "option": "Education" },
+                  { "option": "Other" }
                 ]
               }
             },
@@ -60,27 +44,13 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  {
-                    "option": "Entrepreneurs"
-                  },
-                  {
-                    "option": "Agency Owners"
-                  },
-                  {
-                    "option": "Developers"
-                  },
-                  {
-                    "option": "Executives"
-                  },
-                  {
-                    "option": "Beginners"
-                  },
-                  {
-                    "option": "Advanced Practitioners"
-                  },
-                  {
-                    "option": "General Audience"
-                  }
+                  { "option": "Entrepreneurs" },
+                  { "option": "Agency Owners" },
+                  { "option": "Developers" },
+                  { "option": "Executives" },
+                  { "option": "Beginners" },
+                  { "option": "Advanced Practitioners" },
+                  { "option": "General Audience" }
                 ]
               }
             },
@@ -89,21 +59,11 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  {
-                    "option": "practical"
-                  },
-                  {
-                    "option": "inspirational"
-                  },
-                  {
-                    "option": "controversial"
-                  },
-                  {
-                    "option": "educational"
-                  },
-                  {
-                    "option": "conversational"
-                  }
+                  { "option": "practical" },
+                  { "option": "inspirational" },
+                  { "option": "controversial" },
+                  { "option": "educational" },
+                  { "option": "conversational" }
                 ]
               }
             },
@@ -122,310 +82,30 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "036a3afc-cb2e-4db8-92b8-7be63d1e5df1",
+      "id": "form-trigger",
       "name": "Form Trigger",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2,
-      "position": [
-        0,
-        0
-      ],
-      "webhookId": "1814acb3-4d73-4ba2-b711-bd1d6c39d559"
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get form input\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    status: '⏳',\n    video_id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,\n    video_title: formData['Video Title'],\n    video_url: formData['Video URL'] || '',\n    transcript: formData['Transcript'],\n    niche: formData['Content Niche'] || 'AI/Business',\n    target_audience: formData['Target Audience'] || 'Entrepreneurs',\n    tone: formData['Tone'] || 'practical',\n    tweet_count: formData['Tweet Count'] || 5,\n    linkedin_count: formData['LinkedIn Count'] || 3,\n    created_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "prepare-data",
+      "name": "Prepare Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "notes": "📋 Formats form input and generates unique video_id"
     },
     {
       "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI",
           "mode": "list",
-          "cachedResultName": "ContentCreator",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Raw_Transcripts",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI/edit#gid=0"
-        },
-        "columns": {
-          "mappingMode": "autoMapInputData",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Video Title",
-              "displayName": "Video Title",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Video URL",
-              "displayName": "Video URL",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Transcript",
-              "displayName": "Transcript",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Content Niche",
-              "displayName": "Content Niche",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Target Audience",
-              "displayName": "Target Audience",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Tone",
-              "displayName": "Tone",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Tweet Count",
-              "displayName": "Tweet Count",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "LinkedIn Count",
-              "displayName": "LinkedIn Count",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "submittedAt",
-              "displayName": "submittedAt",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "formMode",
-              "displayName": "formMode",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "video_id",
-              "displayName": "video_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "video_title",
-              "displayName": "video_title",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "video_url",
-              "displayName": "video_url",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "transcript",
-              "displayName": "transcript",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "niche",
-              "displayName": "niche",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "target_audience",
-              "displayName": "target_audience",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "tone",
-              "displayName": "tone",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "tweet_count",
-              "displayName": "tweet_count",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "linkedin_count",
-              "displayName": "linkedin_count",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "created_at",
-              "displayName": "created_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "wf_idea_extraction",
-              "displayName": "wf_idea_extraction",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "wf_content_generation",
-              "displayName": "wf_content_generation",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "wf_curation",
-              "displayName": "wf_curation",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "8010e24c-442d-46c1-8406-afef20817f8b",
-      "name": "Store Raw Transcript",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
-      "position": [
-        600,
-        0
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "gT63GqZ01vMEYBvV",
-          "name": "Google Sheets account"
-        }
-      },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Raw_Transcripts' sheet"
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $('Prepare Data').first().json;\nconst ideaResult = $('Run Idea Extraction').first().json;\nconst contentResult = $('Run Content Generation').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (ideaResult?.error) errors.push(`Idea Extraction: ${ideaResult.error}`);\nif (contentResult?.error) errors.push(`Content Generation: ${contentResult.error}`);\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst tweets = curationResult?.curated?.curated_tweets?.length || 0;\nconst linkedin = curationResult?.curated?.curated_linkedin?.length || 0;\nconst newsletter = curationResult?.curated?.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
-      },
-      "id": "e2005096-669c-4060-bc66-85c6d1ad9f3c",
-      "name": "Build Response",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1540,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "documentId": {
-          "__rl": true,
-          "value": "1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI",
-          "mode": "list",
-          "cachedResultName": "ContentCreator",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI/edit?usp=drivesdk"
+          "value": ""
         },
         "sheetName": {
           "__rl": true,
@@ -438,22 +118,217 @@
           "matchingColumns": [],
           "schema": []
         },
-        "options": {
-          "cellFormat": "USER_ENTERED"
+        "options": {}
+      },
+      "id": "store-transcript",
+      "name": "Store Raw Transcript",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [440, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
         }
       },
-      "id": "13586be7-ce2e-4c90-9bce-c43299387b2b",
+      "notes": "🔧 CONFIG: Select your Google Sheet and 'Raw_Transcripts' sheet"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "workflow-transcript-chunker"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [660, 0],
+      "id": "run-chunker",
+      "name": "Run Transcript Chunker",
+      "notes": "🔧 CONFIG: Select 'workflow-transcript-chunker'\n\nSplits large transcripts into sentence-boundary chunks.\nSmall transcripts pass through as single chunk."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-error",
+              "leftValue": "={{ $json.chunking_method }}",
+              "rightValue": "error",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-chunker-error",
+      "name": "Chunker Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transcript too large - return error\nconst input = $('Run Transcript Chunker').first().json;\n\nreturn [{\n  json: {\n    status: '❌',\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: false,\n    errors: [input.error],\n    message: `❌ ${input.error}`\n  }\n}];"
+      },
+      "id": "error-response",
+      "name": "Build Error Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, -150],
+      "notes": "❌ Returns error for oversized transcripts"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get chunks from chunker output\nconst chunkerOutput = $('Run Transcript Chunker').first().json;\nconst chunks = chunkerOutput.chunks || [];\n\n// Create one item per chunk with full metadata\nreturn chunks.map(chunk => ({\n  json: {\n    video_id: chunkerOutput.video_id,\n    video_title: chunkerOutput.video_title,\n    video_url: chunkerOutput.video_url,\n    niche: chunkerOutput.niche,\n    target_audience: chunkerOutput.target_audience,\n    tone: chunkerOutput.tone,\n    tweet_count: chunkerOutput.tweet_count,\n    linkedin_count: chunkerOutput.linkedin_count,\n    \n    // Chunk-specific data\n    chunk_index: chunk.chunk_index,\n    chunk_title: chunk.chunk_title,\n    transcript: chunk.content,\n    total_chunks: chunkerOutput.total_chunks\n  }\n}));"
+      },
+      "id": "split-chunks",
+      "name": "Split Into Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 100],
+      "notes": "📋 Converts chunks array into multiple items for looping"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "workflow-idea-extraction"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1320, 100],
+      "id": "run-idea-extraction",
+      "name": "Run Idea Extraction",
+      "notes": "🔧 CONFIG: Select 'workflow-idea-extraction'\n\nRuns for EACH chunk. All chunks processed in parallel."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge ideas from all chunks\nconst allResults = $('Run Idea Extraction').all();\nconst firstInput = $('Split Into Chunks').first().json;\n\n// Combine all GLM ideas\nlet combinedGlmIdeas = {\n  key_ideas: [],\n  quotable_moments: [],\n  frameworks: [],\n  stories: []\n};\n\n// Combine all Kimi ideas\nlet combinedKimiIdeas = {\n  key_ideas: [],\n  quotable_moments: [],\n  frameworks: [],\n  stories: []\n};\n\nfor (const result of allResults) {\n  const json = result.json;\n  \n  // Merge GLM ideas\n  if (json.ideas_glm?.data) {\n    const glm = json.ideas_glm.data;\n    if (glm.key_ideas) combinedGlmIdeas.key_ideas.push(...glm.key_ideas);\n    if (glm.quotable_moments) combinedGlmIdeas.quotable_moments.push(...glm.quotable_moments);\n    if (glm.frameworks) combinedGlmIdeas.frameworks.push(...glm.frameworks);\n    if (glm.stories) combinedGlmIdeas.stories.push(...glm.stories);\n  }\n  \n  // Merge Kimi ideas\n  if (json.ideas_kimi?.data) {\n    const kimi = json.ideas_kimi.data;\n    if (kimi.key_ideas) combinedKimiIdeas.key_ideas.push(...kimi.key_ideas);\n    if (kimi.quotable_moments) combinedKimiIdeas.quotable_moments.push(...kimi.quotable_moments);\n    if (kimi.frameworks) combinedKimiIdeas.frameworks.push(...kimi.frameworks);\n    if (kimi.stories) combinedKimiIdeas.stories.push(...kimi.stories);\n  }\n}\n\nreturn [{\n  json: {\n    video_id: firstInput.video_id,\n    video_title: firstInput.video_title,\n    video_url: firstInput.video_url,\n    niche: firstInput.niche,\n    target_audience: firstInput.target_audience,\n    tone: firstInput.tone,\n    tweet_count: firstInput.tweet_count,\n    linkedin_count: firstInput.linkedin_count,\n    \n    ideas_glm: {\n      source: 'groq/compound',\n      data: combinedGlmIdeas,\n      error: null\n    },\n    ideas_kimi: {\n      source: 'Kimi-K2',\n      data: combinedKimiIdeas,\n      error: null\n    },\n    \n    chunks_processed: allResults.length,\n    merged_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "merge-chunk-results",
+      "name": "Merge Chunk Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 100],
+      "notes": "📋 Combines ideas from all chunk extractions\n\nMerges: key_ideas, quotable_moments, frameworks, stories"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "workflow-content-generation"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1760, 100],
+      "id": "run-content-generation",
+      "name": "Run Content Generation",
+      "notes": "🔧 CONFIG: Select 'workflow-content-generation'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "workflow-curation"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1980, 100],
+      "id": "run-curation",
+      "name": "Run Curation",
+      "notes": "🔧 CONFIG: Select 'workflow-curation'"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Merge Chunk Results').first().json;\nconst curationResult = $('Run Curation').first().json;\n\n// Check for errors\nconst errors = [];\nif (curationResult?.error) errors.push(`Curation: ${curationResult.error}`);\n\nconst hasErrors = errors.length > 0;\nconst status = hasErrors ? '❌' : '✅';\n\n// Count generated content\nconst curated = curationResult?.curated || {};\nconst tweets = curated.curated_tweets?.length || 0;\nconst linkedin = curated.curated_linkedin?.length || 0;\nconst newsletter = curated.curated_newsletter ? 1 : 0;\n\nreturn [{\n  json: {\n    status: status,\n    video_id: input.video_id,\n    video_title: input.video_title,\n    success: !hasErrors,\n    errors: errors,\n    chunks_processed: input.chunks_processed,\n    generated: {\n      tweets: tweets,\n      linkedin: linkedin,\n      newsletter: newsletter\n    },\n    message: hasErrors \n      ? `❌ Processing completed with errors:\\n${errors.join('\\n')}`\n      : `✅ Content generated successfully!\\n\\n📊 Created:\\n• ${tweets} Tweets\\n• ${linkedin} LinkedIn posts\\n• ${newsletter} Newsletter section\\n\\n🔢 Chunks processed: ${input.chunks_processed}\\n\\nCheck your Google Sheet for the curated content.`\n  }\n}];"
+      },
+      "id": "build-response",
+      "name": "Build Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 100]
+    },
+    {
+      "parameters": {},
+      "id": "merge-responses",
+      "name": "Merge Responses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2420, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Raw_Transcripts"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}"
+          }
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "video_id",
+              "lookupValue": "={{ $json.video_id }}"
+            }
+          ]
+        }
+      },
+      "id": "update-status",
       "name": "Update Status",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [
-        1760,
-        0
-      ],
+      "position": [2640, 0],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "gT63GqZ01vMEYBvV",
-          "name": "Google Sheets account"
+          "id": "",
+          "name": ""
         }
       }
     },
@@ -463,223 +338,105 @@
         "responseBody": "={{ $json.message }}",
         "options": {}
       },
-      "id": "7ddef410-5c6e-4b14-8484-40472f744cbe",
+      "id": "respond-form",
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [
-        1980,
-        0
-      ]
+      "position": [2860, 0]
     },
     {
       "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "0MUZHto1l05ctN9J",
-          "mode": "list",
-          "cachedResultName": "workflow-idea-extraction"
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.1,
-      "position": [
-        840,
-        0
-      ],
-      "id": "67c4d7ec-940a-414d-a81f-75663108b072",
-      "name": "Run Idea Extraction"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "MdmOYAQB4JXFGhUz",
-          "mode": "list",
-          "cachedResultName": "workflow-content-generation"
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.1,
-      "position": [
-        1080,
-        0
-      ],
-      "id": "e4540b00-573f-4663-ae92-0772e3d2a0c4",
-      "name": "Run Content Generation"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "xTR34CLSKg8rGdoX",
-          "mode": "list",
-          "cachedResultName": "workflow-curation"
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.1,
-      "position": [
-        1320,
-        0
-      ],
-      "id": "f6785bb5-6197-4574-8bfc-6d048d1baafe",
-      "name": "Run Curation"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Get form input\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    // Original form data\n    status: '⏳',\n    video_id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,\n    video_title: formData['Video Title'],\n    video_url: formData['Video URL'] || '',\n    transcript: formData['Transcript'],\n    niche: formData['Content Niche'] || 'AI/Business',\n    target_audience: formData['Target Audience'] || 'Entrepreneurs',\n    tone: formData['Tone'] || 'practical',\n    tweet_count: formData['Tweet Count'] || 5,\n    linkedin_count: formData['LinkedIn Count'] || 3,\n    created_at: new Date().toISOString(),\n  }\n}];"
-      },
-      "id": "e634c59d-4851-4bfd-8b9b-6d40e9323b09",
-      "name": "Prepare Data",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        340,
-        0
-      ],
-      "notes": "📋 AUTO-CONFIGURED:\n\nLooks for workflows named:\n- workflow-idea-extraction\n- workflow-content-generation\n- workflow-curation"
-    },
-    {
-      "parameters": {
-        "content": "## Data Cleanse\n\n\nFormat the data  for the require output",
-        "height": 440,
+        "content": "## Preprocessing\n\nForm → Prepare Data → Store → Chunker",
+        "height": 300,
+        "width": 800,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        280,
-        -200
-      ],
+      "position": [-60, -200],
       "typeVersion": 1,
-      "id": "df9acd43-70b9-4235-822c-7e5ec4c481db",
-      "name": "Sticky Note"
+      "id": "note-preprocessing",
+      "name": "Note: Preprocessing"
     },
     {
       "parameters": {
-        "content": "## AI Agents \n\n**1** Determines the key point an ideas ; two agents are tasked with  identifying the topic contents, key points and outcomes based on the input\n**2** Determines the  content to generate; two agents are tasked with generating content based on the input \n**3** Finally another agent is tasked with determining the the best of all of the content produced and generates the output for the appropriate platforms",
-        "height": 440,
-        "width": 720,
+        "content": "## Chunk Processing\n\nSplit chunks → Extract ideas (parallel per chunk) → Merge results",
+        "height": 300,
+        "width": 600,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1040, -200],
+      "typeVersion": 1,
+      "id": "note-chunking",
+      "name": "Note: Chunking"
+    },
+    {
+      "parameters": {
+        "content": "## Content Generation\n\nGenerate tweets, LinkedIn, newsletter → Curate best content",
+        "height": 300,
+        "width": 500,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        760,
-        -200
-      ],
+      "position": [1700, -200],
       "typeVersion": 1,
-      "id": "e9f173d2-0ad4-4414-93c3-e29a57fa7411",
-      "name": "Sticky Note1"
+      "id": "note-generation",
+      "name": "Note: Generation"
     }
   ],
-  "pinData": {},
   "connections": {
     "Form Trigger": {
-      "main": [
-        [
-          {
-            "node": "Prepare Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Store Raw Transcript": {
-      "main": [
-        [
-          {
-            "node": "Run Idea Extraction",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Response": {
-      "main": [
-        [
-          {
-            "node": "Update Status",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Status": {
-      "main": [
-        [
-          {
-            "node": "Respond to Form",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Run Idea Extraction": {
-      "main": [
-        [
-          {
-            "node": "Run Content Generation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Run Content Generation": {
-      "main": [
-        [
-          {
-            "node": "Run Curation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Run Curation": {
-      "main": [
-        [
-          {
-            "node": "Build Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Prepare Data", "type": "main", "index": 0 }]]
     },
     "Prepare Data": {
+      "main": [[{ "node": "Store Raw Transcript", "type": "main", "index": 0 }]]
+    },
+    "Store Raw Transcript": {
+      "main": [[{ "node": "Run Transcript Chunker", "type": "main", "index": 0 }]]
+    },
+    "Run Transcript Chunker": {
+      "main": [[{ "node": "Chunker Error?", "type": "main", "index": 0 }]]
+    },
+    "Chunker Error?": {
       "main": [
-        [
-          {
-            "node": "Store Raw Transcript",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Build Error Response", "type": "main", "index": 0 }],
+        [{ "node": "Split Into Chunks", "type": "main", "index": 0 }]
       ]
+    },
+    "Build Error Response": {
+      "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
+    },
+    "Split Into Chunks": {
+      "main": [[{ "node": "Run Idea Extraction", "type": "main", "index": 0 }]]
+    },
+    "Run Idea Extraction": {
+      "main": [[{ "node": "Merge Chunk Results", "type": "main", "index": 0 }]]
+    },
+    "Merge Chunk Results": {
+      "main": [[{ "node": "Run Content Generation", "type": "main", "index": 0 }]]
+    },
+    "Run Content Generation": {
+      "main": [[{ "node": "Run Curation", "type": "main", "index": 0 }]]
+    },
+    "Run Curation": {
+      "main": [[{ "node": "Build Success Response", "type": "main", "index": 0 }]]
+    },
+    "Build Success Response": {
+      "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
+    },
+    "Merge Responses": {
+      "main": [[{ "node": "Update Status", "type": "main", "index": 0 }]]
+    },
+    "Update Status": {
+      "main": [[{ "node": "Respond to Form", "type": "main", "index": 0 }]]
     }
   },
-  "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": ""
   },
-  "versionId": "3468921d-2622-4640-a7ff-55de97a0c105",
-  "meta": {
-    "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
-  },
-  "id": "jHMlRu9wdVGWkonG",
-  "tags": []
+  "staticData": null,
+  "tags": ["main"],
+  "triggerCount": 1,
+  "versionId": "7"
 }
