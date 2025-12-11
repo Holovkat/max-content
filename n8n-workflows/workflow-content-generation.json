@@ -3,59 +3,21 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "workflow-trigger",
+      "id": "3f5de2e7-3032-4ad0-a79c-4b051f33780c",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [0, 0],
-      "notes": "📥 TRIGGER: Called by Idea Extraction workflow.\n\nExpected input:\n- All original metadata (video_id, video_title, etc.)\n- ideas_glm: Ideas from GLM-4.6\n- ideas_kimi: Ideas from Kimi-K2"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.z.ai/api/coding/paas/v4/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Accept-Language",
-              "value": "en-US,en"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "glm-tweets",
-      "name": "Tweets (GLM-4.6)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [220, -200],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "GLM-4 API"
-        }
-      },
-      "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIG: Uses GLM-4 API credential\nEndpoint: Z.AI Coding Plan\nGenerates tweet content"
+      "position": [
+        -752,
+        -864
+      ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://api.groq.com/openai/v1/chat/completions",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -67,260 +29,448 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}",
         "options": {
           "timeout": 60000
         }
       },
-      "id": "kimi-tweets",
-      "name": "Tweets (Kimi-K2)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [220, -100],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "Groq API"
-        }
-      },
-      "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIG: Uses Groq API credential\nModel: Kimi-K2\nGenerates tweet content"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.z.ai/api/coding/paas/v4/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Accept-Language",
-              "value": "en-US,en"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a LinkedIn content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "glm-linkedin",
-      "name": "LinkedIn (GLM-4.6)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [220, 0],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "GLM-4 API"
-        }
-      },
-      "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIG: Uses GLM-4 API credential\nGenerates LinkedIn posts"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a LinkedIn content creator. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "kimi-linkedin",
-      "name": "LinkedIn (Kimi-K2)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [220, 100],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "Groq API"
-        }
-      },
-      "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIG: Uses Groq API credential\nGenerates LinkedIn posts"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.z.ai/api/coding/paas/v4/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Accept-Language",
-              "value": "en-US,en"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"glm-4.6\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a newsletter section for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"email subject\\\", \\\"preview\\\": \\\"preview text\\\", \\\"body\\\": \\\"full content\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "glm-newsletter",
-      "name": "Newsletter (GLM-4.6)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [220, 200],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "GLM-4 API"
-        }
-      },
-      "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIG: Uses GLM-4 API credential\nGenerates newsletter content"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a newsletter writer. Respond in the same language as the input content. If language cannot be determined, default to English. Return ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a newsletter section for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"email subject\\\", \\\"preview\\\": \\\"preview text\\\", \\\"body\\\": \\\"full content\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "kimi-newsletter",
+      "id": "d3e217cb-086f-4e39-b114-a7c895397f38",
       "name": "Newsletter (Kimi-K2)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [220, 300],
+      "position": [
+        304,
+        -640
+      ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "",
-          "name": "Groq API"
+          "id": "OB8r5gQSbBl9hPQO",
+          "name": "ZAI"
+        },
+        "httpMultipleHeadersAuth": {
+          "id": "oHRT3SMPrRWc7k2i",
+          "name": "GROQ MHA"
         }
       },
-      "onError": "continueErrorOutput",
-      "notes": "🔧 CONFIG: Uses Groq API credential\nGenerates newsletter content"
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Get input metadata\nconst input = $('Execute Workflow Trigger').first().json;\n\n// Parse function\nfunction parseContent(nodeName, key) {\n  try {\n    const output = $(nodeName).first().json;\n    const content = output.choices?.[0]?.message?.content || '';\n    const cleaned = content.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n    const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n    if (match) {\n      return JSON.parse(match[0]);\n    }\n    return { error: 'No JSON found' };\n  } catch (e) {\n    return { error: e.message };\n  }\n}\n\nreturn [{\n  json: {\n    video_id: input.video_id,\n    video_title: input.video_title,\n    \n    // Parsed content from both models\n    tweets_glm: parseContent('Tweets (GLM-4.6)', 'tweets'),\n    tweets_kimi: parseContent('Tweets (Kimi-K2)', 'tweets'),\n    linkedin_glm: parseContent('LinkedIn (GLM-4.6)', 'posts'),\n    linkedin_kimi: parseContent('LinkedIn (Kimi-K2)', 'posts'),\n    newsletter_glm: parseContent('Newsletter (GLM-4.6)', 'newsletter'),\n    newsletter_kimi: parseContent('Newsletter (Kimi-K2)', 'newsletter'),\n    \n    generated_at: new Date().toISOString()\n  }\n}];"
+        "jsCode": "// Parse all outputs\nconst input = $('Execute Workflow Trigger').first().json;\n\nfunction parseContent(node, type) {\n  try {\n    const output = $(node).first().json;\n    const content = output.choices?.[0]?.message?.content || '';\n    const cleaned = content.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n    const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n    if (match) {\n      return JSON.parse(match[0]);\n    }\n  } catch (e) {\n    console.log(`Parse error for ${node}: ${e.message}`);\n  }\n  return null;\n}\n\nconst allContent = {\n  video_id: input.video_id,\n  video_title: input.video_title,\n  \n  tweets_glm: parseContent('Tweets (GLM-4.6)', 'tweets'),\n  tweets_kimi: parseContent('Tweets (Kimi-K2)', 'tweets'),\n  \n  linkedin_glm: parseContent('LinkedIn (GLM-4.6)', 'linkedin'),\n  linkedin_kimi: parseContent('LinkedIn (Kimi-K2)', 'linkedin'),\n  \n  newsletter_glm: parseContent('Newsletter (GLM-4.6)', 'newsletter'),\n  newsletter_kimi: parseContent('Newsletter (Kimi-K2)', 'newsletter'),\n  \n  generated_at: new Date().toISOString()\n};\n\nreturn [{ json: allContent }];"
       },
-      "id": "merge-content",
+      "id": "25c76657-e0e6-48d3-be48-3d7c3236bb1b",
       "name": "Merge All Content",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 50],
-      "notes": "📋 AUTO-CONFIGURED:\n\nMerges content from all 6 parallel API calls.\nParses JSON from each response."
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "mode": "list",
-          "value": ""
-        },
-        "sheetName": {
-          "__rl": true,
-          "mode": "list",
-          "value": "Generated_Content"
-        },
-        "columns": {
-          "mappingMode": "autoMapInputData",
-          "value": {},
-          "matchingColumns": [],
-          "schema": []
-        },
-        "options": {}
-      },
-      "id": "store-content",
-      "name": "Store Generated Content",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
-      "position": [660, 50],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "",
-          "name": ""
-        }
-      },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Generated_Content' sheet\n\nAuto-maps all input fields to columns."
+      "position": [
+        416,
+        384
+      ]
     },
     {
       "parameters": {},
-      "id": "return-output",
+      "id": "7f116580-dfd0-410a-a847-068d598d8390",
       "name": "Return Output",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [880, 50],
-      "notes": "📤 OUTPUT:\n\nReturns all generated content to the curation workflow."
+      "position": [
+        672,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Twitter Node\n\nTwo agents fight it out over the best content to create\n\n\nGrog Compound (multi LLM's)\nGroq Kimi K2",
+        "height": 496,
+        "width": 480,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -832,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "f88d42af-3139-4f1a-bc46-7b84d52b3c9d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 16384\n}\n",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "c0094848-4047-431a-8bef-faf49253ea7d",
+      "name": "Extract Ideas (Kimi-K2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -640,
+        352
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jEcOP8oHkbMNE2oG",
+          "name": "GROQ"
+        },
+        "httpMultipleHeadersAuth": {
+          "id": "oHRT3SMPrRWc7k2i",
+          "name": "GROQ MHA"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Groq API'\n2. Header Name: Authorization\n3. Header Value: Bearer YOUR_GROQ_API_KEY\n\nGet key from: console.groq.com\nModel: Moonshot Kimi-K2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"moonshotai/kimi-k2-instruct-0905\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a4f24ef0-9a8c-483e-8b25-64a1a1586f5c",
+      "name": "LinkedIn (Kimi-K2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        304,
+        32
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OB8r5gQSbBl9hPQO",
+          "name": "ZAI"
+        },
+        "httpMultipleHeadersAuth": {
+          "id": "oHRT3SMPrRWc7k2i",
+          "name": "GROQ MHA"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"groq/compound\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.linkedin_count }} LinkedIn posts for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: 1200-1800 chars, use white space, hook+value+question structure.\\n\\nReturn ONLY JSON: { \\\"posts\\\": [{ \\\"hook\\\": \\\"first lines\\\", \\\"body\\\": \\\"full post\\\", \\\"question\\\": \\\"closing question\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 8192,\n  \"compound_custom\": {\n    \"tools\": {\n      \"enabled_tools\": [\n        \"web_search\",\n        \"code_interpreter\",\n        \"visit_website\"\n      ]\n    }\n  }\n}\n\n",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "648465b0-bd90-42f3-b895-ea6e88eb7ae7",
+      "name": "LinkedIn (groq/compound)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        304,
+        -192
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jEcOP8oHkbMNE2oG",
+          "name": "GROQ"
+        },
+        "httpMultipleHeadersAuth": {
+          "id": "oHRT3SMPrRWc7k2i",
+          "name": "GROQ MHA"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Groq API'\n2. Header Name: Authorization\n3. Header Value: Bearer YOUR_GROQ_API_KEY\n\nGet key from: console.groq.com\nModel: Moonshot Kimi-K2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"groq/compound\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create {{ $json.tweet_count }} tweets for {{ $json.target_audience }} about {{ $json.niche }}.\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nRules: Under 280 chars, no hashtags, no emojis at start, specific not generic.\\n\\nReturn ONLY JSON: { \\\"tweets\\\": [{ \\\"content\\\": \\\"tweet text\\\", \\\"type\\\": \\\"contrarian|framework|story|tactical|numbers\\\" }] }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 8192,\n  \"compound_custom\": {\n    \"tools\": {\n      \"enabled_tools\": [\n        \"web_search\",\n        \"code_interpreter\",\n        \"visit_website\"\n      ]\n    }\n  }\n}\n\n",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a23d24e9-26b4-4333-9b06-2f19dfab53ca",
+      "name": "Tweets (groq/compound)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -640,
+        176
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jEcOP8oHkbMNE2oG",
+          "name": "GROQ"
+        },
+        "httpMultipleHeadersAuth": {
+          "id": "oHRT3SMPrRWc7k2i",
+          "name": "GROQ MHA"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Groq API'\n2. Header Name: Authorization\n3. Header Value: Bearer YOUR_GROQ_API_KEY\n\nGet key from: console.groq.com\nModel: Moonshot Kimi-K2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create 1 newsletter section for {{ $json.target_audience }} about: {{ $json.video_title }}\\n\\nIDEAS: {{ JSON.stringify($json.ideas_glm.data || $json.ideas_kimi.data) }}\\n\\nInclude: subject line (max 50 chars), opening hook, key insight, 3-5 takeaways, soft CTA.\\n\\nReturn ONLY JSON: { \\\"newsletter\\\": { \\\"subject\\\": \\\"\\\", \\\"opening\\\": \\\"\\\", \\\"insight\\\": \\\"\\\", \\\"takeaways\\\": [], \\\"cta\\\": \\\"\\\" } }\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 8192,\n  \"compound_custom\": {\n    \"tools\": {\n      \"enabled_tools\": [\n        \"web_search\",\n        \"code_interpreter\",\n        \"visit_website\"\n      ]\n    }\n  }\n}\n\n",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "9d0eeb98-8c79-4a70-a9e5-6635655198c9",
+      "name": "Newsletter (groq/compound)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        304,
+        -864
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jEcOP8oHkbMNE2oG",
+          "name": "GROQ"
+        },
+        "httpMultipleHeadersAuth": {
+          "id": "oHRT3SMPrRWc7k2i",
+          "name": "GROQ MHA"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Groq API'\n2. Header Name: Authorization\n3. Header Value: Bearer YOUR_GROQ_API_KEY\n\nGet key from: console.groq.com\nModel: Moonshot Kimi-K2"
+    },
+    {
+      "parameters": {
+        "content": "## LinkedIn Node\n\nTwo agents fight it out over the best content to create\n\n\nGrog Compound (multi LLM's)\nGroq Kimi K2",
+        "height": 560,
+        "width": 480,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        112,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "f2d6cf77-ae14-4218-a62e-ee85a150ec88",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Newsletter Node\n\nTwo agents fight it out over the best content to create\n\n\nGrog Compound (multi LLM's)\nGroq Kimi K2",
+        "height": 560,
+        "width": 480,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        128,
+        -1008
+      ],
+      "typeVersion": 1,
+      "id": "4d45b4b6-c20b-41de-9085-017d3d8ea634",
+      "name": "Sticky Note4"
     }
   ],
+  "pinData": {},
   "connections": {
     "Execute Workflow Trigger": {
       "main": [
         [
-          {"node": "Tweets (GLM-4.6)", "type": "main", "index": 0},
-          {"node": "Tweets (Kimi-K2)", "type": "main", "index": 0},
-          {"node": "LinkedIn (GLM-4.6)", "type": "main", "index": 0},
-          {"node": "LinkedIn (Kimi-K2)", "type": "main", "index": 0},
-          {"node": "Newsletter (GLM-4.6)", "type": "main", "index": 0},
-          {"node": "Newsletter (Kimi-K2)", "type": "main", "index": 0}
+          {
+            "node": "Newsletter (Kimi-K2)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Ideas (Kimi-K2)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LinkedIn (Kimi-K2)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LinkedIn (groq/compound)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tweets (groq/compound)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge All Content",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Newsletter (groq/compound)",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
-    "Tweets (GLM-4.6)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
-    "Tweets (Kimi-K2)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
-    "LinkedIn (GLM-4.6)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
-    "LinkedIn (Kimi-K2)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
-    "Newsletter (GLM-4.6)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
-    "Newsletter (Kimi-K2)": {"main": [[{"node": "Merge All Content", "type": "main", "index": 0}]]},
-    "Merge All Content": {"main": [[{"node": "Store Generated Content", "type": "main", "index": 0}]]},
-    "Store Generated Content": {"main": [[{"node": "Return Output", "type": "main", "index": 0}]]}
+    "Newsletter (Kimi-K2)": {
+      "main": [
+        [
+          {
+            "node": "Merge All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Content": {
+      "main": [
+        [
+          {
+            "node": "Return Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Ideas (Kimi-K2)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Merge All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn (Kimi-K2)": {
+      "main": [
+        [
+          {
+            "node": "Merge All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn (groq/compound)": {
+      "main": [
+        [
+          {
+            "node": "Merge All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tweets (groq/compound)": {
+      "main": [
+        [
+          {
+            "node": "Merge All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter (groq/compound)": {
+      "main": [
+        [
+          {
+            "node": "Merge All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
+  "active": false,
   "settings": {
-    "executionOrder": "v1",
-    "errorWorkflow": ""
+    "executionOrder": "v1"
   },
-  "staticData": null,
-  "tags": ["content-generation"],
-  "triggerCount": 0,
-  "versionId": "2"
+  "versionId": "174e2d0f-6985-40fd-ba64-0d9f5abe990e",
+  "meta": {
+    "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
+  },
+  "id": "MdmOYAQB4JXFGhUz",
+  "tags": []
 }

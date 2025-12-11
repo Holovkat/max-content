@@ -1,0 +1,291 @@
+{
+  "name": "workflow-transcript-chunker",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "workflow-trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "notes": "📥 TRIGGER: Called by Ingestion workflow.\n\nExpected input:\n- transcript: The raw transcript text\n- video_id, video_title, etc.\n\nReturns:\n- chunks: Array of transcript chunks\n- needs_chunking: Boolean"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input\nconst input = $('Execute Workflow Trigger').first().json;\nconst transcript = input.transcript || '';\nconst charCount = transcript.length;\n\n// Thresholds\nconst SMALL_THRESHOLD = 25000;    // Under 25K: no chunking needed\nconst MAX_THRESHOLD = 500000;     // Over 500K: reject as too large\nconst TARGET_CHUNK_SIZE = 8000;   // Target size for Groq Compound\n\nlet decision;\nlet error = null;\n\nif (charCount < SMALL_THRESHOLD) {\n  decision = 'passthrough';\n} else if (charCount > MAX_THRESHOLD) {\n  decision = 'too_large';\n  error = `Transcript too large (${Math.round(charCount/1000)}K chars). Maximum is 500K chars (~125 pages). Please split your content into smaller videos.`;\n} else {\n  decision = 'needs_chunking';\n}\n\nreturn [{\n  json: {\n    ...input,\n    _chunking: {\n      decision: decision,\n      char_count: charCount,\n      estimated_chunks: Math.ceil(charCount / TARGET_CHUNK_SIZE),\n      error: error\n    }\n  }\n}];"
+      },
+      "id": "check-size",
+      "name": "Check Transcript Size",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "notes": "📋 Size Thresholds:\n\n< 25K chars → Pass through\n25K - 500K chars → Chunk with Gemini\n> 500K chars → Error (too large)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "passthrough",
+              "leftValue": "={{ $json._chunking.decision }}",
+              "rightValue": "passthrough",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "router-passthrough",
+      "name": "Is Small?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "too-large",
+              "leftValue": "={{ $json._chunking.decision }}",
+              "rightValue": "too_large",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "router-error",
+      "name": "Is Too Large?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Small transcript - no chunking needed\nconst input = $('Check Transcript Size').first().json;\n\nreturn [{\n  json: {\n    ...input,\n    chunks: [{\n      chunk_index: 0,\n      chunk_title: 'Full Transcript',\n      content: input.transcript\n    }],\n    total_chunks: 1,\n    chunking_method: 'passthrough'\n  }\n}];"
+      },
+      "id": "passthrough",
+      "name": "Return As-Is",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -100],
+      "notes": "📤 Small transcript - returns as single chunk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Return error for oversized transcript\nconst input = $('Check Transcript Size').first().json;\n\nreturn [{\n  json: {\n    ...input,\n    chunks: [],\n    total_chunks: 0,\n    chunking_method: 'error',\n    error: input._chunking.error\n  }\n}];"
+      },
+      "id": "error-output",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 200],
+      "notes": "❌ Transcript too large - returns error message"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a transcript splitter. Your ONLY job is to divide this transcript into smaller chunks for processing.\\n\\nRULES:\\n1. Split into chunks of approximately 7000-8000 characters each\\n2. ALWAYS split at sentence boundaries (after period, question mark, or exclamation)\\n3. NEVER split mid-sentence or mid-word\\n4. NEVER modify, summarize, or change ANY text - preserve EXACTLY\\n5. Include timestamps if present\\n6. Aim for {{ $json._chunking.estimated_chunks }} chunks\\n\\nTRANSCRIPT TO SPLIT:\\n{{ $json.transcript }}\\n\\nReturn ONLY this JSON structure (no other text):\\n{\\n  \\\"chunks\\\": [\\n    {\\n      \\\"chunk_index\\\": 0,\\n      \\\"chunk_title\\\": \\\"Brief descriptive title (max 50 chars)\\\",\\n      \\\"content\\\": \\\"EXACT original text for this chunk...\\\"\\n    }\\n  ],\\n  \\\"total_chunks\\\": N\\n}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"maxOutputTokens\": 65536\n  }\n}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "gemini-chunker",
+      "name": "Gemini: Split by Sentences",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [880, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Gemini API"
+        }
+      },
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Gemini API'\n2. Header Name: x-goog-api-key\n3. Header Value: YOUR_GEMINI_API_KEY\n\nGemini splits transcript at sentence boundaries.\nPreserves EXACT original text."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Gemini's chunking response\nconst geminiOutput = $('Gemini: Split by Sentences').first().json;\nconst input = $('Check Transcript Size').first().json;\n\nlet chunks = [];\nlet error = null;\n\ntry {\n  // Extract text from Gemini response\n  const responseText = geminiOutput.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  \n  // Clean and parse JSON\n  const cleaned = responseText.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n  const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n  \n  if (match) {\n    const parsed = JSON.parse(match[0]);\n    chunks = parsed.chunks || [];\n    \n    // Validate chunks aren't empty\n    chunks = chunks.filter(c => c.content && c.content.length > 0);\n    \n    if (chunks.length === 0) {\n      throw new Error('Gemini returned no valid chunks');\n    }\n  } else {\n    throw new Error('No JSON found in Gemini response');\n  }\n} catch (e) {\n  error = `Chunking failed: ${e.message}`;\n  \n  // Fallback: simple sentence-based splitting\n  const transcript = input.transcript;\n  const TARGET_SIZE = 7500;\n  const sentences = transcript.split(/(?<=[.!?])\\s+/);\n  \n  let currentChunk = '';\n  let chunkIndex = 0;\n  \n  for (const sentence of sentences) {\n    if (currentChunk.length + sentence.length > TARGET_SIZE && currentChunk.length > 0) {\n      chunks.push({\n        chunk_index: chunkIndex,\n        chunk_title: `Section ${chunkIndex + 1}`,\n        content: currentChunk.trim()\n      });\n      chunkIndex++;\n      currentChunk = sentence;\n    } else {\n      currentChunk += ' ' + sentence;\n    }\n  }\n  \n  // Don't forget the last chunk\n  if (currentChunk.trim().length > 0) {\n    chunks.push({\n      chunk_index: chunkIndex,\n      chunk_title: `Section ${chunkIndex + 1}`,\n      content: currentChunk.trim()\n    });\n  }\n  \n  error = null; // Fallback worked\n}\n\nreturn [{\n  json: {\n    video_id: input.video_id,\n    video_title: input.video_title,\n    video_url: input.video_url,\n    niche: input.niche,\n    target_audience: input.target_audience,\n    tone: input.tone,\n    tweet_count: input.tweet_count,\n    linkedin_count: input.linkedin_count,\n    \n    chunks: chunks,\n    total_chunks: chunks.length,\n    chunking_method: 'gemini_sentence_split',\n    original_char_count: input._chunking.char_count,\n    error: error\n  }\n}];"
+      },
+      "id": "parse-chunks",
+      "name": "Parse & Validate Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0],
+      "notes": "📋 Parses Gemini response.\n\nIncludes FALLBACK: If Gemini fails,\nuses simple sentence-boundary splitting."
+    },
+    {
+      "parameters": {},
+      "id": "merge-outputs",
+      "name": "Merge Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {},
+      "id": "return-output",
+      "name": "Return Chunks",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1540, 0],
+      "notes": "📤 OUTPUT:\n\nReturns:\n- chunks: Array of { chunk_index, chunk_title, content }\n- total_chunks: Number of chunks\n- chunking_method: 'passthrough' | 'gemini_sentence_split' | 'error'\n- error: Error message if any"
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Transcript Size",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Transcript Size": {
+      "main": [
+        [
+          {
+            "node": "Is Small?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Small?": {
+      "main": [
+        [
+          {
+            "node": "Return As-Is",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Too Large?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Too Large?": {
+      "main": [
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gemini: Split by Sentences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return As-Is": {
+      "main": [
+        [
+          {
+            "node": "Merge Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Error": {
+      "main": [
+        [
+          {
+            "node": "Merge Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Split by Sentences": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Chunks": {
+      "main": [
+        [
+          {
+            "node": "Merge Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Outputs": {
+      "main": [
+        [
+          {
+            "node": "Return Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["preprocessing"],
+  "triggerCount": 0,
+  "versionId": "1"
+}
