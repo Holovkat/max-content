@@ -13,6 +13,16 @@
               "fieldType": "textarea",
               "placeholder": "Paste your video transcript here...",
               "requiredField": true
+            },
+            {
+              "fieldLabel": "Post to X?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "No - Just generate content" },
+                  { "option": "Yes - Post first tweet to X" }
+                ]
+              }
             }
           ]
         },
@@ -24,26 +34,26 @@
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2,
       "position": [0, 0],
-      "notes": "📥 Simple form with just transcript input"
+      "notes": "📥 Form with transcript and optional X posting"
     },
     {
       "parameters": {
-        "jsCode": "// Generate a unique session ID for memory\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    ...formData,\n    sessionId: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`\n  }\n}];"
+        "jsCode": "// Generate a unique session ID and prepare data\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    ...formData,\n    sessionId: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,\n    postToX: formData['Post to X?'] === 'Yes - Post first tweet to X'\n  }\n}];"
       },
       "id": "prepare-session",
       "name": "Prepare Session",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [220, 0],
-      "notes": "📋 Generates unique sessionId for memory buffer"
+      "notes": "📋 Generates unique sessionId and checks posting preference"
     },
     {
       "parameters": {
         "agent": "toolsAgent",
-        "text": "=You are a Content Repurposing Agent. Your task is to analyze the following transcript and create social media content.\n\n## TRANSCRIPT:\n{{ $json.Transcript }}\n\n## YOUR TASKS:\n1. First, extract 3-5 key ideas from this transcript\n2. Then, create 3 tweets (under 280 characters each, no hashtags)\n3. Finally, create 1 LinkedIn post (with hook, body, and closing question)\n\n## OUTPUT FORMAT:\nReturn a structured summary with:\n- Key Ideas (as bullet points)\n- 3 Tweets\n- 1 LinkedIn Post\n\nBe specific and actionable. Use the tools available if needed.",
+        "text": "=You are a Content Repurposing Agent. Analyze the transcript and create social media content.\n\n## TRANSCRIPT:\n{{ $json.Transcript }}\n\n## YOUR TASKS:\n1. Extract 3-5 key ideas from this transcript\n2. Create exactly 3 tweets (under 280 chars each, no hashtags, no emojis at start)\n3. Create 1 LinkedIn post (hook + body + closing question)\n\n## OUTPUT FORMAT:\nReturn your response in this EXACT JSON format:\n```json\n{\n  \"key_ideas\": [\"idea 1\", \"idea 2\", \"idea 3\"],\n  \"tweets\": [\n    {\"content\": \"Tweet 1 text here\", \"type\": \"contrarian\"},\n    {\"content\": \"Tweet 2 text here\", \"type\": \"framework\"},\n    {\"content\": \"Tweet 3 text here\", \"type\": \"tactical\"}\n  ],\n  \"linkedin\": {\n    \"hook\": \"Opening hook\",\n    \"body\": \"Main content\",\n    \"question\": \"Closing question?\"\n  }\n}\n```\n\nBe specific and actionable. Return ONLY the JSON, no other text.",
         "hasOutputParser": false,
         "options": {
-          "systemMessage": "You are an expert content strategist who specializes in repurposing video content for social media. You create engaging, authentic content that provides real value. Always be specific - avoid generic advice. Match the tone and style of the original content."
+          "systemMessage": "You are an expert content strategist. Always return valid JSON. Be specific - avoid generic advice. Match the tone of the original content."
         }
       },
       "id": "ai-agent",
@@ -51,7 +61,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [540, 0],
-      "notes": "🤖 AI Agent with Groq Chat Model\n\nUses tools to:\n1. Extract key ideas\n2. Generate tweets\n3. Create LinkedIn post"
+      "notes": "🤖 AI Agent generates structured JSON content"
     },
     {
       "parameters": {
@@ -75,7 +85,7 @@
           "name": "Groq API"
         }
       },
-      "notes": "🔧 CONFIG: Add your Groq API credential\n\nModel: llama-3.3-70b-versatile\nAlternatives: mixtral-8x7b-32768, gemma2-9b-it"
+      "notes": "🔧 CONFIG: Add your Groq API credential"
     },
     {
       "parameters": {
@@ -88,17 +98,104 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [540, 200],
-      "notes": "📝 Window Memory Buffer\n\nUses custom sessionId from Prepare Session node.\nKeeps last 10 interactions in context."
+      "notes": "📝 Memory with custom sessionId"
     },
     {
       "parameters": {
-        "jsCode": "// Format the AI Agent output for response\nconst agentOutput = $('AI Agent').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    output: agentOutput.output || agentOutput.text || JSON.stringify(agentOutput),\n    message: `✅ Content Generated Successfully!\\n\\n${agentOutput.output || agentOutput.text || 'See output above'}`\n  }\n}];"
+        "jsCode": "// Parse AI Agent output and extract tweets\nconst agentOutput = $('AI Agent').first().json;\nconst sessionData = $('Prepare Session').first().json;\n\nlet content = null;\nlet parseError = null;\n\ntry {\n  const output = agentOutput.output || agentOutput.text || '';\n  \n  // Try to extract JSON from the output\n  const jsonMatch = output.match(/```json\\n?([\\s\\S]*?)\\n?```/) || output.match(/\\{[\\s\\S]*\\}/);\n  \n  if (jsonMatch) {\n    const jsonStr = jsonMatch[1] || jsonMatch[0];\n    content = JSON.parse(jsonStr);\n  } else {\n    throw new Error('No JSON found in output');\n  }\n} catch (e) {\n  parseError = e.message;\n  content = {\n    key_ideas: [],\n    tweets: [],\n    linkedin: { hook: '', body: '', question: '' }\n  };\n}\n\nreturn [{\n  json: {\n    sessionId: sessionData.sessionId,\n    postToX: sessionData.postToX,\n    content: content,\n    firstTweet: content?.tweets?.[0]?.content || null,\n    allTweets: content?.tweets || [],\n    parseError: parseError,\n    rawOutput: agentOutput.output || agentOutput.text\n  }\n}];"
       },
-      "id": "format-output",
-      "name": "Format Output",
+      "id": "parse-content",
+      "name": "Parse Content",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [760, 0]
+      "position": [760, 0],
+      "notes": "📋 Extracts tweets from AI output for posting"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "should-post",
+              "leftValue": "={{ $json.postToX }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "has-tweet",
+              "leftValue": "={{ $json.firstTweet }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-post",
+      "name": "Should Post to X?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [980, 0]
+    },
+    {
+      "parameters": {
+        "resource": "tweet",
+        "text": "={{ $json.firstTweet }}"
+      },
+      "id": "post-to-x",
+      "name": "Post to X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [1200, -100],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "",
+          "name": "X OAuth2 API"
+        }
+      },
+      "notes": "🔧 CONFIG: Add your X (Twitter) OAuth2 credential\n\nPosts the first generated tweet."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build success response with X post info\nconst parsed = $('Parse Content').first().json;\nlet xPostResult = null;\n\ntry {\n  xPostResult = $('Post to X').first().json;\n} catch (e) {\n  // No X post\n}\n\nconst tweets = parsed.allTweets.map((t, i) => `${i+1}. ${t.content}`).join('\\n');\nconst linkedin = parsed.content?.linkedin || {};\n\nlet message = '✅ Content Generated Successfully!\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (parsed.content?.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += '\\n\\n🐦 TWEETS:\\n' + (tweets || 'None generated');\nmessage += '\\n\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${linkedin.hook || 'N/A'}\\n`;\nmessage += `Body: ${linkedin.body || 'N/A'}\\n`;\nmessage += `Question: ${linkedin.question || 'N/A'}`;\n\nif (xPostResult) {\n  message += `\\n\\n✅ POSTED TO X:\\nTweet ID: ${xPostResult.id}\\nURL: https://x.com/i/status/${xPostResult.id}`;\n}\n\nif (parsed.parseError) {\n  message += `\\n\\n⚠️ Parse warning: ${parsed.parseError}`;\n}\n\nreturn [{ json: { message: message } }];"
+      },
+      "id": "build-response-posted",
+      "name": "Build Response (Posted)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1420, -100],
+      "notes": "📋 Builds response with X post confirmation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build response without X posting\nconst parsed = $('Parse Content').first().json;\n\nconst tweets = parsed.allTweets.map((t, i) => `${i+1}. ${t.content}`).join('\\n');\nconst linkedin = parsed.content?.linkedin || {};\n\nlet message = '✅ Content Generated Successfully!\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (parsed.content?.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += '\\n\\n🐦 TWEETS:\\n' + (tweets || 'None generated');\nmessage += '\\n\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${linkedin.hook || 'N/A'}\\n`;\nmessage += `Body: ${linkedin.body || 'N/A'}\\n`;\nmessage += `Question: ${linkedin.question || 'N/A'}`;\n\nif (!parsed.postToX) {\n  message += '\\n\\n📌 X posting was not requested.';\n}\n\nif (parsed.parseError) {\n  message += `\\n\\n⚠️ Parse warning: ${parsed.parseError}`;\n}\n\nreturn [{ json: { message: message } }];"
+      },
+      "id": "build-response-no-post",
+      "name": "Build Response (No Post)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 100],
+      "notes": "📋 Builds response without X posting"
+    },
+    {
+      "parameters": {},
+      "id": "merge-responses",
+      "name": "Merge Responses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1640, 0]
     },
     {
       "parameters": {
@@ -110,13 +207,13 @@
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [980, 0]
+      "position": [1860, 0]
     },
     {
       "parameters": {
-        "content": "## POC: AI Agent Content Creator\n\n**Purpose:** Test n8n AI Agent with Groq for content creation\n\n**Flow:**\n1. Form Trigger → receives transcript\n2. Prepare Session → generates sessionId\n3. AI Agent → analyzes and generates content\n4. Format Output → structures response\n5. Respond → returns to user\n\n**Sub-nodes:**\n- Groq Chat Model (LLM brain)\n- Simple Memory (context window with custom sessionId)",
-        "height": 440,
-        "width": 400,
+        "content": "## POC: AI Agent Content Creator + X Posting\n\n**Flow:**\n1. Form Trigger → transcript + posting preference\n2. Prepare Session → generates sessionId\n3. AI Agent → generates structured JSON content\n4. Parse Content → extracts tweets\n5. If posting enabled → Post to X\n6. Build Response → shows results\n\n**Config Needed:**\n- Groq API credential\n- X (Twitter) OAuth2 credential",
+        "height": 400,
+        "width": 420,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -127,16 +224,16 @@
     },
     {
       "parameters": {
-        "content": "## Next Steps (After POC Works)\n\n1. Add X (Twitter) Tool for direct posting\n2. Add LinkedIn Tool for direct posting  \n3. Add Google Sheets Tool for logging\n4. Expand system prompt with Voice DNA\n5. Add quality gate feedback loop",
-        "height": 260,
+        "content": "## X (Twitter) Setup\n\n1. Go to developer.x.com\n2. Create app with Read+Write permissions\n3. Set callback URL from n8n credential\n4. Copy Client ID + Secret to n8n\n5. Test OAuth connection",
+        "height": 240,
         "width": 300,
-        "color": 3
+        "color": 6
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [1040, -200],
+      "position": [1140, -360],
       "typeVersion": 1,
-      "id": "note-next-steps",
-      "name": "Note: Next Steps"
+      "id": "note-x-setup",
+      "name": "Note: X Setup"
     }
   ],
   "connections": {
@@ -147,7 +244,7 @@
       "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
     },
     "AI Agent": {
-      "main": [[{ "node": "Format Output", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Parse Content", "type": "main", "index": 0 }]]
     },
     "Groq Chat Model": {
       "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
@@ -155,7 +252,25 @@
     "Simple Memory": {
       "ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]]
     },
-    "Format Output": {
+    "Parse Content": {
+      "main": [[{ "node": "Should Post to X?", "type": "main", "index": 0 }]]
+    },
+    "Should Post to X?": {
+      "main": [
+        [{ "node": "Post to X", "type": "main", "index": 0 }],
+        [{ "node": "Build Response (No Post)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post to X": {
+      "main": [[{ "node": "Build Response (Posted)", "type": "main", "index": 0 }]]
+    },
+    "Build Response (Posted)": {
+      "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
+    },
+    "Build Response (No Post)": {
+      "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
+    },
+    "Merge Responses": {
       "main": [[{ "node": "Respond to Form", "type": "main", "index": 0 }]]
     }
   },
@@ -164,7 +279,7 @@
     "errorWorkflow": ""
   },
   "staticData": null,
-  "tags": ["poc", "ai-agent"],
+  "tags": ["poc", "ai-agent", "twitter"],
   "triggerCount": 1,
-  "versionId": "2"
+  "versionId": "3"
 }
