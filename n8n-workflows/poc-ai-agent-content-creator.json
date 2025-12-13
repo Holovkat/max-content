@@ -28,6 +28,17 @@
     },
     {
       "parameters": {
+        "jsCode": "// Generate a unique session ID for memory\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    ...formData,\n    sessionId: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`\n  }\n}];"
+      },
+      "id": "prepare-session",
+      "name": "Prepare Session",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "notes": "📋 Generates unique sessionId for memory buffer"
+    },
+    {
+      "parameters": {
         "agent": "toolsAgent",
         "text": "=You are a Content Repurposing Agent. Your task is to analyze the following transcript and create social media content.\n\n## TRANSCRIPT:\n{{ $json.Transcript }}\n\n## YOUR TASKS:\n1. First, extract 3-5 key ideas from this transcript\n2. Then, create 3 tweets (under 280 characters each, no hashtags)\n3. Finally, create 1 LinkedIn post (with hook, body, and closing question)\n\n## OUTPUT FORMAT:\nReturn a structured summary with:\n- Key Ideas (as bullet points)\n- 3 Tweets\n- 1 LinkedIn Post\n\nBe specific and actionable. Use the tools available if needed.",
         "hasOutputParser": false,
@@ -39,7 +50,7 @@
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [440, 0],
+      "position": [540, 0],
       "notes": "🤖 AI Agent with Groq Chat Model\n\nUses tools to:\n1. Extract key ideas\n2. Generate tweets\n3. Create LinkedIn post"
     },
     {
@@ -57,7 +68,7 @@
       "name": "Groq Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [220, 200],
+      "position": [320, 200],
       "credentials": {
         "groqApi": {
           "id": "",
@@ -68,14 +79,16 @@
     },
     {
       "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
         "contextWindowLength": 10
       },
       "id": "simple-memory",
       "name": "Simple Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [440, 200],
-      "notes": "📝 Window Memory Buffer\n\nKeeps last 10 interactions in context.\nUseful for multi-step reasoning."
+      "position": [540, 200],
+      "notes": "📝 Window Memory Buffer\n\nUses custom sessionId from Prepare Session node.\nKeeps last 10 interactions in context."
     },
     {
       "parameters": {
@@ -85,7 +98,7 @@
       "name": "Format Output",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 0]
+      "position": [760, 0]
     },
     {
       "parameters": {
@@ -97,17 +110,17 @@
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [880, 0]
+      "position": [980, 0]
     },
     {
       "parameters": {
-        "content": "## POC: AI Agent Content Creator\n\n**Purpose:** Test n8n AI Agent with Groq for content creation\n\n**Flow:**\n1. Form Trigger → receives transcript\n2. AI Agent → analyzes and generates content\n3. Format Output → structures response\n4. Respond → returns to user\n\n**Sub-nodes:**\n- Groq Chat Model (LLM brain)\n- Simple Memory (context window)",
-        "height": 400,
+        "content": "## POC: AI Agent Content Creator\n\n**Purpose:** Test n8n AI Agent with Groq for content creation\n\n**Flow:**\n1. Form Trigger → receives transcript\n2. Prepare Session → generates sessionId\n3. AI Agent → analyzes and generates content\n4. Format Output → structures response\n5. Respond → returns to user\n\n**Sub-nodes:**\n- Groq Chat Model (LLM brain)\n- Simple Memory (context window with custom sessionId)",
+        "height": 440,
         "width": 400,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-60, -300],
+      "position": [-60, -340],
       "typeVersion": 1,
       "id": "note-overview",
       "name": "Note: Overview"
@@ -120,7 +133,7 @@
         "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [940, -200],
+      "position": [1040, -200],
       "typeVersion": 1,
       "id": "note-next-steps",
       "name": "Note: Next Steps"
@@ -128,6 +141,9 @@
   ],
   "connections": {
     "Form Trigger": {
+      "main": [[{ "node": "Prepare Session", "type": "main", "index": 0 }]]
+    },
+    "Prepare Session": {
       "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
     },
     "AI Agent": {
@@ -150,5 +166,5 @@
   "staticData": null,
   "tags": ["poc", "ai-agent"],
   "triggerCount": 1,
-  "versionId": "1"
+  "versionId": "2"
 }
