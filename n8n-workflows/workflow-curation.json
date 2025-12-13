@@ -3,25 +3,28 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "workflow-trigger",
+      "id": "841d44cc-b6f3-4fc6-ac42-155a8f83e619",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [0, 0],
+      "position": [
+        672,
+        304
+      ],
       "notes": "📥 TRIGGER: Called by Content Generation workflow.\n\nExpected input:\n- video_id, video_title\n- tweets_glm, tweets_kimi\n- linkedin_glm, linkedin_kimi\n- newsletter_glm, newsletter_kimi"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "url": "https://ai.google.dev/gemini-api/docs/quickstart#rest:generateContent",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "nodeCredentialType": "googlePalmApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Content-Type",
-              "value": "application/json"
+              "name": "x-goog-api-key",
+              "value": "AIzaSyBM4n5pr_fkjqztl_Ey4cMyI8S7YlyN6yM"
             }
           ]
         },
@@ -32,28 +35,34 @@
           "timeout": 120000
         }
       },
-      "id": "gemini-curate",
+      "id": "18e0434e-14fd-40fd-9c4f-90fd2a959c1d",
       "name": "Curate Content",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [220, 0],
+      "position": [
+        880,
+        304
+      ],
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "Gemini API"
+        "googlePalmApi": {
+          "id": "MbpX9lg4yPynHFYb",
+          "name": "Gemini"
         }
       },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create Header Auth credential named 'Gemini API'\n2. Header Name: x-goog-api-key\n3. Header Value: YOUR_GEMINI_API_KEY\n\nGet key from: aistudio.google.com\n\nModel: gemini-2.5-flash\nEndpoint: v1beta"
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Create 'Query Auth' credential named 'Gemini API Key'\n2. Query Parameter Name: key\n3. Query Parameter Value: YOUR_GEMINI_API_KEY\n\nGet key from: aistudio.google.com\n\nThis node compares outputs and selects the best content."
     },
     {
       "parameters": {
         "jsCode": "// Get Gemini HTTP response\nconst geminiOutput = $('Curate Content').first().json;\n\n// Gemini REST API returns: candidates[0].content.parts[0].text\nlet response = '';\ntry {\n  response = geminiOutput.candidates?.[0]?.content?.parts?.[0]?.text || '';\n} catch (e) {\n  response = '';\n}\n\nconst input = $('Execute Workflow Trigger').first().json;\n\nlet curated;\ntry {\n  const cleaned = (response || '').replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n  const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    curated = JSON.parse(match[0]);\n  } else {\n    throw new Error('No JSON found in response');\n  }\n} catch (e) {\n  curated = { \n    error: e.message, \n    raw: (response || '').substring(0, 500),\n    curated_tweets: [],\n    curated_linkedin: [],\n    curated_newsletter: {},\n    summary: { glm_wins: 0, kimi_wins: 0, combined: 0 }\n  };\n}\n\nreturn [{\n  json: {\n    video_id: input.video_id,\n    video_title: input.video_title,\n    curated: curated,\n    curated_at: new Date().toISOString()\n  }\n}];"
       },
-      "id": "parse-curation",
+      "id": "04d42b71-ce83-4745-9645-5cb871354c35",
       "name": "Parse Curation",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 0],
+      "position": [
+        1104,
+        304
+      ],
       "notes": "📋 AUTO-CONFIGURED:\n\nParses Gemini REST API response.\nExtracts: candidates[0].content.parts[0].text\nThen parses JSON from the text."
     },
     {
@@ -61,13 +70,15 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
+          "value": "1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI",
           "mode": "list",
-          "value": ""
+          "cachedResultName": "ContentCreator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_LcaNUehWKHyaST8sxB7pOia5r4n6_s6vvzyiaXjYI/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
           "mode": "list",
-          "value": "Curated_Content"
+          "value": "Generated_Content"
         },
         "columns": {
           "mappingMode": "autoMapInputData",
@@ -77,29 +88,36 @@
         },
         "options": {}
       },
-      "id": "store-curated",
+      "id": "36849686-a61b-4533-9620-7b9ddd12c602",
       "name": "Store Curated Content",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [660, 0],
+      "position": [
+        1328,
+        304
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "",
-          "name": ""
+          "id": "gT63GqZ01vMEYBvV",
+          "name": "Google Sheets account"
         }
       },
-      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select your spreadsheet\n3. Select 'Curated_Content' sheet\n\nAuto-maps all input fields to columns."
+      "notes": "🔧 CONFIGURATION REQUIRED:\n\n1. Select Google Sheets OAuth2 credential\n2. Select 'Content Repurposing Engine' spreadsheet\n3. Select 'Generated_Content' sheet\n\nRequired columns:\nstatus | content_id | video_id | curated_tweets | curated_linkedin | curated_newsletter | summary | error | created_at"
     },
     {
       "parameters": {},
-      "id": "return-output",
+      "id": "21731b10-f10f-45ba-8559-1e9dc76806a2",
       "name": "Return Output",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [880, 0],
+      "position": [
+        1552,
+        304
+      ],
       "notes": "📤 OUTPUT:\n\nReturns curated content to main workflow.\nData includes final selected content and comparison scores."
     }
   ],
+  "pinData": {},
   "connections": {
     "Execute Workflow Trigger": {
       "main": [
@@ -146,12 +164,14 @@
       ]
     }
   },
+  "active": false,
   "settings": {
-    "executionOrder": "v1",
-    "errorWorkflow": ""
+    "executionOrder": "v1"
   },
-  "staticData": null,
-  "tags": ["curation"],
-  "triggerCount": 0,
-  "versionId": "6"
+  "versionId": "9d35c0ff-0336-4b2b-986c-30bca01f0757",
+  "meta": {
+    "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
+  },
+  "id": "xTR34CLSKg8rGdoX",
+  "tags": []
 }
