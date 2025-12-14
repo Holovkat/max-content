@@ -54,10 +54,10 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are a Content Repurposing Agent with access to a Post to X tool.\n\n## TRANSCRIPT:\n{{ $json.transcript }}\n\n## INSTRUCTIONS:\n1. Analyze the transcript and extract key ideas\n2. Generate {{ $json.tweetCount }} unique tweets (under 280 characters each, no hashtags)\n3. Generate 1 LinkedIn post (hook, body, closing question)\n{{ $json.autoPost ? '4. USE THE \"Post to X\" TOOL to post EACH tweet one by one' : '4. Do NOT post - just return the generated content' }}\n\n## REQUIRED OUTPUT:\nReturn a JSON object with:\n- key_ideas: array of strings\n- tweets: array of {content, type, posted, tweet_id}\n- linkedin: {hook, body, question}\n- summary: brief description of what you did\n\n{{ $json.autoPost ? 'IMPORTANT: You MUST call the Post to X tool for each tweet before returning the final output.' : '' }}",
+        "text": "=You are a Content Repurposing Agent with access to Post to X and Post to LinkedIn tools.\n\n## TRANSCRIPT:\n{{ $json.transcript }}\n\n## INSTRUCTIONS:\n1. Analyze the transcript and extract key ideas\n2. Generate {{ $json.tweetCount }} unique tweets (under 280 characters each, no hashtags)\n3. Generate 1 LinkedIn post (hook, body, closing question)\n{{ $json.autoPost ? '4. USE THE \"Post to X\" TOOL to post EACH tweet one by one\\n5. USE THE \"Post to LinkedIn\" TOOL to post the LinkedIn content (combine hook, body, question into one message)' : '4. Do NOT post - just return the generated content' }}\n\n## REQUIRED OUTPUT:\nReturn a JSON object with:\n- key_ideas: array of strings\n- tweets: array of {content, type, posted, tweet_id}\n- linkedin: {hook, body, question, posted, post_id}\n- summary: brief description of what you did\n\n{{ $json.autoPost ? 'IMPORTANT: You MUST use both Post to X and Post to LinkedIn tools before returning the final output.' : '' }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "You are an expert content strategist. Create engaging, specific content that matches the original tone. When auto-post is enabled, use the Post to X tool for each tweet."
+          "systemMessage": "You are an expert content strategist. Create engaging, specific content that matches the original tone. When auto-post is enabled, use the Post to X tool for tweets and Post to LinkedIn tool for the LinkedIn post."
         }
       },
       "id": "ai-agent",
@@ -65,7 +65,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [440, 300],
-      "notes": "🤖 AI Agent with Post to X tool"
+      "notes": "🤖 AI Agent with X and LinkedIn tools"
     },
     {
       "parameters": {
@@ -130,7 +130,35 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
       "position": [680, 520],
-      "notes": "🔧 Calls workflow-post-to-x.json\nYou need to set the workflowId after import!"
+      "notes": "🔧 Calls workflow-post-to-x.json\nSet the workflowId after import!"
+    },
+    {
+      "parameters": {
+        "name": "post_to_linkedin",
+        "description": "Post content to LinkedIn. Input should be a JSON object with a 'content' field containing the full post text (max 3000 characters). Returns the post ID and URL.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "specifyInputSchema": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The LinkedIn post content (max 3000 characters)"
+            }
+          },
+          "required": ["content"]
+        }
+      },
+      "id": "linkedin-tool",
+      "name": "Post to LinkedIn Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [800, 520],
+      "notes": "🔧 Calls workflow-post-to-linkedin.json\nSet the workflowId after import!"
     },
     {
       "parameters": {
@@ -195,6 +223,9 @@
       "ai_outputParser": [[{ "node": "AI Agent", "type": "ai_outputParser", "index": 0 }]]
     },
     "Post to X Tool": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Post to LinkedIn Tool": {
       "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
     },
     "Build HTML Response": {

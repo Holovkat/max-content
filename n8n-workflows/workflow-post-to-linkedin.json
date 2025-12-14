@@ -1,0 +1,129 @@
+{
+  "name": "Post to LinkedIn (Sub-workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 200],
+      "notes": "📥 Receives post data from parent workflow or AI Agent tool"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and prepare LinkedIn post\n// Accepts: query (from AI tool), or content, or separate hook/body/question\nconst input = $json;\n\n// Handle different input formats\nlet content = '';\n\nif (input.query) {\n  // From AI Agent tool\n  content = input.query;\n} else if (input.content) {\n  // Direct content\n  content = input.content;\n} else if (input.hook || input.body || input.question) {\n  // Separate parts\n  const parts = [];\n  if (input.hook) parts.push(input.hook);\n  if (input.body) parts.push(input.body);\n  if (input.question) parts.push(input.question);\n  content = parts.join('\\n\\n');\n}\n\nconsole.log('Input received:', JSON.stringify(input));\nconsole.log('Content extracted:', content.substring(0, 100) + '...');\n\nif (!content || content.trim() === '') {\n  return [{\n    json: {\n      success: false,\n      error: 'No LinkedIn post content provided',\n      content: '',\n      receivedInput: input\n    }\n  }];\n}\n\n// LinkedIn has a 3000 character limit for posts\nif (content.length > 3000) {\n  return [{\n    json: {\n      success: false,\n      error: `Post too long: ${content.length} characters (max 3000)`,\n      content: content.substring(0, 3000)\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    content: content.trim(),\n    length: content.length,\n    ready: true\n  }\n}];"
+      },
+      "id": "validate",
+      "name": "Validate Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-ready",
+              "leftValue": "={{ $json.ready }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-valid",
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "person": "",
+        "text": "={{ $json.content }}",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "id": "post-to-linkedin",
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [660, 100],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "",
+          "name": "LinkedIn OAuth2 API"
+        }
+      },
+      "notes": "🔧 Configure your LinkedIn OAuth2 credential\nLeave 'person' empty to use authenticated user"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format success response\nconst linkedInResponse = $json;\n\n// LinkedIn returns different response structures\nconst postId = linkedInResponse?.id || linkedInResponse?.updateKey || '';\nconst postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}` : null;\n\nreturn [{\n  json: {\n    success: true,\n    post_id: postId,\n    post_url: postUrl,\n    message: 'Successfully posted to LinkedIn',\n    response: linkedInResponse\n  }\n}];"
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format error response\nconst input = $('Validate Post').first().json;\n\nreturn [{\n  json: {\n    success: false,\n    error: input.error || 'Post validation failed',\n    content: input.content || ''\n  }\n}];"
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Post to LinkedIn Sub-workflow\n\n**Input options:**\n- query: string (from AI tool)\n- content: string (full post)\n- hook + body + question (separate)\n\n**Output:**\n- success: boolean\n- post_id: string\n- post_url: string\n- message: string\n\n**Setup:**\n1. Create LinkedIn OAuth2 credential\n2. Set credential in Post node",
+        "height": 360,
+        "width": 340,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-60, -100],
+      "typeVersion": 1,
+      "id": "note",
+      "name": "Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [[{ "node": "Validate Post", "type": "main", "index": 0 }]]
+    },
+    "Validate Post": {
+      "main": [[{ "node": "Is Valid?", "type": "main", "index": 0 }]]
+    },
+    "Is Valid?": {
+      "main": [
+        [{ "node": "Post to LinkedIn", "type": "main", "index": 0 }],
+        [{ "node": "Error Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post to LinkedIn": {
+      "main": [[{ "node": "Success Response", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "sub-workflow-linkedin-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": ["sub-workflow", "linkedin"]
+}
