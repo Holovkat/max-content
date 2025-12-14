@@ -12,29 +12,42 @@
       "name": "Approval Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 300],
+      "position": [
+        0,
+        300
+      ],
       "webhookId": "approval-confirm-v1"
     },
     {
       "parameters": {
-        "jsCode": "// Decode the content payload from the approval URL\nconst query = $json.query || {};\nconst encodedData = query.data || '';\n\nif (!encodedData) {\n  return [{\n    json: {\n      success: false,\n      error: 'No content data provided',\n      html: '<html><body><h1>Error</h1><p>No content data found. Please go back and try again.</p></body></html>'\n    }\n  }];\n}\n\ntry {\n  let decoded = Buffer.from(encodedData, 'base64').toString('utf-8');\n  \n  // Sanitize control characters that break JSON parsing\n  decoded = decoded\n    .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]/g, '')\n    .replace(/\\r\\n/g, '\\\\n')\n    .replace(/\\r/g, '\\\\n');\n  \n  const payload = JSON.parse(decoded);\n  \n  return [{\n    json: {\n      success: true,\n      sessionId: payload.sessionId,\n      platforms: payload.platforms,\n      content: payload.content,\n      newsletter: payload.newsletter || {},\n      createdAt: payload.createdAt\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      success: false,\n      error: 'Failed to decode content: ' + error.message,\n      html: '<html><body><h1>Error</h1><p>Failed to decode content. Please go back and try again.</p></body></html>'\n    }\n  }];\n}"
+        "jsCode": "// Decode the simple payload from the approval URL\nconst query = $json.query || {};\nconst encodedData = query.data || '';\n\nif (!encodedData) {\n  return [{\n    json: {\n      success: false,\n      error: 'No content data provided',\n      html: '<html><body><h1>Error</h1><p>No content data found. Please go back and try again.</p></body></html>'\n    }\n  }];\n}\n\ntry {\n  // Decode the outer base64\n  const payloadStr = Buffer.from(encodedData, 'base64').toString('utf-8');\n  \n  // Parse pipe-delimited format: sessionId|x|linkedin|newsletter|instagram|skool|recipients|senderName|base64LlmText\n  const parts = payloadStr.split('|');\n  if (parts.length < 9) {\n    throw new Error('Invalid payload format');\n  }\n  \n  const sessionId = parts[0];\n  const platforms = {\n    x: parts[1] === '1',\n    linkedin: parts[2] === '1',\n    newsletter: parts[3] === '1',\n    instagram: parts[4] === '1',\n    skool: parts[5] === '1'\n  };\n  const recipients = parts[6] ? parts[6].split(',').filter(e => e.includes('@')) : [];\n  const senderName = parts[7] || 'Newsletter';\n  \n  // Decode the LLM text from base64\n  const llmTextBase64 = parts[8];\n  const llmText = Buffer.from(llmTextBase64, 'base64').toString('utf-8');\n  \n  // Now parse the LLM JSON output\n  let content = {};\n  try {\n    content = JSON.parse(llmText);\n  } catch (parseErr) {\n    content = {\n      key_ideas: ['Error parsing LLM output'],\n      tweets: [],\n      linkedin: { hook: '', body: '', question: '' },\n      newsletter: { subject: '', intro: '', points: [], cta: '' },\n      instagram: [],\n      skool: { title: '', intro: '', takeaways: [], discussion: '' }\n    };\n  }\n  \n  return [{\n    json: {\n      success: true,\n      sessionId: sessionId,\n      platforms: platforms,\n      content: content,\n      newsletter: {\n        recipients: recipients,\n        senderName: senderName\n      },\n      createdAt: new Date().toISOString()\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      success: false,\n      error: 'Failed to decode content: ' + error.message,\n      html: '<html><body><h1>Error</h1><p>Failed to decode content. Please go back and try again.</p></body></html>'\n    }\n  }];\n}"
       },
       "id": "decode-payload",
       "name": "Decode Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 300]
+      "position": [
+        220,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "is-valid",
               "leftValue": "={{ $json.success }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -45,7 +58,10 @@
       "name": "Valid Payload?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [440, 300]
+      "position": [
+        440,
+        300
+      ]
     },
     {
       "parameters": {
@@ -55,18 +71,28 @@
       "name": "Prepare Post Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 200]
+      "position": [
+        660,
+        200
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "is-x",
               "leftValue": "={{ $json.platform }}",
               "rightValue": "x",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -77,7 +103,10 @@
       "name": "Is X?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [880, 200]
+      "position": [
+        880,
+        200
+      ]
     },
     {
       "parameters": {
@@ -88,22 +117,35 @@
       "name": "Post to X",
       "type": "n8n-nodes-base.twitter",
       "typeVersion": 2,
-      "position": [1100, 100],
+      "position": [
+        1100,
+        100
+      ],
       "credentials": {
-        "twitterOAuth2Api": { "id": "", "name": "X account" }
+        "twitterOAuth2Api": {
+          "id": "",
+          "name": "X account"
+        }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "is-linkedin",
               "leftValue": "={{ $json.platform }}",
               "rightValue": "linkedin",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -114,34 +156,52 @@
       "name": "Is LinkedIn?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1100, 300]
+      "position": [
+        1100,
+        300
+      ]
     },
     {
       "parameters": {
         "person": "",
         "text": "={{ $json.content }}",
-        "additionalFields": { "visibility": "PUBLIC" }
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
       },
       "id": "post-to-linkedin",
       "name": "Post to LinkedIn",
       "type": "n8n-nodes-base.linkedIn",
       "typeVersion": 1,
-      "position": [1320, 200],
+      "position": [
+        1320,
+        200
+      ],
       "credentials": {
-        "linkedInOAuth2Api": { "id": "", "name": "LinkedIn OAuth2 API" }
+        "linkedInOAuth2Api": {
+          "id": "",
+          "name": "LinkedIn OAuth2 API"
+        }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "is-newsletter",
               "leftValue": "={{ $json.platform }}",
               "rightValue": "newsletter",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -152,7 +212,10 @@
       "name": "Is Newsletter?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1320, 400]
+      "position": [
+        1320,
+        400
+      ]
     },
     {
       "parameters": {
@@ -162,7 +225,10 @@
       "name": "Build Email HTML",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, 400]
+      "position": [
+        1540,
+        400
+      ]
     },
     {
       "parameters": {
@@ -179,9 +245,15 @@
       "name": "Send via Resend",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1760, 400],
+      "position": [
+        1760,
+        400
+      ],
       "credentials": {
-        "httpHeaderAuth": { "id": "", "name": "Resend API Key" }
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Resend API Key"
+        }
       },
       "onError": "continueRegularOutput"
     },
@@ -191,7 +263,10 @@
       "name": "Merge X Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [1320, 100]
+      "position": [
+        1320,
+        100
+      ]
     },
     {
       "parameters": {},
@@ -199,7 +274,10 @@
       "name": "Merge LinkedIn Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [1540, 200]
+      "position": [
+        1540,
+        200
+      ]
     },
     {
       "parameters": {},
@@ -207,7 +285,10 @@
       "name": "Merge Newsletter Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [1980, 300]
+      "position": [
+        1980,
+        300
+      ]
     },
     {
       "parameters": {
@@ -217,7 +298,10 @@
       "name": "Build Confirmation",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2200, 300]
+      "position": [
+        2200,
+        300
+      ]
     },
     {
       "parameters": {
@@ -226,7 +310,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Content-Type", "value": "text/html; charset=utf-8" }
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
             ]
           }
         }
@@ -235,7 +322,10 @@
       "name": "Respond Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2420, 300]
+      "position": [
+        2420,
+        300
+      ]
     },
     {
       "parameters": {
@@ -244,7 +334,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Content-Type", "value": "text/html; charset=utf-8" }
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
             ]
           }
         }
@@ -253,7 +346,10 @@
       "name": "Respond Error",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [660, 400]
+      "position": [
+        660,
+        400
+      ]
     },
     {
       "parameters": {
@@ -263,7 +359,10 @@
         "color": 6
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-60, 60],
+      "position": [
+        -60,
+        60
+      ],
       "typeVersion": 1,
       "id": "note",
       "name": "Note"
@@ -272,61 +371,197 @@
   "pinData": {},
   "connections": {
     "Approval Webhook": {
-      "main": [[{ "node": "Decode Payload", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Decode Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Decode Payload": {
-      "main": [[{ "node": "Valid Payload?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Valid Payload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Valid Payload?": {
       "main": [
-        [{ "node": "Prepare Post Tasks", "type": "main", "index": 0 }],
-        [{ "node": "Respond Error", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Prepare Post Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prepare Post Tasks": {
-      "main": [[{ "node": "Is X?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Is X?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Is X?": {
       "main": [
-        [{ "node": "Post to X", "type": "main", "index": 0 }],
-        [{ "node": "Is LinkedIn?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Post to X",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is LinkedIn?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Post to X": {
-      "main": [[{ "node": "Merge X Results", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Merge X Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Merge X Results": {
-      "main": [[{ "node": "Is LinkedIn?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Is LinkedIn?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Is LinkedIn?": {
       "main": [
-        [{ "node": "Post to LinkedIn", "type": "main", "index": 0 }],
-        [{ "node": "Is Newsletter?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Post to LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Newsletter?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Post to LinkedIn": {
-      "main": [[{ "node": "Merge LinkedIn Results", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Merge LinkedIn Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Merge LinkedIn Results": {
-      "main": [[{ "node": "Is Newsletter?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Is Newsletter?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Is Newsletter?": {
       "main": [
-        [{ "node": "Build Email HTML", "type": "main", "index": 0 }],
-        [{ "node": "Build Confirmation", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Build Email HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Build Email HTML": {
-      "main": [[{ "node": "Send via Resend", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Send via Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Send via Resend": {
-      "main": [[{ "node": "Merge Newsletter Results", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Merge Newsletter Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Merge Newsletter Results": {
-      "main": [[{ "node": "Build Confirmation", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Confirmation": {
-      "main": [[{ "node": "Respond Success", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -337,5 +572,10 @@
   "meta": {
     "templateCredsSetupCompleted": true
   },
-  "tags": ["approval", "posting", "webhook", "resend"]
+  "tags": [
+    "approval",
+    "posting",
+    "webhook",
+    "resend"
+  ]
 }

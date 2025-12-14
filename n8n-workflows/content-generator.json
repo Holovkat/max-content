@@ -24,8 +24,12 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  { "option": "Yes" },
-                  { "option": "No" }
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
                 ]
               }
             },
@@ -34,8 +38,12 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  { "option": "Yes" },
-                  { "option": "No" }
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
                 ]
               }
             },
@@ -44,8 +52,12 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  { "option": "Yes" },
-                  { "option": "No" }
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
                 ]
               }
             },
@@ -54,8 +66,12 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  { "option": "Yes" },
-                  { "option": "No" }
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
                 ]
               }
             },
@@ -64,8 +80,12 @@
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
-                  { "option": "Yes" },
-                  { "option": "No" }
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
                 ]
               }
             },
@@ -88,7 +108,10 @@
       "name": "Form Trigger",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2,
-      "position": [0, 300],
+      "position": [
+        0,
+        300
+      ],
       "webhookId": "content-approval-v1"
     },
     {
@@ -99,7 +122,10 @@
       "name": "Prepare Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 300]
+      "position": [
+        220,
+        300
+      ]
     },
     {
       "parameters": {
@@ -110,31 +136,45 @@
       "name": "Generate Content",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.4,
-      "position": [440, 300]
+      "position": [
+        440,
+        300
+      ]
     },
     {
       "parameters": {
         "modelName": "models/gemini-1.5-flash",
-        "options": { "temperature": 0.7 }
+        "options": {
+          "temperature": 0.7
+        }
       },
       "id": "gemini-model",
       "name": "Google Gemini Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [320, 500],
+      "position": [
+        320,
+        500
+      ],
       "credentials": {
-        "googlePalmApi": { "id": "", "name": "Google Gemini API" }
+        "googlePalmApi": {
+          "id": "",
+          "name": "Google Gemini API"
+        }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Parse the LLM response and build preview HTML\nconst llmOutput = $('Generate Content').first().json;\nconst input = $('Prepare Input').first().json;\n\n// Parse the JSON from the LLM response\nlet output = {};\ntry {\n  let responseText = llmOutput.text || llmOutput.response || JSON.stringify(llmOutput);\n  responseText = responseText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  output = JSON.parse(responseText);\n} catch (e) {\n  output = {\n    key_ideas: ['Error parsing AI response'],\n    tweets: [],\n    linkedin: { hook: '', body: 'Error: ' + e.message, question: '' },\n    newsletter: { subject: '', intro: '', points: [], cta: '' },\n    instagram: [],\n    skool: { title: '', intro: '', takeaways: [], discussion: '' },\n    summary: 'Parse error'\n  };\n}\n\n// Get newsletter settings from input\nconst newsletterSettings = input.newsletter || {};\nconst recipients = newsletterSettings.recipients || [];\nconst senderName = newsletterSettings.senderName || 'Newsletter';\n\n// Store content for approval\nconst contentPayload = {\n  sessionId: input.sessionId,\n  platforms: input.platforms,\n  content: output,\n  newsletter: {\n    recipients: recipients,\n    senderName: senderName\n  },\n  createdAt: new Date().toISOString()\n};\n\nconst approvalWebhookPath = 'content-approval-confirm';\nconst encodedContent = Buffer.from(JSON.stringify(contentPayload)).toString('base64');\nconst showApprovalButton = input.platforms.x || input.platforms.linkedin || (input.platforms.newsletter && recipients.length > 0);\n\n// Icons\nconst xIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z\"/></svg>';\nconst linkedinIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#0077b5\"><path d=\"M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z\"/></svg>';\nconst listIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z\"/></svg>';\nconst emailIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z\"/></svg>';\nconst instaIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#E4405F\"><path d=\"M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z\"/></svg>';\nconst skoolIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#5865F2\"><path d=\"M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z\"/></svg>';\n\nconst tweets = output.tweets || [];\nconst linkedin = output.linkedin || {};\nconst newsletter = output.newsletter || {};\nconst instagram = output.instagram || [];\nconst skool = output.skool || {};\n\nconst css = '<style>body{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);min-height:100vh;padding:40px 20px;margin:0}.container{max-width:900px;margin:0 auto}.card{background:#fff;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3)}.header{text-align:center;color:#fff;margin-bottom:30px}.header h1{font-size:2.5em;margin:0}.header p{opacity:0.8;margin-top:8px}.preview-badge{display:inline-block;background:#fbbf24;color:#78350f;padding:8px 20px;border-radius:20px;font-weight:600;margin-top:16px}.section-title{display:flex;align-items:center;gap:10px;font-size:1.3em;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #667eea}.section-icon{display:flex;align-items:center;color:#667eea}.platform-status{display:inline-block;padding:4px 10px;border-radius:12px;font-size:0.8em;font-weight:500;margin-left:12px}.platform-on{background:#d1fae5;color:#065f46}.platform-warn{background:#fef3c7;color:#92400e}.platform-copy{background:#e0e7ff;color:#3730a3}.idea-list{list-style:none;padding:0;margin:0}.idea-list li{padding:12px 16px;background:#f8f9ff;border-radius:8px;margin-bottom:8px;border-left:4px solid #667eea;color:#1a1a2e}.tweet-card{background:#f8f9ff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #e0e7ff}.tweet-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}.tweet-number{display:inline-flex;align-items:center;justify-content:center;background:#000;color:#fff;width:32px;height:32px;border-radius:50%;font-weight:600}.tweet-type{background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:12px;font-size:0.8em}.tweet-content{font-size:1.1em;line-height:1.6;color:#1a1a2e;margin:0}.linkedin-section{background:#f0f4ff;padding:20px;border-radius:12px}.linkedin-hook{font-size:1.2em;font-weight:600;color:#0077b5;margin-bottom:12px}.linkedin-body{line-height:1.7;color:#333;white-space:pre-line;margin-bottom:16px}.linkedin-question{font-style:italic;color:#555;padding:12px;background:#fff;border-radius:8px;border-left:4px solid #0077b5}.newsletter-section{background:#fef3c7;padding:20px;border-radius:12px}.newsletter-subject{font-size:1.2em;font-weight:600;color:#92400e;margin-bottom:12px}.newsletter-intro{line-height:1.6;color:#333;margin-bottom:16px}.newsletter-points{list-style:none;padding:0;margin:0 0 16px}.newsletter-points li{padding:8px 12px;background:#fff;border-radius:6px;margin-bottom:6px;border-left:3px solid #f59e0b}.newsletter-cta{font-weight:600;color:#b45309}.newsletter-recipients{background:#fff;border-radius:8px;padding:12px;margin-top:16px;border:1px solid #fcd34d}.instagram-section{background:linear-gradient(135deg,#f8f0ff 0%,#fff0f5 100%);padding:20px;border-radius:12px;margin-bottom:16px}.instagram-hook{font-size:1.1em;font-weight:600;color:#E4405F;margin-bottom:10px}.instagram-body{line-height:1.6;color:#333;white-space:pre-line;margin-bottom:12px}.instagram-cta{font-weight:500;color:#833AB4;padding:10px;background:#fff;border-radius:8px;border-left:3px solid #E4405F}.skool-section{background:#f0f4ff;padding:20px;border-radius:12px}.skool-title{font-size:1.3em;font-weight:700;color:#5865F2;margin-bottom:12px}.skool-intro{line-height:1.6;color:#333;margin-bottom:16px}.skool-takeaways{list-style:none;padding:0;margin:0 0 16px}.skool-takeaways li{padding:10px 14px;background:#fff;border-radius:8px;margin-bottom:8px;border-left:3px solid #5865F2}.skool-discussion{font-style:italic;color:#4338ca;padding:14px;background:#e0e7ff;border-radius:8px}.approval-section{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;border-radius:16px;text-align:center;color:#fff;margin-top:20px}.approval-section h2{margin:0 0 16px}.approval-section p{opacity:0.9;margin-bottom:24px}.approval-btn{display:inline-block;background:#fff;color:#667eea;padding:16px 40px;border-radius:12px;font-size:1.2em;font-weight:600;text-decoration:none;box-shadow:0 4px 15px rgba(0,0,0,0.2);cursor:pointer}.approval-btn:hover{transform:translateY(-2px)}.platform-summary{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}.platform-chip{background:rgba(255,255,255,0.2);padding:8px 16px;border-radius:20px;font-size:0.9em}.platform-chip.active{background:rgba(255,255,255,0.9);color:#667eea}</style>';\n\nvar html = css;\nhtml += '<div class=\"container\">';\nhtml += '<div class=\"header\"><h1>Content Preview</h1><p>Review your generated content</p>';\nhtml += showApprovalButton ? '<span class=\"preview-badge\">Ready for Approval</span>' : '<span class=\"preview-badge\">Preview Only</span>';\nhtml += '</div>';\n\n// Platform summary\nvar selectedPlatforms = [];\nif (input.platforms.x) selectedPlatforms.push('X/Twitter');\nif (input.platforms.linkedin) selectedPlatforms.push('LinkedIn');\nif (input.platforms.instagram) selectedPlatforms.push('Instagram');\nif (input.platforms.skool) selectedPlatforms.push('Skool');\nif (input.platforms.newsletter && recipients.length > 0) selectedPlatforms.push('Newsletter (' + recipients.length + ')');\n\nhtml += '<div class=\"card\"><div class=\"section-title\">Platforms</div>';\nhtml += '<div style=\"display:flex;gap:12px;flex-wrap:wrap;\">';\nif (selectedPlatforms.length > 0) {\n  for (var p = 0; p < selectedPlatforms.length; p++) {\n    html += '<span class=\"platform-status platform-on\">' + selectedPlatforms[p] + '</span>';\n  }\n} else {\n  html += '<span class=\"platform-status\" style=\"background:#fee2e2;color:#991b1b;\">No platforms selected</span>';\n}\nhtml += '</div></div>';\n\n// Key Ideas\nhtml += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + listIcon + '</span> Key Ideas</div><ul class=\"idea-list\">';\nvar keyIdeas = output.key_ideas || [];\nfor (var i = 0; i < keyIdeas.length; i++) {\n  html += '<li>' + keyIdeas[i] + '</li>';\n}\nhtml += '</ul></div>';\n\n// Tweets\nif (input.platforms.x && tweets.length > 0) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + xIcon + '</span> Tweets (' + tweets.length + ')<span class=\"platform-status platform-on\">Will Post</span></div>';\n  for (var j = 0; j < tweets.length; j++) {\n    var t = tweets[j];\n    html += '<div class=\"tweet-card\"><div class=\"tweet-header\">';\n    html += '<span class=\"tweet-number\">' + (j+1) + '</span><span class=\"tweet-type\">' + (t.type || 'tweet') + '</span>';\n    html += '</div>';\n    html += '<p class=\"tweet-content\">' + (t.content || '') + '</p>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// LinkedIn\nif (input.platforms.linkedin && linkedin.hook) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + linkedinIcon + '</span> LinkedIn<span class=\"platform-status platform-on\">Will Post</span></div><div class=\"linkedin-section\">';\n  html += '<div class=\"linkedin-hook\">' + (linkedin.hook || '') + '</div>';\n  html += '<div class=\"linkedin-body\">' + (linkedin.body || '') + '</div>';\n  html += '<div class=\"linkedin-question\">' + (linkedin.question || '') + '</div>';\n  html += '</div></div>';\n}\n\n// Instagram\nif (input.platforms.instagram && instagram.length > 0) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + instaIcon + '</span> Instagram (' + instagram.length + ')<span class=\"platform-status platform-copy\">Copy to Post</span></div>';\n  for (var ig = 0; ig < instagram.length; ig++) {\n    var insta = instagram[ig];\n    html += '<div class=\"instagram-section\">';\n    html += '<div class=\"instagram-hook\">' + (insta.hook || '') + '</div>';\n    html += '<div class=\"instagram-body\">' + (insta.body || '') + '</div>';\n    html += '<div class=\"instagram-cta\">' + (insta.cta || '') + '</div>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// Skool\nif (input.platforms.skool && skool.title) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + skoolIcon + '</span> Skool Community<span class=\"platform-status platform-copy\">Copy to Post</span></div><div class=\"skool-section\">';\n  html += '<div class=\"skool-title\">' + (skool.title || '') + '</div>';\n  html += '<div class=\"skool-intro\">' + (skool.intro || '') + '</div>';\n  var takeaways = skool.takeaways || [];\n  if (takeaways.length > 0) {\n    html += '<ul class=\"skool-takeaways\">';\n    for (var tk = 0; tk < takeaways.length; tk++) {\n      html += '<li>' + takeaways[tk] + '</li>';\n    }\n    html += '</ul>';\n  }\n  html += '<div class=\"skool-discussion\">' + (skool.discussion || '') + '</div>';\n  html += '</div></div>';\n}\n\n// Newsletter\nif (input.platforms.newsletter && newsletter.subject) {\n  var recipientStatus = recipients.length > 0 ? 'Will Send to ' + recipients.length : 'No Recipients';\n  var statusClass = recipients.length > 0 ? 'platform-on' : 'platform-warn';\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + emailIcon + '</span> Newsletter<span class=\"platform-status ' + statusClass + '\">' + recipientStatus + '</span></div><div class=\"newsletter-section\">';\n  html += '<div class=\"newsletter-subject\">Subject: ' + (newsletter.subject || '') + '</div>';\n  html += '<div class=\"newsletter-intro\">' + (newsletter.intro || '') + '</div>';\n  var points = newsletter.points || [];\n  if (points.length > 0) {\n    html += '<ul class=\"newsletter-points\">';\n    for (var k = 0; k < points.length; k++) {\n      html += '<li>' + points[k] + '</li>';\n    }\n    html += '</ul>';\n  }\n  html += '<div class=\"newsletter-cta\">CTA: ' + (newsletter.cta || '') + '</div>';\n  if (recipients.length > 0) {\n    html += '<div class=\"newsletter-recipients\"><strong>From:</strong> ' + senderName + '<br><strong>Recipients:</strong> ' + recipients.slice(0, 5).join(', ') + (recipients.length > 5 ? '... +' + (recipients.length - 5) : '') + '</div>';\n  }\n  html += '</div></div>';\n}\n\n// Approval Button\nif (showApprovalButton) {\n  var approvalUrl = '/webhook/' + approvalWebhookPath + '?data=' + encodedContent;\n  html += '<div class=\"approval-section\">';\n  html += '<h2>Ready to Publish?</h2>';\n  html += '<p>Review above. X, LinkedIn, Newsletter will auto-post. Instagram/Skool are copy-only.</p>';\n  html += '<div class=\"platform-summary\">';\n  if (input.platforms.x) html += '<span class=\"platform-chip active\">X Twitter</span>';\n  if (input.platforms.linkedin) html += '<span class=\"platform-chip active\">LinkedIn</span>';\n  if (input.platforms.newsletter && recipients.length > 0) html += '<span class=\"platform-chip active\">Email</span>';\n  html += '</div>';\n  html += '<br><br><a class=\"approval-btn\" href=\"' + approvalUrl + '\">Approve and Post</a>';\n  html += '</div>';\n} else if (input.platforms.instagram || input.platforms.skool) {\n  html += '<div class=\"card\" style=\"text-align:center;padding:30px;background:#f0f4ff;\"><h3>Copy-Only Platforms</h3><p>Instagram and Skool content is generated for you to copy and post manually.</p></div>';\n} else {\n  html += '<div class=\"card\" style=\"text-align:center;padding:30px;\"><h3>Preview Only</h3><p>Select platforms to generate content.</p></div>';\n}\n\nhtml += '</div>';\n\nreturn [{ json: { html: html, contentPayload: contentPayload } }];"
+        "jsCode": "// Parse the LLM response and build preview HTML\nconst llmOutput = $('Generate Content').first().json;\nconst input = $('Prepare Input').first().json;\n\n// Get the raw LLM response text (we'll send this to approval)\nconst rawLlmText = llmOutput.text || llmOutput.response || JSON.stringify(llmOutput);\n\n// Parse for preview display only\nlet output = {};\ntry {\n  let responseText = rawLlmText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  output = JSON.parse(responseText);\n} catch (e) {\n  output = {\n    key_ideas: ['Error parsing AI response'],\n    tweets: [],\n    linkedin: { hook: '', body: 'Error: ' + e.message, question: '' },\n    newsletter: { subject: '', intro: '', points: [], cta: '' },\n    instagram: [],\n    skool: { title: '', intro: '', takeaways: [], discussion: '' },\n    summary: 'Parse error'\n  };\n}\n\n// Get newsletter settings from input\nconst newsletterSettings = input.newsletter || {};\nconst recipients = newsletterSettings.recipients || [];\nconst senderName = newsletterSettings.senderName || 'Newsletter';\n\n// Create a simple payload with raw LLM text (no nested JSON objects)\n// The approval workflow will parse the rawLlmText\nconst simplePayload = {\n  s: input.sessionId,\n  p: input.platforms,\n  r: recipients.join(','),\n  n: senderName,\n  t: rawLlmText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim()\n};\n\n// Encode as simple pipe-delimited string to avoid JSON issues\nconst payloadStr = [\n  simplePayload.s,\n  simplePayload.p.x ? '1' : '0',\n  simplePayload.p.linkedin ? '1' : '0', \n  simplePayload.p.newsletter ? '1' : '0',\n  simplePayload.p.instagram ? '1' : '0',\n  simplePayload.p.skool ? '1' : '0',\n  simplePayload.r,\n  simplePayload.n,\n  Buffer.from(simplePayload.t).toString('base64')\n].join('|');\n\nconst approvalWebhookPath = 'content-approval-confirm';\nconst encodedContent = Buffer.from(payloadStr).toString('base64');\nconst showApprovalButton = input.platforms.x || input.platforms.linkedin || (input.platforms.newsletter && recipients.length > 0);\n\n// Icons\nconst xIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z\"/></svg>';\nconst linkedinIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#0077b5\"><path d=\"M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z\"/></svg>';\nconst listIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z\"/></svg>';\nconst emailIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z\"/></svg>';\nconst instaIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#E4405F\"><path d=\"M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z\"/></svg>';\nconst skoolIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#5865F2\"><path d=\"M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z\"/></svg>';\n\nconst tweets = output.tweets || [];\nconst linkedin = output.linkedin || {};\nconst newsletter = output.newsletter || {};\nconst instagram = output.instagram || [];\nconst skool = output.skool || {};\n\nconst css = '<style>body{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);min-height:100vh;padding:40px 20px;margin:0}.container{max-width:900px;margin:0 auto}.card{background:#fff;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3)}.header{text-align:center;color:#fff;margin-bottom:30px}.header h1{font-size:2.5em;margin:0}.header p{opacity:0.8;margin-top:8px}.preview-badge{display:inline-block;background:#fbbf24;color:#78350f;padding:8px 20px;border-radius:20px;font-weight:600;margin-top:16px}.section-title{display:flex;align-items:center;gap:10px;font-size:1.3em;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #667eea}.section-icon{display:flex;align-items:center;color:#667eea}.platform-status{display:inline-block;padding:4px 10px;border-radius:12px;font-size:0.8em;font-weight:500;margin-left:12px}.platform-on{background:#d1fae5;color:#065f46}.platform-warn{background:#fef3c7;color:#92400e}.platform-copy{background:#e0e7ff;color:#3730a3}.idea-list{list-style:none;padding:0;margin:0}.idea-list li{padding:12px 16px;background:#f8f9ff;border-radius:8px;margin-bottom:8px;border-left:4px solid #667eea;color:#1a1a2e}.tweet-card{background:#f8f9ff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #e0e7ff}.tweet-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}.tweet-number{display:inline-flex;align-items:center;justify-content:center;background:#000;color:#fff;width:32px;height:32px;border-radius:50%;font-weight:600}.tweet-type{background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:12px;font-size:0.8em}.tweet-content{font-size:1.1em;line-height:1.6;color:#1a1a2e;margin:0}.linkedin-section{background:#f0f4ff;padding:20px;border-radius:12px}.linkedin-hook{font-size:1.2em;font-weight:600;color:#0077b5;margin-bottom:12px}.linkedin-body{line-height:1.7;color:#333;white-space:pre-line;margin-bottom:16px}.linkedin-question{font-style:italic;color:#555;padding:12px;background:#fff;border-radius:8px;border-left:4px solid #0077b5}.newsletter-section{background:#fef3c7;padding:20px;border-radius:12px}.newsletter-subject{font-size:1.2em;font-weight:600;color:#92400e;margin-bottom:12px}.newsletter-intro{line-height:1.6;color:#333;margin-bottom:16px}.newsletter-points{list-style:none;padding:0;margin:0 0 16px}.newsletter-points li{padding:8px 12px;background:#fff;border-radius:6px;margin-bottom:6px;border-left:3px solid #f59e0b}.newsletter-cta{font-weight:600;color:#b45309}.newsletter-recipients{background:#fff;border-radius:8px;padding:12px;margin-top:16px;border:1px solid #fcd34d}.instagram-section{background:linear-gradient(135deg,#f8f0ff 0%,#fff0f5 100%);padding:20px;border-radius:12px;margin-bottom:16px}.instagram-hook{font-size:1.1em;font-weight:600;color:#E4405F;margin-bottom:10px}.instagram-body{line-height:1.6;color:#333;white-space:pre-line;margin-bottom:12px}.instagram-cta{font-weight:500;color:#833AB4;padding:10px;background:#fff;border-radius:8px;border-left:3px solid #E4405F}.skool-section{background:#f0f4ff;padding:20px;border-radius:12px}.skool-title{font-size:1.3em;font-weight:700;color:#5865F2;margin-bottom:12px}.skool-intro{line-height:1.6;color:#333;margin-bottom:16px}.skool-takeaways{list-style:none;padding:0;margin:0 0 16px}.skool-takeaways li{padding:10px 14px;background:#fff;border-radius:8px;margin-bottom:8px;border-left:3px solid #5865F2}.skool-discussion{font-style:italic;color:#4338ca;padding:14px;background:#e0e7ff;border-radius:8px}.approval-section{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;border-radius:16px;text-align:center;color:#fff;margin-top:20px}.approval-section h2{margin:0 0 16px}.approval-section p{opacity:0.9;margin-bottom:24px}.approval-btn{display:inline-block;background:#fff;color:#667eea;padding:16px 40px;border-radius:12px;font-size:1.2em;font-weight:600;text-decoration:none;box-shadow:0 4px 15px rgba(0,0,0,0.2);cursor:pointer}.approval-btn:hover{transform:translateY(-2px)}.platform-summary{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}.platform-chip{background:rgba(255,255,255,0.2);padding:8px 16px;border-radius:20px;font-size:0.9em}.platform-chip.active{background:rgba(255,255,255,0.9);color:#667eea}</style>';\n\nvar html = css;\nhtml += '<div class=\"container\">';\nhtml += '<div class=\"header\"><h1>Content Preview</h1><p>Review your generated content</p>';\nhtml += showApprovalButton ? '<span class=\"preview-badge\">Ready for Approval</span>' : '<span class=\"preview-badge\">Preview Only</span>';\nhtml += '</div>';\n\n// Platform summary\nvar selectedPlatforms = [];\nif (input.platforms.x) selectedPlatforms.push('X/Twitter');\nif (input.platforms.linkedin) selectedPlatforms.push('LinkedIn');\nif (input.platforms.instagram) selectedPlatforms.push('Instagram');\nif (input.platforms.skool) selectedPlatforms.push('Skool');\nif (input.platforms.newsletter && recipients.length > 0) selectedPlatforms.push('Newsletter (' + recipients.length + ')');\n\nhtml += '<div class=\"card\"><div class=\"section-title\">Platforms</div>';\nhtml += '<div style=\"display:flex;gap:12px;flex-wrap:wrap;\">';\nif (selectedPlatforms.length > 0) {\n  for (var p = 0; p < selectedPlatforms.length; p++) {\n    html += '<span class=\"platform-status platform-on\">' + selectedPlatforms[p] + '</span>';\n  }\n} else {\n  html += '<span class=\"platform-status\" style=\"background:#fee2e2;color:#991b1b;\">No platforms selected</span>';\n}\nhtml += '</div></div>';\n\n// Key Ideas\nhtml += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + listIcon + '</span> Key Ideas</div><ul class=\"idea-list\">';\nvar keyIdeas = output.key_ideas || [];\nfor (var i = 0; i < keyIdeas.length; i++) {\n  html += '<li>' + keyIdeas[i] + '</li>';\n}\nhtml += '</ul></div>';\n\n// Tweets\nif (input.platforms.x && tweets.length > 0) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + xIcon + '</span> Tweets (' + tweets.length + ')<span class=\"platform-status platform-on\">Will Post</span></div>';\n  for (var j = 0; j < tweets.length; j++) {\n    var t = tweets[j];\n    html += '<div class=\"tweet-card\"><div class=\"tweet-header\">';\n    html += '<span class=\"tweet-number\">' + (j+1) + '</span><span class=\"tweet-type\">' + (t.type || 'tweet') + '</span>';\n    html += '</div>';\n    html += '<p class=\"tweet-content\">' + (t.content || '') + '</p>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// LinkedIn\nif (input.platforms.linkedin && linkedin.hook) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + linkedinIcon + '</span> LinkedIn<span class=\"platform-status platform-on\">Will Post</span></div><div class=\"linkedin-section\">';\n  html += '<div class=\"linkedin-hook\">' + (linkedin.hook || '') + '</div>';\n  html += '<div class=\"linkedin-body\">' + (linkedin.body || '') + '</div>';\n  html += '<div class=\"linkedin-question\">' + (linkedin.question || '') + '</div>';\n  html += '</div></div>';\n}\n\n// Instagram\nif (input.platforms.instagram && instagram.length > 0) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + instaIcon + '</span> Instagram (' + instagram.length + ')<span class=\"platform-status platform-copy\">Copy to Post</span></div>';\n  for (var ig = 0; ig < instagram.length; ig++) {\n    var insta = instagram[ig];\n    html += '<div class=\"instagram-section\">';\n    html += '<div class=\"instagram-hook\">' + (insta.hook || '') + '</div>';\n    html += '<div class=\"instagram-body\">' + (insta.body || '') + '</div>';\n    html += '<div class=\"instagram-cta\">' + (insta.cta || '') + '</div>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// Skool\nif (input.platforms.skool && skool.title) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + skoolIcon + '</span> Skool Community<span class=\"platform-status platform-copy\">Copy to Post</span></div><div class=\"skool-section\">';\n  html += '<div class=\"skool-title\">' + (skool.title || '') + '</div>';\n  html += '<div class=\"skool-intro\">' + (skool.intro || '') + '</div>';\n  var takeaways = skool.takeaways || [];\n  if (takeaways.length > 0) {\n    html += '<ul class=\"skool-takeaways\">';\n    for (var tk = 0; tk < takeaways.length; tk++) {\n      html += '<li>' + takeaways[tk] + '</li>';\n    }\n    html += '</ul>';\n  }\n  html += '<div class=\"skool-discussion\">' + (skool.discussion || '') + '</div>';\n  html += '</div></div>';\n}\n\n// Newsletter\nif (input.platforms.newsletter && newsletter.subject) {\n  var recipientStatus = recipients.length > 0 ? 'Will Send to ' + recipients.length : 'No Recipients';\n  var statusClass = recipients.length > 0 ? 'platform-on' : 'platform-warn';\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + emailIcon + '</span> Newsletter<span class=\"platform-status ' + statusClass + '\">' + recipientStatus + '</span></div><div class=\"newsletter-section\">';\n  html += '<div class=\"newsletter-subject\">Subject: ' + (newsletter.subject || '') + '</div>';\n  html += '<div class=\"newsletter-intro\">' + (newsletter.intro || '') + '</div>';\n  var points = newsletter.points || [];\n  if (points.length > 0) {\n    html += '<ul class=\"newsletter-points\">';\n    for (var k = 0; k < points.length; k++) {\n      html += '<li>' + points[k] + '</li>';\n    }\n    html += '</ul>';\n  }\n  html += '<div class=\"newsletter-cta\">CTA: ' + (newsletter.cta || '') + '</div>';\n  if (recipients.length > 0) {\n    html += '<div class=\"newsletter-recipients\"><strong>From:</strong> ' + senderName + '<br><strong>Recipients:</strong> ' + recipients.slice(0, 5).join(', ') + (recipients.length > 5 ? '... +' + (recipients.length - 5) : '') + '</div>';\n  }\n  html += '</div></div>';\n}\n\n// Approval Button\nif (showApprovalButton) {\n  var approvalUrl = '/webhook/' + approvalWebhookPath + '?data=' + encodedContent;\n  html += '<div class=\"approval-section\">';\n  html += '<h2>Ready to Publish?</h2>';\n  html += '<p>Review above. X, LinkedIn, Newsletter will auto-post. Instagram/Skool are copy-only.</p>';\n  html += '<div class=\"platform-summary\">';\n  if (input.platforms.x) html += '<span class=\"platform-chip active\">X Twitter</span>';\n  if (input.platforms.linkedin) html += '<span class=\"platform-chip active\">LinkedIn</span>';\n  if (input.platforms.newsletter && recipients.length > 0) html += '<span class=\"platform-chip active\">Email</span>';\n  html += '</div>';\n  html += '<br><br><a class=\"approval-btn\" href=\"' + approvalUrl + '\">Approve and Post</a>';\n  html += '</div>';\n} else if (input.platforms.instagram || input.platforms.skool) {\n  html += '<div class=\"card\" style=\"text-align:center;padding:30px;background:#f0f4ff;\"><h3>Copy-Only Platforms</h3><p>Instagram and Skool content is generated for you to copy and post manually.</p></div>';\n} else {\n  html += '<div class=\"card\" style=\"text-align:center;padding:30px;\"><h3>Preview Only</h3><p>Select platforms to generate content.</p></div>';\n}\n\nhtml += '</div>';\n\nreturn [{ json: { html: html } }];"
       },
       "id": "build-preview",
       "name": "Build Preview Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 300]
+      "position": [
+        660,
+        300
+      ]
     },
     {
       "parameters": {
@@ -143,7 +183,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Content-Type", "value": "text/html; charset=utf-8" }
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
             ]
           }
         }
@@ -152,7 +195,10 @@
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [880, 300]
+      "position": [
+        880,
+        300
+      ]
     },
     {
       "parameters": {
@@ -162,7 +208,10 @@
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-80, 100],
+      "position": [
+        -80,
+        100
+      ],
       "typeVersion": 1,
       "id": "note",
       "name": "Note"
@@ -171,19 +220,59 @@
   "pinData": {},
   "connections": {
     "Form Trigger": {
-      "main": [[{ "node": "Prepare Input", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Prepare Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prepare Input": {
-      "main": [[{ "node": "Generate Content", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Generate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Generate Content": {
-      "main": [[{ "node": "Build Preview Response", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Preview Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Google Gemini Chat Model": {
-      "ai_languageModel": [[{ "node": "Generate Content", "type": "ai_languageModel", "index": 0 }]]
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Preview Response": {
-      "main": [[{ "node": "Respond to Form", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond to Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -194,5 +283,9 @@
   "meta": {
     "templateCredsSetupCompleted": true
   },
-  "tags": ["content", "approval", "social-media"]
+  "tags": [
+    "content",
+    "approval",
+    "social-media"
+  ]
 }
