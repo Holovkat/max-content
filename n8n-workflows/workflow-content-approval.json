@@ -5,7 +5,7 @@
       "parameters": {
         "path": "content-creator-approval",
         "formTitle": "AI Content Creator",
-        "formDescription": "Generate social media content from your transcript. Select which platforms to generate content for.",
+        "formDescription": "Generate social media content from your transcript",
         "formFields": {
           "values": [
             {
@@ -15,7 +15,12 @@
               "requiredField": true
             },
             {
-              "fieldLabel": "Generate for X/Twitter",
+              "fieldLabel": "Number of Tweets",
+              "fieldType": "number",
+              "placeholder": "3"
+            },
+            {
+              "fieldLabel": "Post to X/Twitter",
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
@@ -25,12 +30,7 @@
               }
             },
             {
-              "fieldLabel": "Number of Tweets",
-              "fieldType": "number",
-              "placeholder": "3"
-            },
-            {
-              "fieldLabel": "Generate for LinkedIn",
+              "fieldLabel": "Post to LinkedIn",
               "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
@@ -63,7 +63,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const formData = $('Form Trigger').first().json;\n\n// Parse individual selections\nconst generateX = formData['Generate for X/Twitter'] === 'Yes';\nconst generateLinkedIn = formData['Generate for LinkedIn'] === 'Yes';\nconst generateNewsletter = formData['Generate Newsletter'] === 'Yes';\n// Always use at least 3 tweets for generation, even if X not selected (won't be displayed)\nconst tweetCount = Math.min(Math.max(parseInt(formData['Number of Tweets']) || 3, 1), 10);\n\n// Generate unique session ID\nconst sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;\n\nreturn [{\n  json: {\n    transcript: formData.Transcript,\n    tweetCount: tweetCount,\n    platforms: {\n      x: generateX,\n      linkedin: generateLinkedIn,\n      newsletter: generateNewsletter,\n      previewOnly: !generateX && !generateLinkedIn && !generateNewsletter\n    },\n    sessionId: sessionId\n  }\n}];"
+        "jsCode": "const formData = $('Form Trigger').first().json;\n\nconst generateX = formData['Post to X/Twitter'] === 'Yes';\nconst generateLinkedIn = formData['Post to LinkedIn'] === 'Yes';\nconst generateNewsletter = formData['Generate Newsletter'] === 'Yes';\nconst tweetCount = Math.min(Math.max(parseInt(formData['Number of Tweets']) || 3, 1), 10);\nconst sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);\n\nreturn [{\n  json: {\n    transcript: formData.Transcript,\n    tweetCount: tweetCount,\n    platforms: {\n      x: generateX,\n      linkedin: generateLinkedIn,\n      newsletter: generateNewsletter\n    },\n    sessionId: sessionId\n  }\n}];"
       },
       "id": "prepare-input",
       "name": "Prepare Input",
@@ -73,17 +73,13 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "=You are a Content Repurposing Agent. Generate content for human approval before posting.\n\n## TRANSCRIPT:\n{{ $json.transcript }}\n\n## INSTRUCTIONS:\n1. Analyze the transcript and extract 3-5 key ideas\n2. Generate {{ $json.tweetCount }} unique tweets (under 280 characters each, no hashtags)\n3. Generate 1 LinkedIn post with: hook (attention-grabbing opener), body (main content with line breaks), question (engagement closer)\n4. Generate 1 Newsletter section with: subject line, intro paragraph, key points array (3-5 bullet points), call to action\n\n## REQUIRED OUTPUT:\nReturn a JSON object with:\n- key_ideas: array of strings\n- tweets: array of {content, type} where type is 'insight', 'tip', 'question', or 'story'\n- linkedin: {hook, body, question}\n- newsletter: {subject, intro, points: [], cta}\n- summary: brief description of the content generated",
-        "hasOutputParser": true,
-        "options": {
-          "systemMessage": "You are an expert content strategist. Create engaging, specific content that matches the original tone. Always generate all content types requested."
-        }
+        "prompt": "=You are a content strategist. Analyze this transcript and create social media content.\n\nTRANSCRIPT:\n{{ $json.transcript }}\n\nGENERATE:\n1. 3-5 key ideas from the transcript\n2. {{ $json.tweetCount }} tweets (under 280 chars each, no hashtags)\n3. 1 LinkedIn post with hook, body, and closing question\n4. 1 Newsletter section with subject, intro, 3-5 key points, and call to action\n\nRESPOND WITH ONLY VALID JSON IN THIS EXACT FORMAT:\n{\n  \"key_ideas\": [\"idea 1\", \"idea 2\", \"idea 3\"],\n  \"tweets\": [\n    {\"content\": \"Tweet text here\", \"type\": \"insight\"},\n    {\"content\": \"Another tweet\", \"type\": \"tip\"}\n  ],\n  \"linkedin\": {\n    \"hook\": \"Attention-grabbing opener\",\n    \"body\": \"Main content with insights\",\n    \"question\": \"Engaging question to end?\"\n  },\n  \"newsletter\": {\n    \"subject\": \"Email subject line\",\n    \"intro\": \"Opening paragraph\",\n    \"points\": [\"Point 1\", \"Point 2\", \"Point 3\"],\n    \"cta\": \"Call to action\"\n  },\n  \"summary\": \"Brief description of content generated\"\n}\n\nIMPORTANT: Return ONLY the JSON object, no markdown, no explanation.",
+        "options": {}
       },
-      "id": "ai-agent",
-      "name": "AI Agent - Generate",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.7,
+      "id": "llm-chain",
+      "name": "Generate Content",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
       "position": [440, 300]
     },
     {
@@ -95,25 +91,14 @@
       "name": "Google Gemini Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [320, 520],
+      "position": [320, 500],
       "credentials": {
         "googlePalmApi": { "id": "", "name": "Google Gemini API" }
       }
     },
     {
       "parameters": {
-        "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"key_ideas\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"tweets\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"content\": { \"type\": \"string\" },\n          \"type\": { \"type\": \"string\" }\n        }\n      }\n    },\n    \"linkedin\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"hook\": { \"type\": \"string\" },\n        \"body\": { \"type\": \"string\" },\n        \"question\": { \"type\": \"string\" }\n      }\n    },\n    \"newsletter\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"subject\": { \"type\": \"string\" },\n        \"intro\": { \"type\": \"string\" },\n        \"points\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n        \"cta\": { \"type\": \"string\" }\n      }\n    },\n    \"summary\": { \"type\": \"string\" }\n  },\n  \"required\": [\"key_ideas\", \"tweets\", \"linkedin\", \"newsletter\", \"summary\"]\n}"
-      },
-      "id": "output-parser",
-      "name": "Structured Output Parser",
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.2,
-      "position": [440, 520]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Store content for approval and build preview HTML\nconst agentOutput = $('AI Agent - Generate').first().json;\nconst output = agentOutput.output || agentOutput;\nconst input = $('Prepare Input').first().json;\n\n// Store content for approval\nconst contentPayload = {\n  sessionId: input.sessionId,\n  platforms: input.platforms,\n  content: output,\n  createdAt: new Date().toISOString()\n};\n\n// Build approval webhook URL\nconst approvalWebhookPath = 'content-approval-confirm';\nconst encodedContent = Buffer.from(JSON.stringify(contentPayload)).toString('base64');\n\n// Determine if we should show approval button\nconst showApprovalButton = input.platforms.x || input.platforms.linkedin || input.platforms.newsletter;\n\n// SVG icons\nconst xIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z\"/></svg>';\nconst linkedinIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#0077b5\"><path d=\"M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z\"/></svg>';\nconst listIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z\"/></svg>';\nconst emailIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z\"/></svg>';\n\nconst tweets = output.tweets || [];\nconst linkedin = output.linkedin || {};\nconst newsletter = output.newsletter || {};\n\nconst css = `\n<style>\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; padding: 40px 20px; margin: 0; }\n  .container { max-width: 900px; margin: 0 auto; }\n  .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }\n  .header { text-align: center; color: white; margin-bottom: 30px; }\n  .header h1 { font-size: 2.5em; margin: 0; }\n  .header p { opacity: 0.8; margin-top: 8px; }\n  .preview-badge { display: inline-block; background: #fbbf24; color: #78350f; padding: 8px 20px; border-radius: 20px; font-weight: 600; margin-top: 16px; }\n  .section-title { display: flex; align-items: center; gap: 10px; font-size: 1.3em; font-weight: 600; color: #333; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #667eea; }\n  .section-icon { display: flex; align-items: center; color: #667eea; }\n  .platform-status { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 500; margin-left: 12px; }\n  .platform-on { background: #d1fae5; color: #065f46; }\n  .idea-list { list-style: none; padding: 0; margin: 0; }\n  .idea-list li { padding: 12px 16px; background: #f8f9ff; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #667eea; color: #1a1a2e; }\n  .tweet-card { background: #f8f9ff; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid #e0e7ff; }\n  .tweet-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }\n  .tweet-number { display: inline-flex; align-items: center; justify-content: center; background: #000; color: white; width: 32px; height: 32px; border-radius: 50%; font-weight: 600; }\n  .tweet-type { background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-size: 0.8em; }\n  .tweet-content { font-size: 1.1em; line-height: 1.6; color: #1a1a2e; margin: 0; }\n  .linkedin-section { background: #f0f4ff; padding: 20px; border-radius: 12px; }\n  .linkedin-hook { font-size: 1.2em; font-weight: 600; color: #0077b5; margin-bottom: 12px; }\n  .linkedin-body { line-height: 1.7; color: #333; white-space: pre-line; margin-bottom: 16px; }\n  .linkedin-question { font-style: italic; color: #555; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #0077b5; }\n  .newsletter-section { background: #fef3c7; padding: 20px; border-radius: 12px; }\n  .newsletter-subject { font-size: 1.2em; font-weight: 600; color: #92400e; margin-bottom: 12px; }\n  .newsletter-intro { line-height: 1.6; color: #333; margin-bottom: 16px; }\n  .newsletter-points { list-style: none; padding: 0; margin: 0 0 16px 0; }\n  .newsletter-points li { padding: 8px 12px; background: white; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid #f59e0b; }\n  .newsletter-cta { font-weight: 600; color: #b45309; }\n  .approval-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 16px; text-align: center; color: white; margin-top: 20px; }\n  .approval-section h2 { margin: 0 0 16px 0; }\n  .approval-section p { opacity: 0.9; margin-bottom: 24px; }\n  .approval-btn { display: inline-block; background: white; color: #667eea; padding: 16px 40px; border-radius: 12px; font-size: 1.2em; font-weight: 600; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s; cursor: pointer; }\n  .approval-btn:hover { transform: translateY(-2px); background: #f0f0f0; }\n  .platform-summary { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }\n  .platform-chip { background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-size: 0.9em; }\n  .platform-chip.active { background: rgba(255,255,255,0.9); color: #667eea; }\n</style>`;\n\nlet html = css;\nhtml += '<div class=\"container\">';\nhtml += '<div class=\"header\"><h1>✨ Content Preview</h1><p>Review your generated content before posting</p>';\nhtml += showApprovalButton ? '<span class=\"preview-badge\">📝 Ready for Approval</span>' : '<span class=\"preview-badge\">👀 Preview Only</span>';\nhtml += '</div>';\n\n// Platform summary - only show selected platforms\nconst selectedPlatforms = [];\nif (input.platforms.x) selectedPlatforms.push('X/Twitter (' + input.tweetCount + ' tweets)');\nif (input.platforms.linkedin) selectedPlatforms.push('LinkedIn');\nif (input.platforms.newsletter) selectedPlatforms.push('Newsletter');\n\nhtml += '<div class=\"card\"><div class=\"section-title\">📤 Generating For</div>';\nhtml += '<div style=\"display:flex;gap:12px;flex-wrap:wrap;\">';\nselectedPlatforms.forEach(p => {\n  html += '<span class=\"platform-status platform-on\">✓ ' + p + '</span>';\n});\nif (selectedPlatforms.length === 0) {\n  html += '<span class=\"platform-status\" style=\"background:#fee2e2;color:#991b1b;\">No platforms selected - preview only</span>';\n}\nhtml += '</div></div>';\n\n// Key Ideas - always show\nhtml += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + listIcon + '</span> Key Ideas</div><ul class=\"idea-list\">';\n(output.key_ideas || []).forEach(idea => { html += '<li>' + idea + '</li>'; });\nhtml += '</ul></div>';\n\n// Tweets - only show if X is selected\nif (input.platforms.x && tweets.length > 0) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + xIcon + '</span> Tweets (' + tweets.length + ')<span class=\"platform-status platform-on\">Will Post</span></div>';\n  tweets.forEach((t, i) => {\n    html += '<div class=\"tweet-card\"><div class=\"tweet-header\">';\n    html += '<span class=\"tweet-number\">' + (i+1) + '</span><span class=\"tweet-type\">' + (t.type || 'tweet') + '</span>';\n    html += '</div>';\n    html += '<p class=\"tweet-content\">' + (t.content || '') + '</p>';\n    html += '</div>';\n  });\n  html += '</div>';\n}\n\n// LinkedIn - only show if LinkedIn is selected\nif (input.platforms.linkedin && linkedin && (linkedin.hook || linkedin.body)) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + linkedinIcon + '</span> LinkedIn Post<span class=\"platform-status platform-on\">Will Post</span></div><div class=\"linkedin-section\">';\n  html += '<div class=\"linkedin-hook\">' + (linkedin.hook || '') + '</div>';\n  html += '<div class=\"linkedin-body\">' + (linkedin.body || '') + '</div>';\n  html += '<div class=\"linkedin-question\">💬 ' + (linkedin.question || '') + '</div>';\n  html += '</div></div>';\n}\n\n// Newsletter - only show if Newsletter is selected\nif (input.platforms.newsletter && newsletter && newsletter.subject) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + emailIcon + '</span> Newsletter<span class=\"platform-status platform-on\">Will Generate</span></div><div class=\"newsletter-section\">';\n  html += '<div class=\"newsletter-subject\">📧 ' + (newsletter.subject || 'Newsletter Subject') + '</div>';\n  html += '<div class=\"newsletter-intro\">' + (newsletter.intro || '') + '</div>';\n  if (newsletter.points && newsletter.points.length > 0) {\n    html += '<ul class=\"newsletter-points\">';\n    newsletter.points.forEach(p => { html += '<li>' + p + '</li>'; });\n    html += '</ul>';\n  }\n  html += '<div class=\"newsletter-cta\">→ ' + (newsletter.cta || '') + '</div>';\n  html += '</div></div>';\n}\n\n// APPROVAL BUTTON SECTION\nif (showApprovalButton) {\n  const approvalUrl = '/webhook/' + approvalWebhookPath + '?data=' + encodedContent;\n  html += '<div class=\"approval-section\">';\n  html += '<h2>🚀 Ready to Publish?</h2>';\n  html += '<p>Review the content above. When you\\'re happy, click below to post to your selected platforms.</p>';\n  html += '<div class=\"platform-summary\">';\n  if (input.platforms.x) html += '<span class=\"platform-chip active\">𝕏 ' + input.tweetCount + ' Tweets</span>';\n  if (input.platforms.linkedin) html += '<span class=\"platform-chip active\">in LinkedIn</span>';\n  if (input.platforms.newsletter) html += '<span class=\"platform-chip active\">📧 Newsletter</span>';\n  html += '</div>';\n  html += '<br><br><a class=\"approval-btn\" href=\"' + approvalUrl + '\">✓ Approve & Post</a>';\n  html += '</div>';\n} else {\n  html += '<div class=\"card\" style=\"text-align:center;padding:30px;background:#f9fafb;\"><h3>👀 Preview Complete</h3><p>No platforms selected. Go back and select X, LinkedIn, or Newsletter to generate content.</p></div>';\n}\n\nhtml += '</div>';\n\nreturn [{ json: { html, contentPayload, showApprovalButton } }];"
+        "jsCode": "// Parse the LLM response and build preview HTML\nconst llmOutput = $('Generate Content').first().json;\nconst input = $('Prepare Input').first().json;\n\n// Parse the JSON from the LLM response\nlet output = {};\ntry {\n  // The response might be in 'text' or 'response' field\n  let responseText = llmOutput.text || llmOutput.response || JSON.stringify(llmOutput);\n  \n  // Clean up the response - remove markdown code blocks if present\n  responseText = responseText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  \n  output = JSON.parse(responseText);\n} catch (e) {\n  // Fallback with empty content\n  output = {\n    key_ideas: ['Error parsing AI response'],\n    tweets: [],\n    linkedin: { hook: '', body: 'Error: ' + e.message, question: '' },\n    newsletter: { subject: '', intro: '', points: [], cta: '' },\n    summary: 'Parse error'\n  };\n}\n\n// Store content for approval\nconst contentPayload = {\n  sessionId: input.sessionId,\n  platforms: input.platforms,\n  content: output,\n  createdAt: new Date().toISOString()\n};\n\nconst approvalWebhookPath = 'content-approval-confirm';\nconst encodedContent = Buffer.from(JSON.stringify(contentPayload)).toString('base64');\nconst showApprovalButton = input.platforms.x || input.platforms.linkedin || input.platforms.newsletter;\n\n// Icons\nconst xIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z\"/></svg>';\nconst linkedinIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#0077b5\"><path d=\"M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z\"/></svg>';\nconst listIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z\"/></svg>';\nconst emailIcon = '<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z\"/></svg>';\n\nconst tweets = output.tweets || [];\nconst linkedin = output.linkedin || {};\nconst newsletter = output.newsletter || {};\n\nconst css = '<style>body{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);min-height:100vh;padding:40px 20px;margin:0}.container{max-width:900px;margin:0 auto}.card{background:#fff;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3)}.header{text-align:center;color:#fff;margin-bottom:30px}.header h1{font-size:2.5em;margin:0}.header p{opacity:0.8;margin-top:8px}.preview-badge{display:inline-block;background:#fbbf24;color:#78350f;padding:8px 20px;border-radius:20px;font-weight:600;margin-top:16px}.section-title{display:flex;align-items:center;gap:10px;font-size:1.3em;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #667eea}.section-icon{display:flex;align-items:center;color:#667eea}.platform-status{display:inline-block;padding:4px 10px;border-radius:12px;font-size:0.8em;font-weight:500;margin-left:12px}.platform-on{background:#d1fae5;color:#065f46}.idea-list{list-style:none;padding:0;margin:0}.idea-list li{padding:12px 16px;background:#f8f9ff;border-radius:8px;margin-bottom:8px;border-left:4px solid #667eea;color:#1a1a2e}.tweet-card{background:#f8f9ff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #e0e7ff}.tweet-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}.tweet-number{display:inline-flex;align-items:center;justify-content:center;background:#000;color:#fff;width:32px;height:32px;border-radius:50%;font-weight:600}.tweet-type{background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:12px;font-size:0.8em}.tweet-content{font-size:1.1em;line-height:1.6;color:#1a1a2e;margin:0}.linkedin-section{background:#f0f4ff;padding:20px;border-radius:12px}.linkedin-hook{font-size:1.2em;font-weight:600;color:#0077b5;margin-bottom:12px}.linkedin-body{line-height:1.7;color:#333;white-space:pre-line;margin-bottom:16px}.linkedin-question{font-style:italic;color:#555;padding:12px;background:#fff;border-radius:8px;border-left:4px solid #0077b5}.newsletter-section{background:#fef3c7;padding:20px;border-radius:12px}.newsletter-subject{font-size:1.2em;font-weight:600;color:#92400e;margin-bottom:12px}.newsletter-intro{line-height:1.6;color:#333;margin-bottom:16px}.newsletter-points{list-style:none;padding:0;margin:0 0 16px}.newsletter-points li{padding:8px 12px;background:#fff;border-radius:6px;margin-bottom:6px;border-left:3px solid #f59e0b}.newsletter-cta{font-weight:600;color:#b45309}.approval-section{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;border-radius:16px;text-align:center;color:#fff;margin-top:20px}.approval-section h2{margin:0 0 16px}.approval-section p{opacity:0.9;margin-bottom:24px}.approval-btn{display:inline-block;background:#fff;color:#667eea;padding:16px 40px;border-radius:12px;font-size:1.2em;font-weight:600;text-decoration:none;box-shadow:0 4px 15px rgba(0,0,0,0.2);cursor:pointer}.approval-btn:hover{transform:translateY(-2px)}.platform-summary{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}.platform-chip{background:rgba(255,255,255,0.2);padding:8px 16px;border-radius:20px;font-size:0.9em}.platform-chip.active{background:rgba(255,255,255,0.9);color:#667eea}</style>';\n\nlet html = css;\nhtml += '<div class=\"container\">';\nhtml += '<div class=\"header\"><h1>✨ Content Preview</h1><p>Review your generated content before posting</p>';\nhtml += showApprovalButton ? '<span class=\"preview-badge\">📝 Ready for Approval</span>' : '<span class=\"preview-badge\">👀 Preview Only</span>';\nhtml += '</div>';\n\n// Platform summary\nconst selectedPlatforms = [];\nif (input.platforms.x) selectedPlatforms.push('X/Twitter');\nif (input.platforms.linkedin) selectedPlatforms.push('LinkedIn');\nif (input.platforms.newsletter) selectedPlatforms.push('Newsletter');\n\nhtml += '<div class=\"card\"><div class=\"section-title\">📤 Posting To</div>';\nhtml += '<div style=\"display:flex;gap:12px;flex-wrap:wrap;\">';\nif (selectedPlatforms.length > 0) {\n  selectedPlatforms.forEach(function(p) {\n    html += '<span class=\"platform-status platform-on\">✓ ' + p + '</span>';\n  });\n} else {\n  html += '<span class=\"platform-status\" style=\"background:#fee2e2;color:#991b1b;\">No platforms selected</span>';\n}\nhtml += '</div></div>';\n\n// Key Ideas\nhtml += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + listIcon + '</span> Key Ideas</div><ul class=\"idea-list\">';\nvar keyIdeas = output.key_ideas || [];\nfor (var i = 0; i < keyIdeas.length; i++) {\n  html += '<li>' + keyIdeas[i] + '</li>';\n}\nhtml += '</ul></div>';\n\n// Tweets\nif (input.platforms.x && tweets.length > 0) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + xIcon + '</span> Tweets (' + tweets.length + ')<span class=\"platform-status platform-on\">Will Post</span></div>';\n  for (var j = 0; j < tweets.length; j++) {\n    var t = tweets[j];\n    html += '<div class=\"tweet-card\"><div class=\"tweet-header\">';\n    html += '<span class=\"tweet-number\">' + (j+1) + '</span><span class=\"tweet-type\">' + (t.type || 'tweet') + '</span>';\n    html += '</div>';\n    html += '<p class=\"tweet-content\">' + (t.content || '') + '</p>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// LinkedIn\nif (input.platforms.linkedin && linkedin.hook) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + linkedinIcon + '</span> LinkedIn Post<span class=\"platform-status platform-on\">Will Post</span></div><div class=\"linkedin-section\">';\n  html += '<div class=\"linkedin-hook\">' + (linkedin.hook || '') + '</div>';\n  html += '<div class=\"linkedin-body\">' + (linkedin.body || '') + '</div>';\n  html += '<div class=\"linkedin-question\">💬 ' + (linkedin.question || '') + '</div>';\n  html += '</div></div>';\n}\n\n// Newsletter\nif (input.platforms.newsletter && newsletter.subject) {\n  html += '<div class=\"card\"><div class=\"section-title\"><span class=\"section-icon\">' + emailIcon + '</span> Newsletter<span class=\"platform-status platform-on\">Ready</span></div><div class=\"newsletter-section\">';\n  html += '<div class=\"newsletter-subject\">📧 ' + (newsletter.subject || '') + '</div>';\n  html += '<div class=\"newsletter-intro\">' + (newsletter.intro || '') + '</div>';\n  var points = newsletter.points || [];\n  if (points.length > 0) {\n    html += '<ul class=\"newsletter-points\">';\n    for (var k = 0; k < points.length; k++) {\n      html += '<li>' + points[k] + '</li>';\n    }\n    html += '</ul>';\n  }\n  html += '<div class=\"newsletter-cta\">→ ' + (newsletter.cta || '') + '</div>';\n  html += '</div></div>';\n}\n\n// Approval Button\nif (showApprovalButton) {\n  var approvalUrl = '/webhook/' + approvalWebhookPath + '?data=' + encodedContent;\n  html += '<div class=\"approval-section\">';\n  html += '<h2>🚀 Ready to Publish?</h2>';\n  html += '<p>Review the content above. Click below to post to your selected platforms.</p>';\n  html += '<div class=\"platform-summary\">';\n  if (input.platforms.x) html += '<span class=\"platform-chip active\">𝕏 Twitter</span>';\n  if (input.platforms.linkedin) html += '<span class=\"platform-chip active\">in LinkedIn</span>';\n  if (input.platforms.newsletter) html += '<span class=\"platform-chip active\">📧 Newsletter</span>';\n  html += '</div>';\n  html += '<br><br><a class=\"approval-btn\" href=\"' + approvalUrl + '\">✓ Approve & Post</a>';\n  html += '</div>';\n} else {\n  html += '<div class=\"card\" style=\"text-align:center;padding:30px;\"><h3>👀 Preview Only</h3><p>Select platforms to enable posting.</p></div>';\n}\n\nhtml += '</div>';\n\nreturn [{ json: { html: html, contentPayload: contentPayload } }];"
       },
       "id": "build-preview",
       "name": "Build Preview Response",
@@ -141,13 +126,13 @@
     },
     {
       "parameters": {
-        "content": "## Content Creator with Approval\n\n**Phase 1: Generate & Preview**\n1. Form with platform selection\n2. AI generates all content types\n3. Preview page with approval button\n\n**Phase 2: Approve & Post**\n4. User clicks Approve button\n5. Webhook receives approval\n6. Posts to selected platforms\n\n**Platforms:**\n- X/Twitter\n- LinkedIn\n- Newsletter (email)",
-        "height": 360,
-        "width": 380,
+        "content": "## Content Creator with Approval\n\n**Simplified Flow:**\n1. Form with platform selection\n2. LLM Chain generates JSON content\n3. Code node parses + builds HTML preview\n4. Approval button triggers Phase 2\n\n**No Structured Output Parser**\n- More reliable JSON parsing\n- Handles AI format variations",
+        "height": 280,
+        "width": 340,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-80, 60],
+      "position": [-80, 100],
       "typeVersion": 1,
       "id": "note",
       "name": "Note"
@@ -159,34 +144,13 @@
       "main": [[{ "node": "Prepare Input", "type": "main", "index": 0 }]]
     },
     "Prepare Input": {
-      "main": [[{ "node": "AI Agent - Generate", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Generate Content", "type": "main", "index": 0 }]]
     },
-    "AI Agent - Generate": {
-      "main": [
-        [{ "node": "Build Preview Response", "type": "main", "index": 0 }]
-      ]
+    "Generate Content": {
+      "main": [[{ "node": "Build Preview Response", "type": "main", "index": 0 }]]
     },
     "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent - Generate",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Structured Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "AI Agent - Generate",
-            "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "Generate Content", "type": "ai_languageModel", "index": 0 }]]
     },
     "Build Preview Response": {
       "main": [[{ "node": "Respond to Form", "type": "main", "index": 0 }]]
@@ -196,7 +160,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "content-approval-v1",
+  "versionId": "content-approval-v2",
   "meta": {
     "templateCredsSetupCompleted": true
   },
