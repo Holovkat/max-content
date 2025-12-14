@@ -1,102 +1,108 @@
-# Shard 09: Newsletter Generation
+# Shard 09: Newsletter Generation - ✅ COMPLETE
 
 ## Content Repurposing Engine
 
-**Est. Time:** 30-45 min | **Depends on:** Shard 06 | **Outcome:** 1 newsletter section generated
+**Status:** ✅ Completed  
+**Implementation:** Unified generation + email sending via Resend
 
 ---
 
-## Tasks
+## What Was Planned
 
-### 9.1 Add Gemini Node for Newsletter
+- Separate Gemini node for newsletter
+- Store in Google Sheets
 
-1. [ ] From `Parse Ideas JSON` (parallel to other branches), add **Google Gemini Chat Model**
-2. [ ] Name: `Generate Newsletter`
-3. [ ] Model: `gemini-1.5-flash`, Temperature: `0.6`
+## What Was Actually Built
 
-### 9.2 Configure Prompt
+Newsletter generation + **actual email sending**:
 
-```
-Create 1 newsletter section summarizing this video for Liam Ottley's audience.
+### LLM Output Structure
 
-VIDEO: {{$json.video_title}}
-URL: {{$json.video_url}}
-IDEAS: {{JSON.stringify($json.ideas, null, 2)}}
-
-STRUCTURE:
-1. Opening hook (2-3 sentences setting context)
-2. Key insight paragraph
-3. 3-5 actionable takeaways (bullet points)
-4. Framework summary if applicable
-5. Soft CTA (reply, watch video, etc.)
-
-Return ONLY JSON:
+```json
 {
   "newsletter": {
-    "subject_line": "Email subject (max 50 chars)",
-    "opening": "Hook paragraph",
-    "key_insight": "Main takeaway paragraph",
-    "takeaways": ["Bullet 1", "Bullet 2", "Bullet 3"],
-    "framework": {"name": "Name", "steps": ["Step 1", "Step 2"]},
-    "closing": "Soft CTA sentence"
+    "subject": "Email subject line",
+    "intro": "Opening paragraph",
+    "points": ["Key point 1", "Key point 2", "Key point 3"],
+    "cta": "Call to action"
   }
 }
 ```
 
-### 9.3 Add Parse Code Node
+### Email Template (Build Email HTML node)
 
-Name: `Parse Newsletter`
+Professional HTML email with:
+
+- ✅ Purple gradient header (solid fallback for Outlook)
+- ✅ Key takeaways section with checkmarks
+- ✅ CTA button
+- ✅ Instagram content section (if selected)
+- ✅ Skool content section (if selected)
+- ✅ Footer with unsubscribe links
+
+### Email Sending via Resend
 
 ```javascript
-const response = $input.all()[0].json.text || $input.all()[0].json.content;
-let data;
-try {
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
-  data = JSON.parse(jsonMatch[0]);
-} catch (e) {
-  data = { newsletter: {} };
+// Send via Resend API
+POST https://api.resend.com/emails
+{
+  "from": "Newsletter <newsletter@yourdomain.com>",
+  "to": ["recipient1@email.com", "recipient2@email.com"],
+  "subject": "Subject from LLM",
+  "html": "<generated HTML>"
 }
-
-const meta = $("Parse Ideas JSON").first().json;
-const nl = data.newsletter;
-
-// Compose full newsletter body
-const body =
-  `${nl.opening}\n\n${nl.key_insight}\n\n` +
-  `KEY TAKEAWAYS:\n${(nl.takeaways || []).map((t) => `→ ${t}`).join("\n")}\n\n` +
-  (nl.framework
-    ? `THE FRAMEWORK:\n${nl.framework.name}\n${nl.framework.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}\n\n`
-    : "") +
-  nl.closing;
-
-return [
-  {
-    json: {
-      content_id: `${meta.video_id}-newsletter-1`,
-      video_id: meta.video_id,
-      platform: "newsletter",
-      hook: nl.subject_line,
-      body: body,
-      cta: nl.closing,
-      status: "draft",
-      created_at: new Date().toISOString(),
-    },
-  },
-];
 ```
-
-### 9.4 Add Google Sheets Node
-
-- Name: `Store Newsletter`
-- Sheet: `Generated_Content`
-- Map: content_id, video_id, platform, hook, body, cta, status, created_at
 
 ---
 
-## Verification
+## Bonus: Instagram & Skool Added
 
-- [ ] Execute workflow
-- [ ] 1 newsletter in Generated_Content sheet
-- [ ] Newsletter has subject, body with takeaways, CTA
+Beyond the original plan, also generates:
 
-**→ Next: Shard 10: Quality Gate Implementation**
+### Instagram Captions
+
+```json
+{
+  "instagram": [
+    { "hook": "Caption hook", "body": "Full caption", "cta": "Call to action" }
+  ]
+}
+```
+
+### Skool Community Posts
+
+```json
+{
+  "skool": {
+    "title": "Post title",
+    "intro": "Introduction",
+    "takeaways": ["Point 1", "Point 2"],
+    "discussion": "Discussion question"
+  }
+}
+```
+
+---
+
+## Verification ✅
+
+- [x] Newsletter content generated
+- [x] Subject/intro/points/CTA structure
+- [x] Beautiful HTML email template
+- [x] Emails sent via Resend API
+- [x] Multi-recipient support
+- [x] Instagram captions (bonus)
+- [x] Skool posts (bonus)
+
+---
+
+## Key Files
+
+| File                                         | Purpose                  |
+| -------------------------------------------- | ------------------------ |
+| `../../n8n-workflows/content-generator.json` | Generation               |
+| `../../n8n-workflows/content-approval.json`  | Email building + sending |
+
+---
+
+**→ Next: Shard 10 (Quality Gate) was skipped - human review via preview page instead**

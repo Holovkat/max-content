@@ -1,78 +1,69 @@
-# Shard 07: Twitter Generation
+# Shard 07: Twitter Generation - ✅ COMPLETE
 
 ## Content Repurposing Engine
 
-**Est. Time:** 30-45 min | **Depends on:** Shard 06 | **Outcome:** 5 tweets generated
+**Status:** ✅ Completed  
+**Implementation:** Unified in `content-generator.json`
 
 ---
 
-## Tasks
+## What Was Planned
 
-### 7.1 Add Gemini Node for Twitter
+- Separate Gemini node for Twitter
+- Parse tweets to separate items
+- Store in Google Sheets
 
-1. [ ] From `Parse Ideas JSON`, add **Google Gemini Chat Model** node
-2. [ ] Name: `Generate Tweets`
-3. [ ] Model: `gemini-1.5-flash`, Temperature: `0.8`
+## What Was Actually Built
 
-### 7.2 Configure Prompt
+Twitter generation is part of the **unified content generation** in `content-generator.json`:
 
-Set User Message (see `/features/voice-dna-framework.md` for full prompt):
+### Single LLM Call Generates All Platforms
 
-```
-Create 5 tweets in Liam Ottley's voice - direct, practical, numbers-focused.
+The `Generate Content` node calls Gemini once and returns:
 
-VIDEO: {{$json.video_title}}
-IDEAS: {{JSON.stringify($json.ideas, null, 2)}}
-
-Return ONLY JSON:
+```json
 {
   "tweets": [
-    {"content": "Tweet text (max 280 chars)", "type": "contrarian|tactical|mistake|framework|observation"}
-  ]
+    { "type": "hook", "content": "Tweet 1..." },
+    { "type": "insight", "content": "Tweet 2..." },
+    { "type": "cta", "content": "Tweet 3..." }
+  ],
+  "linkedin": { ... },
+  "newsletter": { ... },
+  "instagram": [ ... ],
+  "skool": { ... }
 }
-
-Rules: Under 280 chars, specific not generic, mix of types, no emoji spam.
 ```
 
-### 7.3 Add Parse Code Node
+### Auto-Posting via X API
 
-Name: `Parse Tweets`
+The `content-approval.json` workflow:
 
-```javascript
-const response = $input.all()[0].json.text || $input.all()[0].json.content;
-let data;
-try {
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
-  data = JSON.parse(jsonMatch[0]);
-} catch (e) {
-  data = { tweets: [] };
-}
-
-const meta = $("Parse Ideas JSON").first().json;
-return data.tweets.map((t, i) => ({
-  json: {
-    content_id: `${meta.video_id}-twitter-${i + 1}`,
-    video_id: meta.video_id,
-    platform: "twitter",
-    body: t.content,
-    status: "draft",
-    created_at: new Date().toISOString(),
-  },
-}));
-```
-
-### 7.4 Add Google Sheets Node
-
-- Name: `Store Tweets`
-- Sheet: `Generated_Content`
-- Map: content_id, video_id, platform, body, status, created_at
+1. Receives approval click
+2. Routes tweets to `Post to X` node
+3. Uses Twitter OAuth 2.0
+4. Posts each tweet via API
 
 ---
 
-## Verification
+## Verification ✅
 
-- [ ] Execute workflow with test data
-- [ ] 5 tweets appear in Generated_Content sheet
-- [ ] Tweets are under 280 chars and specific
+- [x] Tweets generated in LLM response
+- [x] Displayed in preview page
+- [x] Posted to X on approval
+- [x] Character limit respected (280 chars)
+- [x] Mix of tweet types (hook, insight, CTA)
 
-**→ Next: Shard 08: LinkedIn Generation**
+---
+
+## Key Files
+
+| File                                         | Purpose          |
+| -------------------------------------------- | ---------------- |
+| `../../n8n-workflows/content-generator.json` | Generation node  |
+| `../../n8n-workflows/content-approval.json`  | Posting node     |
+| `../../n8n-workflows/prompts/`               | Prompt templates |
+
+---
+
+**→ Next: Shard 08: LinkedIn Generation (also complete)**

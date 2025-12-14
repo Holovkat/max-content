@@ -1,154 +1,112 @@
-# AGENTS.md — Implementation Shards
+# Implementation Shards - Summary
 
-> **Step-by-step build guides for the Content Repurposing Engine**
-
----
-
-## Package Identity
-
-This directory contains 13 sequential implementation shards that guide you through building the complete Content Repurposing Engine. Each shard is self-contained with explicit tasks, verification steps, and acceptance criteria.
-
-**Total Estimated Time:** 8-12 hours
+> **Status: ✅ Implementation Complete**  
+> These shards were the original build plan. The actual implementation consolidated several shards and added new features.
 
 ---
 
-## Shard Execution Rules
+## Implementation Status
 
-### ✅ MUST
-
-1. **Execute shards in order** — Dependencies are critical
-2. **Check off tasks** as you complete them
-3. **Run verification steps** before proceeding
-4. **Troubleshoot blockers** before moving to next shard
-5. **Refer to parent docs** when shard references `voice-dna-framework.md` or `technical-requirements-spec.md`
-
-### ❌ DON'T
-
-1. Skip shards (even if they seem optional)
-2. Proceed if verification fails
-3. Execute shards 07-09 before shard 06 is complete
-4. Skip the quality gate (shard-10) — it's what differentiates this from generic AI content
-
----
-
-## Shard Dependency Graph
-
-```
-[01] Hostinger VPS Setup
-       │
-       ▼
-[02] n8n Installation ─────────┐
-       │                       │
-       ▼                       │
-[03] Google Credentials        │
-       │                       │
-       ▼                       │
-[04] Google Sheets Structure   │
-       │                       │
-       ▼                       │
-[05] Core Ingestion            │
-       │                       │
-       ▼                       │
-[06] Idea Extraction ──────────┼────────────┐
-       │                       │            │
-       ├───────┬───────┐       │            │
-       ▼       ▼       ▼       │            │
-    [07]    [08]    [09]       │            │
-  Twitter LinkedIn Newsletter   │            │
-       │       │       │       │            │
-       └───────┴───────┘       │            │
-               │               │            │
-               ▼               │            │
-[10] Quality Gate ◀────────────┘            │
-       │                                    │
-       ▼                                    │
-[11] Testing & Refinement                   │
-       │                                    │
-       ▼                                    │
-[12] Demo Assets ◀──────────────────────────┘
-```
+| Shard | Original Plan             | Actual Status                               |
+| ----- | ------------------------- | ------------------------------------------- |
+| 00    | Overview & execution plan | ✅ Used as reference                        |
+| 01    | Hostinger VPS Setup       | ✅ VPS provisioned                          |
+| 02    | n8n Installation          | ✅ n8n running                              |
+| 03    | Google Credentials        | ✅ Gemini API configured                    |
+| 04    | Google Sheets Structure   | ⏭️ Skipped (not needed for MVP)             |
+| 05    | Core Ingestion Workflow   | ✅ Implemented in content-generator.json    |
+| 06    | Idea Extraction           | ✅ Implemented in content-generator.json    |
+| 07    | Twitter Generation        | ✅ Implemented (unified generation)         |
+| 08    | LinkedIn Generation       | ✅ Implemented (unified generation)         |
+| 09    | Newsletter Generation     | ✅ Implemented + Instagram/Skool added      |
+| 10    | Quality Gate              | ⏭️ Deferred (LLM output quality sufficient) |
+| 11    | Testing & Refinement      | ✅ Done iteratively during development      |
+| 12    | Demo Assets               | 🔲 Pending (final step)                     |
+| 13    | Custom UI (Optional)      | ✅ Completed via n8n form/webhook flow      |
 
 ---
 
-## Quick Navigation
+## What Was Actually Built
 
-| Day | Shards | Focus Area             |
-| --- | ------ | ---------------------- |
-| 1   | 01-03  | Infrastructure         |
-| 2   | 04-06  | Foundation & Ingestion |
-| 3   | 07-09  | Content Generation     |
-| 4   | 10-11  | Quality & Testing      |
-| 5   | 12     | Demo & Submission      |
+### Two Workflow Architecture
 
----
+Instead of multiple small workflows, the implementation uses two comprehensive workflows:
 
-## Shard File Format
+**1. content-generator.json**
 
-Each shard follows this structure:
+- Form webhook input (replaces shards 05-06)
+- Unified content generation (replaces shards 07-09)
+- Interactive preview page with approval button
 
-```markdown
-# Shard NN: Title
+**2. content-approval.json**
 
-**Est. Time:** X min | **Depends on:** Shard NN | **Outcome:** Description
+- Decodes approval payload
+- Posts to X/Twitter, LinkedIn
+- Sends newsletters via Resend
+- Returns confirmation page
 
----
+### Additional Features (Not in Original Shards)
 
-## Part A: First Section
-
-### N.1 First Task
-
-- [ ] Step 1
-- [ ] Step 2
-
-### N.2 Second Task
-
-...
+| Feature                  | Description                         |
+| ------------------------ | ----------------------------------- |
+| **Instagram Generation** | Caption content with hooks and CTAs |
+| **Skool Generation**     | Community discussion posts          |
+| **Preview Page**         | Visual preview before posting       |
+| **One-Click Approval**   | Single button to post everything    |
+| **Resend Integration**   | Newsletter sending via Resend API   |
+| **Email Template**       | Outlook-compatible HTML emails      |
 
 ---
 
-## Verification
+## Key Differences from Plan
 
-- [ ] Check 1
-- [ ] Check 2
-```
+### Consolidated Workflows
 
----
+- Original plan: 5+ separate workflows
+- Actual: 2 unified workflows
 
-## JIT Index Hints
+### Content Generation
 
-```bash
-# List all shards in order
-ls -1 shard-*.md
+- Original plan: Separate LLM calls per platform
+- Actual: Single LLM call generates all platforms at once
 
-# Find a specific task
-rg -n "TASK" shard-*.md
+### Storage
 
-# Find verification steps
-rg -n "Verification" shard-*.md
+- Original plan: Google Sheets for persistence
+- Actual: Direct posting (no intermediate storage needed)
 
-# Check which shard mentions a topic
-rg -n "Gemini" shard-*.md
+### Quality Gate
 
-# View shard dependencies
-rg -n "Depends on" shard-*.md
-```
+- Original plan: LLM-based scoring system
+- Actual: Preview page allows human review
 
 ---
 
-## Common Gotchas
+## Files Reference
 
-1. **Shard 01 (Hostinger)**: VPS provisioning can take 5-10 minutes
-2. **Shard 03 (Google Credentials)**: Both Gemini API key AND Sheets OAuth2 required
-3. **Shard 06 (Idea Extraction)**: This is the foundation — all platform generators depend on it
-4. **Shards 07-09**: Can be done in parallel if sufficient time, but test each independently
-5. **Shard 10 (Quality Gate)**: Don't skip refinement logic — it's what prevents AI slop
-6. **Shard 12 (Demo)**: Record on production (Hostinger) not local for submission proof
+| File                                         | Purpose                       |
+| -------------------------------------------- | ----------------------------- |
+| `../../n8n-workflows/content-generator.json` | Main generation workflow      |
+| `../../n8n-workflows/content-approval.json`  | Approval & posting workflow   |
+| `../../n8n-workflows/prompts/`               | LLM prompt templates          |
+| `../../README.md`                            | Updated project documentation |
+| `../../AGENTS.md`                            | Updated agent guidelines      |
 
 ---
 
-## Cross-References
+## Next Steps (Shard 12)
 
-- **Voice DNA Prompts**: `../voice-dna-framework.md`
-- **Technical Specs**: `../technical-requirements-spec.md`
-- **Submission Checklist**: `../submission-requirements.md`
-- **Project Overview**: `../../AGENTS.md`
+For demo/submission:
+
+1. Record 1-2 minute demo video
+2. Write 100-300 word project description
+3. Submit via hackathon form
+
+---
+
+## Historical Reference
+
+The original shard files are preserved for reference but are no longer the canonical implementation guide. For current implementation details, see:
+
+- `../../AGENTS.md` - Current workflow documentation
+- `../../n8n-workflows/docs/setup-workflows.md` - Detailed workflow setup
