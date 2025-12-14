@@ -22,7 +22,7 @@
 | 10    | Quality Gate              | ⏭️ Deferred (LLM output quality sufficient) |
 | 11    | Testing & Refinement      | ✅ Done iteratively during development      |
 | 12    | Demo Assets               | 🔲 Pending (final step)                     |
-| 13    | Custom UI (Optional)      | ⏭️ Deferred (form webhook is sufficient)    |
+| 13    | Custom UI (Optional)      | ✅ Completed via n8n form/webhook flow      |
 
 ---
 
