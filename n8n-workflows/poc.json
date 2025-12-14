@@ -5,7 +5,7 @@
       "parameters": {
         "path": "ai-content-creator",
         "formTitle": "AI Content Creator (Agent POC)",
-        "formDescription": "Simple POC: Paste a transcript and let the AI Agent create social content",
+        "formDescription": "Generate and post multiple tweets from a transcript",
         "formFields": {
           "values": [
             {
@@ -13,46 +13,59 @@
               "fieldType": "textarea",
               "placeholder": "Paste your video transcript here...",
               "requiredField": true
+            },
+            {
+              "fieldLabel": "Number of Tweets",
+              "fieldType": "number",
+              "placeholder": "5"
+            },
+            {
+              "fieldLabel": "Post to X?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "No - Just generate" },
+                  { "option": "Yes - Post all tweets" }
+                ]
+              }
             }
           ]
         },
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "ad39c2a4-fd3e-4cf0-afa0-0fa969b8bdaf",
+      "id": "form-trigger",
       "name": "Form Trigger",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2,
-      "position": [1616, 624],
-      "webhookId": "951ab57d-78f5-48f8-8d44-6831ebcbcbab",
-      "notes": "📥 Simple form with just transcript input"
+      "position": [0, 300],
+      "webhookId": "951ab57d-78f5-48f8-8d44-6831ebcbcbab"
     },
     {
       "parameters": {
-        "jsCode": "// Generate a unique session ID for memory\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    ...formData,\n    sessionId: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`\n  }\n}];"
+        "jsCode": "const formData = $('Form Trigger').first().json;\nconst tweetCount = parseInt(formData['Number of Tweets']) || 5;\n\nreturn [{\n  json: {\n    ...formData,\n    sessionId: `session-${Date.now()}`,\n    tweetCount: Math.min(Math.max(tweetCount, 3), 10),\n    postToX: formData['Post to X?'] === 'Yes - Post all tweets'\n  }\n}];"
       },
-      "id": "1c5c22af-b2ee-43ce-8756-52114b15c2fc",
+      "id": "prepare-session",
       "name": "Prepare Session",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1840, 624],
-      "notes": "📋 Generates unique sessionId for memory buffer"
+      "position": [220, 300]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are a Content Repurposing Agent with access to a Twitter/X posting tool.\n\n## TRANSCRIPT:\n{{ $json.Transcript }}\n\n## YOUR TASKS:\n1. Extract 3-5 key ideas from this transcript\n2. Create 3 tweets (under 280 characters each, no hashtags)\n3. Create 1 LinkedIn post (with hook, body, and closing question)\n4. **USE THE X TOOL to post the FIRST tweet** - call the Create Tweet tool with your best tweet\n\n## IMPORTANT:\nAfter generating content, you MUST call the Create Tweet tool to post the first tweet to X.\nPass the tweet text directly to the tool.\n\nBe specific and actionable. Match the tone of the original content.",
+        "text": "=Analyze this transcript and create social media content.\n\n## TRANSCRIPT:\n{{ $json.Transcript }}\n\n## REQUIREMENTS:\n- Generate exactly {{ $json.tweetCount }} tweets\n- Each tweet under 280 characters\n- No hashtags, no emojis at the start\n- Make each tweet unique and valuable\n- Also create 1 LinkedIn post\n\nReturn the structured output with all tweets and LinkedIn content.",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "You are an expert content strategist. After generating content, always use the Create Tweet tool to post the first tweet. Be specific - avoid generic advice."
+          "systemMessage": "You are an expert content strategist. Create engaging, specific content. Match the tone of the original. Each tweet should stand alone and provide value."
         }
       },
-      "id": "669dd30b-7e53-457f-9605-14863d5952e7",
+      "id": "ai-agent",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [2048, 624],
-      "notes": "🤖 AI Agent with Groq + X Tool\n\nThe agent will:\n1. Generate content\n2. Call X Tool to post first tweet"
+      "position": [440, 300],
+      "notes": "🤖 ONE call to generate all tweets"
     },
     {
       "parameters": {
@@ -61,53 +74,144 @@
           "temperature": 0.7
         }
       },
-      "id": "189b6570-73c6-4101-91ed-b7e5d2c74c0b",
+      "id": "groq-chat-model",
       "name": "Groq Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [1920, 864],
+      "position": [320, 520],
       "credentials": {
         "groqApi": {
           "id": "8MsvIxF9vGRE2U0Y",
           "name": "Groq account"
         }
-      },
-      "notes": "🔧 Using Kimi-K2 model via Groq"
+      }
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
         "sessionKey": "={{ $json.sessionId }}",
-        "contextWindowLength": 10
+        "contextWindowLength": 5
       },
-      "id": "8571bf31-264c-41ed-93ee-a2978fe8adfc",
+      "id": "simple-memory",
       "name": "Simple Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [2048, 912],
-      "notes": "📝 Window Memory Buffer"
+      "position": [440, 520]
     },
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"key_ideas\": {\n      \"type\": \"array\",\n      \"description\": \"3-5 key ideas from the transcript\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"tweet_1\": {\n      \"type\": \"string\",\n      \"description\": \"First tweet, under 280 characters\"\n    },\n    \"tweet_2\": {\n      \"type\": \"string\",\n      \"description\": \"Second tweet, under 280 characters\"\n    },\n    \"tweet_3\": {\n      \"type\": \"string\",\n      \"description\": \"Third tweet, under 280 characters\"\n    },\n    \"linkedin_hook\": {\n      \"type\": \"string\",\n      \"description\": \"LinkedIn opening hook\"\n    },\n    \"linkedin_body\": {\n      \"type\": \"string\",\n      \"description\": \"LinkedIn main content\"\n    },\n    \"linkedin_question\": {\n      \"type\": \"string\",\n      \"description\": \"LinkedIn closing question\"\n    },\n    \"tweet_posted\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether the first tweet was posted to X\"\n    }\n  },\n  \"required\": [\"key_ideas\", \"tweet_1\", \"tweet_2\", \"tweet_3\", \"linkedin_hook\", \"linkedin_body\", \"linkedin_question\"]\n}"
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tweets\": {\n      \"type\": \"array\",\n      \"description\": \"Array of 3-10 tweets\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"content\": { \"type\": \"string\", \"description\": \"Tweet text under 280 chars\" },\n          \"type\": { \"type\": \"string\", \"description\": \"Type: contrarian, tactical, story, insight, question\" }\n        }\n      }\n    },\n    \"linkedin_hook\": { \"type\": \"string\" },\n    \"linkedin_body\": { \"type\": \"string\" },\n    \"linkedin_question\": { \"type\": \"string\" },\n    \"key_ideas\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    }\n  },\n  \"required\": [\"tweets\", \"linkedin_hook\", \"linkedin_body\", \"linkedin_question\", \"key_ideas\"]\n}"
       },
       "id": "output-parser",
       "name": "Structured Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
-      "position": [2176, 912],
-      "notes": "📋 Defines exact JSON output schema"
+      "position": [560, 520],
+      "notes": "📋 Output: tweets[] array with 3-10 items"
     },
     {
       "parameters": {
-        "jsCode": "// Format the AI Agent output for response\nconst agentOutput = $('AI Agent').first().json;\n\nlet message = '✅ Content Generated Successfully!\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (agentOutput.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += '\\n\\n🐦 TWEETS:\\n';\nmessage += `1. ${agentOutput.tweet_1 || 'N/A'}\\n`;\nmessage += `2. ${agentOutput.tweet_2 || 'N/A'}\\n`;\nmessage += `3. ${agentOutput.tweet_3 || 'N/A'}`;\nmessage += '\\n\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${agentOutput.linkedin_hook || 'N/A'}\\n`;\nmessage += `Body: ${agentOutput.linkedin_body || 'N/A'}\\n`;\nmessage += `Question: ${agentOutput.linkedin_question || 'N/A'}`;\n\nif (agentOutput.tweet_posted) {\n  message += '\\n\\n✅ First tweet was posted to X!';\n}\n\nreturn [{\n  json: {\n    success: true,\n    ...agentOutput,\n    message: message\n  }\n}];"
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "should-post",
+              "leftValue": "={{ $('Prepare Session').first().json.postToX }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "id": "5f53b764-828b-429e-ac79-00ac0a0b8433",
-      "name": "Format Output",
+      "id": "should-post",
+      "name": "Should Post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert tweets array to individual items\nconst agentOutput = $('AI Agent').first().json;\nconst tweets = agentOutput.tweets || [];\n\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content,\n    type: tweet.type,\n    agentOutput: agentOutput\n  }\n}));"
+      },
+      "id": "split-tweets",
+      "name": "Split Tweets",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2384, 624]
+      "position": [880, 200],
+      "notes": "📋 Converts tweets[] to individual items for looping"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop-tweets",
+      "name": "Loop Tweets",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1100, 200],
+      "notes": "🔄 Process one tweet at a time"
+    },
+    {
+      "parameters": {
+        "resource": "tweet",
+        "text": "={{ $json.content }}"
+      },
+      "id": "post-to-x",
+      "name": "Post to X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [1320, 200],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "TtzUMmUcFebH8T9X",
+          "name": "X account"
+        }
+      },
+      "notes": "🐦 Posts each tweet"
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "wait-60s",
+      "name": "Wait 60s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1540, 200],
+      "notes": "⏳ 60 second delay between tweets"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all posted tweets\nconst allItems = $('Post to X').all();\nconst agentOutput = $('Split Tweets').first().json.agentOutput;\n\nconst postedTweets = allItems.map((item, i) => ({\n  id: item.json?.data?.id,\n  text: item.json?.data?.text?.substring(0, 50) + '...'\n}));\n\nlet message = '✅ Content Generated & Posted!\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (agentOutput.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += `\\n\\n🐦 TWEETS POSTED (${postedTweets.length}):\\n`;\npostedTweets.forEach((t, i) => {\n  message += `${i+1}. ${t.text}\\n   → https://x.com/i/status/${t.id}\\n`;\n});\nmessage += '\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${agentOutput.linkedin_hook}\\n`;\nmessage += `Body: ${agentOutput.linkedin_body?.substring(0, 100)}...\\n`;\nmessage += `Question: ${agentOutput.linkedin_question}`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-posted-response",
+      "name": "Build Posted Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Just show generated content without posting\nconst agentOutput = $('AI Agent').first().json;\n\nlet message = '✅ Content Generated (not posted)\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (agentOutput.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += `\\n\\n🐦 TWEETS (${agentOutput.tweets?.length || 0}):\\n`;\n(agentOutput.tweets || []).forEach((t, i) => {\n  message += `${i+1}. [${t.type}] ${t.content}\\n`;\n});\nmessage += '\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${agentOutput.linkedin_hook}\\n`;\nmessage += `Body: ${agentOutput.linkedin_body}\\n`;\nmessage += `Question: ${agentOutput.linkedin_question}`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-no-post-response",
+      "name": "Build No-Post Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 400]
+    },
+    {
+      "parameters": {},
+      "id": "merge-responses",
+      "name": "Merge Responses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1540, 400]
     },
     {
       "parameters": {
@@ -115,152 +219,82 @@
         "responseBody": "={{ $json.message }}",
         "options": {}
       },
-      "id": "ee477415-dd84-48ef-b6f1-25cdc461e78b",
+      "id": "respond-form",
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [2592, 624]
+      "position": [1760, 400]
     },
     {
       "parameters": {
-        "content": "## POC: AI Agent + X Tool\n\n**How it works:**\n1. Form receives transcript\n2. AI Agent analyzes & generates content\n3. AI Agent calls X Tool to post first tweet\n4. Structured Output Parser formats response\n5. Response shows all content + X post status\n\n**The AI Agent decides when to call the X Tool!**",
-        "height": 776,
-        "width": 512,
+        "content": "## POC: Multi-Tweet Poster\n\n**Flow:**\n1. AI Agent generates 3-10 tweets in ONE call\n2. Split into individual items\n3. Loop: Post → Wait 60s → Next\n4. Collect results & respond\n\n**Rate Limit Protection:**\n60-second delay between X API calls",
+        "height": 340,
+        "width": 400,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [1280, 192],
+      "position": [-60, 100],
       "typeVersion": 1,
-      "id": "e3c1d3ec-8ec5-4018-8cf6-aa9bdc33c3e5",
+      "id": "note-overview",
       "name": "Note: Overview"
-    },
-    {
-      "parameters": {
-        "content": "## X Tool as AI Agent Tool\n\nThe X Tool is connected as an **ai_tool**.\nThis means the AI Agent can call it!\n\nThe prompt tells the agent:\n\"USE THE X TOOL to post the FIRST tweet\"",
-        "height": 260,
-        "width": 300,
-        "color": 6
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [2272, 1040],
-      "typeVersion": 1,
-      "id": "dbed0d30-794f-4b3d-bd4e-4f110b27854f",
-      "name": "Note: X Tool"
-    },
-    {
-      "parameters": {
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-base.twitterTool",
-      "typeVersion": 2,
-      "position": [2304, 912],
-      "id": "12c8edec-5f93-43c0-b4ca-5879d9e4562d",
-      "name": "Create Tweet in X",
-      "credentials": {
-        "twitterOAuth2Api": {
-          "id": "TtzUMmUcFebH8T9X",
-          "name": "X account"
-        }
-      },
-      "notes": "🐦 X Tool - AI Agent passes tweet text directly"
     }
   ],
   "pinData": {},
   "connections": {
     "Form Trigger": {
-      "main": [
-        [
-          {
-            "node": "Prepare Session",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Prepare Session", "type": "main", "index": 0 }]]
     },
     "Prepare Session": {
-      "main": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
     },
     "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Format Output",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Should Post?", "type": "main", "index": 0 }]]
     },
     "Groq Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
     },
     "Simple Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]]
     },
     "Structured Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_outputParser": [[{ "node": "AI Agent", "type": "ai_outputParser", "index": 0 }]]
     },
-    "Format Output": {
+    "Should Post?": {
       "main": [
-        [
-          {
-            "node": "Respond to Form",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Split Tweets", "type": "main", "index": 0 }],
+        [{ "node": "Build No-Post Response", "type": "main", "index": 0 }]
       ]
     },
-    "Create Tweet in X": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
+    "Split Tweets": {
+      "main": [[{ "node": "Loop Tweets", "type": "main", "index": 0 }]]
+    },
+    "Loop Tweets": {
+      "main": [
+        [{ "node": "Post to X", "type": "main", "index": 0 }],
+        [{ "node": "Build Posted Response", "type": "main", "index": 0 }]
       ]
+    },
+    "Post to X": {
+      "main": [[{ "node": "Wait 60s", "type": "main", "index": 0 }]]
+    },
+    "Wait 60s": {
+      "main": [[{ "node": "Loop Tweets", "type": "main", "index": 0 }]]
+    },
+    "Build No-Post Response": {
+      "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
+    },
+    "Build Posted Response": {
+      "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
+    },
+    "Merge Responses": {
+      "main": [[{ "node": "Respond to Form", "type": "main", "index": 0 }]]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "c4e3d527-da18-4f37-a879-efa4dbb94364",
+  "versionId": "d5e3d527-da18-4f37-a879-efa4dbb94365",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
