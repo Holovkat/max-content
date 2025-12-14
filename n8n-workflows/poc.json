@@ -1,0 +1,270 @@
+{
+  "name": "poc",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ai-content-creator",
+        "formTitle": "AI Content Creator (Agent POC)",
+        "formDescription": "Simple POC: Paste a transcript and let the AI Agent create social content",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Transcript",
+              "fieldType": "textarea",
+              "placeholder": "Paste your video transcript here...",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ad39c2a4-fd3e-4cf0-afa0-0fa969b8bdaf",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [1616, 624],
+      "webhookId": "951ab57d-78f5-48f8-8d44-6831ebcbcbab",
+      "notes": "📥 Simple form with just transcript input"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate a unique session ID for memory\nconst formData = $('Form Trigger').first().json;\n\nreturn [{\n  json: {\n    ...formData,\n    sessionId: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`\n  }\n}];"
+      },
+      "id": "1c5c22af-b2ee-43ce-8756-52114b15c2fc",
+      "name": "Prepare Session",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1840, 624],
+      "notes": "📋 Generates unique sessionId for memory buffer"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Content Repurposing Agent with access to a Twitter/X posting tool.\n\n## TRANSCRIPT:\n{{ $json.Transcript }}\n\n## YOUR TASKS:\n1. Extract 3-5 key ideas from this transcript\n2. Create 3 tweets (under 280 characters each, no hashtags)\n3. Create 1 LinkedIn post (with hook, body, and closing question)\n4. **USE THE X TOOL to post the FIRST tweet** - call the Create Tweet tool with your best tweet\n\n## IMPORTANT:\nAfter generating content, you MUST call the Create Tweet tool to post the first tweet to X.\nPass the tweet text directly to the tool.\n\nBe specific and actionable. Match the tone of the original content.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert content strategist. After generating content, always use the Create Tweet tool to post the first tweet. Be specific - avoid generic advice."
+        }
+      },
+      "id": "669dd30b-7e53-457f-9605-14863d5952e7",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [2048, 624],
+      "notes": "🤖 AI Agent with Groq + X Tool\n\nThe agent will:\n1. Generate content\n2. Call X Tool to post first tweet"
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct-0905",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "189b6570-73c6-4101-91ed-b7e5d2c74c0b",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [1920, 864],
+      "credentials": {
+        "groqApi": {
+          "id": "8MsvIxF9vGRE2U0Y",
+          "name": "Groq account"
+        }
+      },
+      "notes": "🔧 Using Kimi-K2 model via Groq"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "id": "8571bf31-264c-41ed-93ee-a2978fe8adfc",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [2048, 912],
+      "notes": "📝 Window Memory Buffer"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"key_ideas\": {\n      \"type\": \"array\",\n      \"description\": \"3-5 key ideas from the transcript\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"tweet_1\": {\n      \"type\": \"string\",\n      \"description\": \"First tweet, under 280 characters\"\n    },\n    \"tweet_2\": {\n      \"type\": \"string\",\n      \"description\": \"Second tweet, under 280 characters\"\n    },\n    \"tweet_3\": {\n      \"type\": \"string\",\n      \"description\": \"Third tweet, under 280 characters\"\n    },\n    \"linkedin_hook\": {\n      \"type\": \"string\",\n      \"description\": \"LinkedIn opening hook\"\n    },\n    \"linkedin_body\": {\n      \"type\": \"string\",\n      \"description\": \"LinkedIn main content\"\n    },\n    \"linkedin_question\": {\n      \"type\": \"string\",\n      \"description\": \"LinkedIn closing question\"\n    },\n    \"tweet_posted\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether the first tweet was posted to X\"\n    }\n  },\n  \"required\": [\"key_ideas\", \"tweet_1\", \"tweet_2\", \"tweet_3\", \"linkedin_hook\", \"linkedin_body\", \"linkedin_question\"]\n}"
+      },
+      "id": "output-parser",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [2176, 912],
+      "notes": "📋 Defines exact JSON output schema"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format the AI Agent output for response\nconst agentOutput = $('AI Agent').first().json;\n\nlet message = '✅ Content Generated Successfully!\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (agentOutput.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += '\\n\\n🐦 TWEETS:\\n';\nmessage += `1. ${agentOutput.tweet_1 || 'N/A'}\\n`;\nmessage += `2. ${agentOutput.tweet_2 || 'N/A'}\\n`;\nmessage += `3. ${agentOutput.tweet_3 || 'N/A'}`;\nmessage += '\\n\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${agentOutput.linkedin_hook || 'N/A'}\\n`;\nmessage += `Body: ${agentOutput.linkedin_body || 'N/A'}\\n`;\nmessage += `Question: ${agentOutput.linkedin_question || 'N/A'}`;\n\nif (agentOutput.tweet_posted) {\n  message += '\\n\\n✅ First tweet was posted to X!';\n}\n\nreturn [{\n  json: {\n    success: true,\n    ...agentOutput,\n    message: message\n  }\n}];"
+      },
+      "id": "5f53b764-828b-429e-ac79-00ac0a0b8433",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2384, 624]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "ee477415-dd84-48ef-b6f1-25cdc461e78b",
+      "name": "Respond to Form",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2592, 624]
+    },
+    {
+      "parameters": {
+        "content": "## POC: AI Agent + X Tool\n\n**How it works:**\n1. Form receives transcript\n2. AI Agent analyzes & generates content\n3. AI Agent calls X Tool to post first tweet\n4. Structured Output Parser formats response\n5. Response shows all content + X post status\n\n**The AI Agent decides when to call the X Tool!**",
+        "height": 776,
+        "width": 512,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1280, 192],
+      "typeVersion": 1,
+      "id": "e3c1d3ec-8ec5-4018-8cf6-aa9bdc33c3e5",
+      "name": "Note: Overview"
+    },
+    {
+      "parameters": {
+        "content": "## X Tool as AI Agent Tool\n\nThe X Tool is connected as an **ai_tool**.\nThis means the AI Agent can call it!\n\nThe prompt tells the agent:\n\"USE THE X TOOL to post the FIRST tweet\"",
+        "height": 260,
+        "width": 300,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [2272, 1040],
+      "typeVersion": 1,
+      "id": "dbed0d30-794f-4b3d-bd4e-4f110b27854f",
+      "name": "Note: X Tool"
+    },
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.twitterTool",
+      "typeVersion": 2,
+      "position": [2304, 912],
+      "id": "12c8edec-5f93-43c0-b4ca-5879d9e4562d",
+      "name": "Create Tweet in X",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "TtzUMmUcFebH8T9X",
+          "name": "X account"
+        }
+      },
+      "notes": "🐦 X Tool - AI Agent passes tweet text directly"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Session": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tweet in X": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c4e3d527-da18-4f37-a879-efa4dbb94364",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
+  },
+  "id": "R7tzZu07byZxSuex",
+  "tags": []
+}
