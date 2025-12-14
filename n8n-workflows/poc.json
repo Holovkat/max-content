@@ -134,7 +134,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Convert tweets array to individual items\nconst agentOutput = $('AI Agent').first().json;\nconst tweets = agentOutput.tweets || [];\n\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content,\n    type: tweet.type,\n    agentOutput: agentOutput\n  }\n}));"
+        "jsCode": "// Convert tweets array to individual items\nconst agentOutput = $('AI Agent').first().json;\nconst tweets = agentOutput.tweets || [];\n\n// Handle empty tweets array\nif (!tweets || tweets.length === 0) {\n  return [{\n    json: {\n      index: 0,\n      total: 0,\n      content: '',\n      type: 'error',\n      error: 'No tweets generated',\n      agentOutput: agentOutput\n    }\n  }];\n}\n\n// Map tweets to individual items\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content || '',\n    type: tweet.type || 'unknown',\n    agentOutput: agentOutput\n  }\n}));"
       },
       "id": "split-tweets",
       "name": "Split Tweets",
@@ -227,8 +227,37 @@
     },
     {
       "parameters": {
-        "content": "## POC: Multi-Tweet Poster\n\n**Flow:**\n1. AI Agent generates 3-10 tweets in ONE call\n2. Split into individual items\n3. Loop: Post → Wait 60s → Next\n4. Collect results & respond\n\n**Rate Limit Protection:**\n60-second delay between X API calls",
-        "height": 340,
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "has-content",
+              "leftValue": "={{ $json.content }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            },
+            {
+              "id": "not-error",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "error",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "has-valid-tweets",
+      "name": "Has Valid Tweets?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [980, 200],
+      "notes": "✅ Checks tweet has content and is not an error"
+    },
+    {
+      "parameters": {
+        "content": "## POC: Multi-Tweet Poster\n\n**Flow:**\n1. AI Agent generates 3-10 tweets in ONE call\n2. Split into individual items\n3. Check if valid tweets exist\n4. Loop: Post → Wait 60s → Next\n5. Collect results & respond\n\n**Rate Limit Protection:**\n60-second delay between X API calls",
+        "height": 380,
         "width": 400,
         "color": 5
       },
@@ -266,7 +295,13 @@
       ]
     },
     "Split Tweets": {
-      "main": [[{ "node": "Loop Tweets", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Has Valid Tweets?", "type": "main", "index": 0 }]]
+    },
+    "Has Valid Tweets?": {
+      "main": [
+        [{ "node": "Loop Tweets", "type": "main", "index": 0 }],
+        [{ "node": "Build No-Post Response", "type": "main", "index": 0 }]
+      ]
     },
     "Loop Tweets": {
       "main": [
