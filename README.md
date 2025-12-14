@@ -1,67 +1,65 @@
-# 🎬 Content Repurposing Engine
+# 🎬 Max Content - AI-Powered Content Repurposing Engine
 
 > **Hostinger x n8n Hackathon – Content Management Build**  
-> Transform long-form video transcripts into platform-ready social content.
+> Transform long-form content into platform-ready social posts with a single click.
 
-[![Deadline](https://img.shields.io/badge/Deadline-December%2014%2C%202024-red)]()
+[![Status](https://img.shields.io/badge/Status-Complete-brightgreen)]()
 [![Platform](https://img.shields.io/badge/Platform-n8n-orange)]()
-[![Hosting](https://img.shields.io/badge/Hosting-Hostinger%20VPS-blue)]()
-[![Workflow](https://img.shields.io/badge/Git-Graphite%20Stacking-purple)]()
-
----
-
-## ⚠️ Git Workflow (Mandatory)
-
-> **ALL changes MUST use the Graphite stacking workflow. No direct commits to main.**
-
-| Rule            | Requirement                         |
-| --------------- | ----------------------------------- |
-| **Main Branch** | ❌ **NEVER** commit directly        |
-| **Merge Type**  | ✅ **ALWAYS squash merge**          |
-| **Rebasing**    | ✅ Keep stack in sync with main     |
-| **PR Size**     | Small, focused — ONE logical change |
-
-```bash
-# Quick workflow
-git checkout -b feature/your-change origin/main
-# ... make changes ...
-git push origin feature/your-change
-gh pr create --base main --title "feat: description"
-gh pr merge <PR_NUMBER> --squash --delete-branch
-```
-
-See [AGENTS.md](AGENTS.md) for full workflow documentation.
+[![AI](https://img.shields.io/badge/AI-Google%20Gemini-blue)]()
 
 ---
 
 ## 🚀 What It Does
 
-The **Content Repurposing Engine** takes a single long-form video transcript and automatically generates **platform-ready posts** for:
+**Max Content** takes your long-form content (YouTube transcripts, podcast notes, articles) and automatically generates **platform-ready posts** for:
 
-- 💼 **LinkedIn** – Professional posts (150-300+ words)
-- 🐦 **X/Twitter** – Punchy tweets and threads
-- 📸 **Instagram** – Emotionally-driven captions
-- 🎓 **Skool** – Community engagement posts
-- 📧 **Newsletter** – Summary sections with CTAs
+| Platform          | Content Type                       | Publishing              |
+| ----------------- | ---------------------------------- | ----------------------- |
+| 🐦 **X/Twitter**  | Punchy tweets with hooks           | ✅ Auto-post            |
+| 💼 **LinkedIn**   | Professional posts (150-300 words) | ✅ Auto-post            |
+| 📧 **Newsletter** | Email with key takeaways           | ✅ Auto-send via Resend |
+| 📸 **Instagram**  | Emotionally-driven captions        | 📋 Copy-ready           |
+| 🎓 **Skool**      | Community discussion starters      | 📋 Copy-ready           |
 
-Every piece of content follows the **Hook → Value → CTA** structure to maximize engagement while avoiding generic "AI slop."
+Every piece of content follows the **Hook → Value → CTA** structure to maximize engagement.
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-Transcript → n8n Workflow → LLM Processing → Multi-Platform Content → Storage
+┌─────────────────────────────────────────────────────────────────┐
+│                    WEB FORM INPUT                                │
+│  Submit: YouTube URL, transcript, or raw ideas + platforms      │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              CONTENT GENERATOR WORKFLOW                          │
+│  • Parse input and extract content                               │
+│  • Generate platform-specific content via Gemini                 │
+│  • Build interactive preview page                                │
+│  • Encode payload for approval                                   │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              PREVIEW & APPROVAL PAGE                             │
+│  • Visual preview of all generated content                       │
+│  • Platform indicators (will post / copy only)                   │
+│  • One-click "Approve and Post" button                          │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              CONTENT APPROVAL WORKFLOW                           │
+│  • Decode payload and parse LLM output                          │
+│  • Post to X/Twitter via API                                    │
+│  • Post to LinkedIn via API                                     │
+│  • Send newsletter via Resend                                   │
+│  • Return success/error confirmation page                       │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
-| Component         | Local Dev            | Production           |
-| ----------------- | -------------------- | -------------------- |
-| **Orchestration** | n8n (Docker Desktop) | n8n (self-hosted)    |
-| **Hosting**       | localhost:5678       | Hostinger VPS (KVM2) |
-| **AI/LLM**        | Google Gemini Flash  | Google Gemini Flash  |
-| **Storage**       | Google Sheets        | Google Sheets        |
-
-> 💰 **Zero-cost stack**: Gemini Flash free tier (1M tokens/day) + Google Sheets (free)
 
 ---
 
@@ -69,123 +67,137 @@ Transcript → n8n Workflow → LLM Processing → Multi-Platform Content → St
 
 ```
 max-content/
-├── AGENTS.md                    # AI agent guidelines & quick reference
-├── README.md                    # This file
-├── features/
-│   ├── prd.md                   # Product Requirements Document
-│   ├── technical-requirements-spec.md  # Full technical architecture
-│   ├── voice-dna-framework.md   # LLM prompts & voice calibration
-│   ├── submission-requirements.md  # Hackathon checklist
-│   ├── implementation-shards/   # 13 step-by-step build guides
-│   │   ├── shard-00-overview.md     # Execution plan
-│   │   ├── shard-01-hostinger-setup.md
-│   │   ├── shard-02-n8n-setup.md
-│   │   ├── shard-03 to 12...        # Infrastructure to Demo
-│   │   └── shard-12-demo-assets.md  # Final submission
-│   └── sprint-artifacts/        # Sprint deliverables
-├── .agent/workflows/bmad/       # BMAD workflow definitions
-└── .bmad/                       # BMAD configuration
+├── README.md                        # This file
+├── AGENTS.md                        # AI agent guidelines
+├── n8n-workflows/
+│   ├── content-generator.json       # Main content generation workflow
+│   ├── content-approval.json        # Approval & posting workflow
+│   ├── workflow-error-handler.json  # Error handling utilities
+│   ├── input-schema.md              # Form input documentation
+│   ├── sheets-schema.md             # Google Sheets schema
+│   ├── prompts/                     # LLM prompt templates
+│   └── docs/                        # Workflow documentation
+├── scripts/
+│   ├── update-workflows.py          # Workflow JSON updater
+│   └── fix-email-colors.py          # Email template fixer
+└── features/
+    ├── prd.md                        # Product Requirements
+    ├── technical-requirements-spec.md
+    ├── voice-dna-framework.md        # LLM prompts & voice calibration
+    └── implementation-shards/        # Build guides
 ```
 
 ---
 
-## 📋 Implementation Roadmap
+## 🔧 Workflows
 
-> **Local-first development** → Deploy to Hostinger for final submission
+### 1. Content Generator (`content-generator.json`)
 
-| Phase | Description                             | Environment | Status |
-| ----- | --------------------------------------- | ----------- | ------ |
-| 1️⃣    | Local Setup (Docker Desktop + n8n)      | 🏠 Local    | 🔲     |
-| 2️⃣    | Minimal Viable Workflow (LinkedIn only) | 🏠 Local    | 🔲     |
-| 3️⃣    | Multi-Platform Expansion                | 🏠 Local    | 🔲     |
-| 4️⃣    | Quality Layer (LLM review)              | 🏠 Local    | 🔲     |
-| 5️⃣    | Polish & Observability                  | 🏠 Local    | 🔲     |
-| 6️⃣    | **Deploy to Hostinger VPS**             | ☁️ Prod     | 🔲     |
-| 7️⃣    | Demo & Submission                       | ☁️ Prod     | 🔲     |
+**Trigger:** Webhook form submission
 
----
+**Inputs:**
 
-## 🎯 Hackathon Deliverables
+- Content source (YouTube URL, transcript, or raw text)
+- Platform selection (X, LinkedIn, Newsletter, Instagram, Skool)
+- Newsletter settings (recipient emails, sender name)
 
-- [ ] n8n workflows deployed on Hostinger VPS
-- [ ] Data storage with sample output posts
-- [ ] **1-2 minute demo video**
-- [ ] **100-300 word write-up**
-- [ ] (Optional) Simple input UI
+**Process:**
 
----
+1. Parse and prepare input data
+2. Call Gemini to generate platform-specific content
+3. Build visual preview HTML page
+4. Encode payload with pipe-delimited format for approval
 
-## 📖 Documentation
+**Output:** Interactive preview page with "Approve and Post" button
 
-| Document                                                                     | Description                               |
-| ---------------------------------------------------------------------------- | ----------------------------------------- |
-| [AGENTS.md](AGENTS.md)                                                       | AI agent guidelines & quick reference     |
-| [PRD](features/prd.md)                                                       | Full Product Requirements                 |
-| [Technical Spec](features/technical-requirements-spec.md)                    | Architecture, data flow, success criteria |
-| [Voice DNA Framework](features/voice-dna-framework.md)                       | LLM prompts & voice calibration           |
-| [Implementation Shards](features/implementation-shards/shard-00-overview.md) | Step-by-step build guide (13 shards)      |
-| [Submission Checklist](features/submission-requirements.md)                  | Pre-submission verification               |
+### 2. Content Approval (`content-approval.json`)
+
+**Trigger:** Approval button click (webhook with encoded payload)
+
+**Process:**
+
+1. Decode pipe-delimited payload
+2. Parse raw LLM JSON output
+3. Route to platform-specific posting nodes
+4. Post to X/Twitter, LinkedIn, send newsletters
+5. Collect results and errors
+
+**Output:** Confirmation page with success/error details
 
 ---
 
-## 🔧 Getting Started
+## 🛠️ Setup
 
 ### Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
-- LLM API key (OpenAI/Gemini/Anthropic)
-- Data storage account (Airtable/Notion/Sheets)
-- (For deployment) Hostinger VPS (KVM2)
+- n8n instance (local Docker or Hostinger VPS)
+- Google Gemini API key
+- X/Twitter API credentials (for auto-posting)
+- LinkedIn OAuth credentials (for auto-posting)
+- Resend API key (for newsletters)
 
-### Local Development Setup
+### Installation
 
-```bash
-# Quick start with Docker
-docker run -d --name n8n-local -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+1. **Import workflows into n8n:**
+   - `n8n-workflows/content-generator.json`
+   - `n8n-workflows/content-approval.json`
 
-# Access n8n at http://localhost:5678
+2. **Configure credentials in n8n:**
+   - Google Gemini API
+   - Twitter OAuth 2.0
+   - LinkedIn OAuth 2.0
+   - Resend API (HTTP Header Auth)
 
-# Or use Docker Compose (see AGENTS.md for full config)
-docker-compose up -d
-```
+3. **Activate both workflows**
 
-### BMAD Workflows
-
-This project uses [BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD) for project management:
-
-```bash
-# Initialize project workflow
-/workflow-init
-
-# Check status
-/workflow-status
-
-# Create development story
-/create-story
-```
+4. **Access the form:**
+   - Navigate to: `https://your-n8n-instance/webhook/content-generator`
 
 ---
 
-## 📝 Content Quality Standards
+## 📋 Content Quality Standards
 
-Every generated post must:
+Every generated post follows the **Hook → Value → CTA** structure:
 
-✅ Have a **clear hook** (1-2 sentences)  
-✅ Deliver **concrete value** (specific insights, not vague advice)  
-✅ End with a **natural CTA** (platform-appropriate)  
-✅ Be something a creator would **actually post**
+| Component | Purpose                              | Example                                  |
+| --------- | ------------------------------------ | ---------------------------------------- |
+| **Hook**  | 1-2 sentences to capture attention   | "Most people misunderstand AI agents..." |
+| **Value** | Detailed insight or transformation   | Specific steps, examples, data           |
+| **CTA**   | Natural, platform-appropriate action | "Reply 'guide' for the PDF"              |
 
-❌ No generic filler ("In today's fast-paced world...")  
-❌ No repetitive patterns  
-❌ No obvious AI-generated language
+### Anti-Slop Rules
+
+- ✅ Specific examples, not vague advice
+- ✅ Platform-native voice and length
+- ✅ Something a creator would actually post
+- ❌ Generic filler ("In today's fast-paced world...")
+- ❌ Obvious AI-generated patterns
 
 ---
 
-## ⏰ Deadline
+## 🔐 Security
 
-**December 14, 2024 – 11:59 PM EST**
+- API keys stored in n8n Credentials Manager (encrypted)
+- No hardcoded secrets in workflow JSON
+- Payload uses base64 encoding for transport
 
-Submit via Skool → Hostinger Hackathon category → Official submission form.
+---
+
+## 📈 Payload Format
+
+The system uses a pipe-delimited payload format to avoid JSON encoding issues:
+
+```
+sessionId|x|linkedin|newsletter|instagram|skool|recipients|senderName|base64LlmText
+```
+
+| Position | Field            | Example                     |
+| -------- | ---------------- | --------------------------- |
+| 0        | Session ID       | `session-1734175234567`     |
+| 1-5      | Platform flags   | `1` (enabled) or `0`        |
+| 6        | Recipient emails | `email1@x.com,email2@x.com` |
+| 7        | Sender name      | `Max Content`               |
+| 8        | LLM output       | Base64-encoded JSON         |
 
 ---
 

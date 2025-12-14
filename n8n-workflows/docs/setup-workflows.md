@@ -1,286 +1,252 @@
-# Workflow Setup Guide
+# n8n Workflows Documentation
 
-## Content Repurposing Engine - n8n Workflows
-
-This document explains how to import and configure the n8n workflows.
+> **Max Content - AI-Powered Content Repurposing Engine**
 
 ---
 
 ## Workflow Overview
 
-| #   | Workflow File                      | Purpose                               | Triggered By     |
-| --- | ---------------------------------- | ------------------------------------- | ---------------- |
-| 1   | `workflow-ingestion.json`          | Form input → Store transcript         | Form submission  |
-| 2   | `workflow-idea-extraction.json`    | Parallel idea extraction (GLM + Kimi) | Execute Workflow |
-| 3   | `workflow-content-generation.json` | Parallel content creation             | Execute Workflow |
-| 4   | `workflow-curation.json`           | Gemini picks best output              | Execute Workflow |
-| 5   | `workflow-error-handler.json`      | Central error handling                | Error events     |
-
----
-
-## Status Indicators
-
-All content rows use emoji status indicators:
-
-| Emoji | Status  | Meaning                        |
-| ----- | ------- | ------------------------------ |
-| ⭐    | Sent    | Content exported/published     |
-| ✅    | Created | Content generated successfully |
-| ❌    | Error   | Exception during processing    |
-| ⏳    | Pending | In progress                    |
-
----
-
-## Installation Order
-
-**Install in this order:**
-
-1. **Error Handler first** (other workflows reference it)
-2. **Ingestion workflow**
-3. **Idea Extraction workflow**
-4. **Content Generation workflow**
-5. **Curation workflow**
-
----
-
-## Step-by-Step Installation
-
-### 1. Import Error Handler
-
-1. Open n8n in browser
-2. Click **+** to create new workflow
-3. Click **⋮** menu → **Import from File**
-4. Select: `workflow-error-handler.json`
-5. Configure:
-   - Click **Log Error to Sheets** node
-   - Select your Google Sheets credential
-   - Select `Content Repurposing Engine` spreadsheet
-   - Select `Error_Logs` sheet (create if needed)
-6. **Save and Activate** the workflow
-
-### 2. Import Ingestion Workflow
-
-1. Import `workflow-ingestion.json`
-2. Configure:
-   - **Store Raw Transcript** node: Select your spreadsheet/sheet
-   - **Execute Workflow** node: Link to Idea Extraction workflow
-3. **Save and Activate**
-
-### 3. Import Idea Extraction Workflow
-
-1. Import `workflow-idea-extraction.json`
-2. Configure credentials:
-   - **Extract Ideas (GLM-4.6)**: Add GLM-4 Header Auth credential
-   - **Extract Ideas (Kimi-K2)**: Add Groq Header Auth credential
-   - **Store Ideas**: Select your spreadsheet/sheet
-3. Link error workflow in Settings → Error Workflow
-4. **Save** (don't activate - it's triggered by another workflow)
-
-### 4. Import Content Generation Workflow
-
-1. Import `workflow-content-generation.json`
-2. Configure credentials for all 6 HTTP Request nodes:
-   - GLM nodes: GLM-4 API credential
-   - Kimi nodes: Groq API credential
-3. Link error workflow in Settings
-4. **Save**
-
-### 5. Import Curation Workflow
-
-1. Import `workflow-curation.json`
-2. Configure:
-   - **Curate Content**: Add Gemini API credential
-   - **Store Curated Content**: Select your spreadsheet/sheet
-3. Link error workflow in Settings
-4. **Save**
-
----
-
-## Credential Setup
-
-### GLM-4 API (Header Auth) - Z.AI Coding Plan
-
-1. Go to **Settings → Credentials → Add Credential**
-2. Type: **Header Auth**
-3. Configure:
-   - Name: `GLM-4 API`
-   - Header Name: `Authorization`
-   - Header Value: `Bearer YOUR_Z_AI_API_KEY`
-
-**Endpoint Used:** `https://api.z.ai/api/coding/paas/v4/chat/completions`
-
-**Note:** The workflows also send `Accept-Language: en-US,en` header automatically.
-
-### Groq API (Header Auth) - Kimi-K2
-
-1. Add another **Header Auth** credential
-2. Configure:
-   - Name: `Groq API`
-   - Header Name: `Authorization`
-   - Header Value: `Bearer YOUR_GROQ_API_KEY`
-
-Get key from: [console.groq.com](https://console.groq.com)
-
-**Model Used:** `moonshotai/kimi-k2-instruct-0905`
-
-### Gemini API
-
-1. Add **Google Gemini** credential
-2. Enter your API key from [aistudio.google.com](https://aistudio.google.com)
-
-**Model Used:** `gemini-2.5-flash`
-
-### Google Sheets OAuth
-
-1. Add **Google Sheets OAuth2** credential
-2. Connect your Google account
-3. Authorize access to Sheets
-
----
-
-## Google Sheets Setup
-
-### Required Sheets
-
-Your `Content Repurposing Engine` spreadsheet needs these sheets:
-
-| Sheet Name          | Purpose               |
-| ------------------- | --------------------- |
-| `Raw_Transcripts`   | Input storage         |
-| `Ideas_Extracted`   | GLM + Kimi ideas      |
-| `Generated_Content` | Final curated content |
-| `Error_Logs`        | Error tracking        |
-
-### Column Headers
-
-**Raw_Transcripts:**
+The system consists of two main workflows that work together:
 
 ```
-status | video_id | video_title | video_url | transcript | metadata | created_at
-```
-
-**Ideas_Extracted:**
-
-```
-status | idea_id | video_id | glm_ideas | kimi_ideas | extracted_at
-```
-
-**Generated_Content:**
-
-```
-status | content_id | video_id | curated_tweets | curated_linkedin | curated_newsletter | summary | created_at
-```
-
-**Error_Logs:**
-
-```
-error_id | workflow_name | node_name | error_message | execution_id | timestamp | status
+┌────────────────────────────────────────────────────────────────┐
+│                     USER SUBMITS FORM                          │
+│  (YouTube URL, transcript, or raw content + platform selection) │
+└─────────────────────────┬──────────────────────────────────────┘
+                          │
+                          ▼
+┌────────────────────────────────────────────────────────────────┐
+│             CONTENT GENERATOR WORKFLOW                          │
+│  content-generator.json                                         │
+│                                                                 │
+│  1. Receive form submission via webhook                         │
+│  2. Prepare and normalize input data                            │
+│  3. Call Gemini to generate platform content                    │
+│  4. Build interactive preview page                              │
+│  5. Return HTML with "Approve and Post" button                  │
+└─────────────────────────┬──────────────────────────────────────┘
+                          │
+                          ▼
+┌────────────────────────────────────────────────────────────────┐
+│                    PREVIEW PAGE                                 │
+│  Shows all generated content with platform indicators           │
+│  User clicks "Approve and Post" to proceed                      │
+└─────────────────────────┬──────────────────────────────────────┘
+                          │
+                          ▼
+┌────────────────────────────────────────────────────────────────┐
+│             CONTENT APPROVAL WORKFLOW                           │
+│  content-approval.json                                          │
+│                                                                 │
+│  1. Receive approval click via webhook                          │
+│  2. Decode payload (pipe-delimited format)                      │
+│  3. Parse LLM JSON output                                       │
+│  4. Post to enabled platforms:                                  │
+│     - X/Twitter (auto-post via API)                             │
+│     - LinkedIn (auto-post via API)                              │
+│     - Newsletter (send via Resend)                              │
+│  5. Return success/error confirmation page                      │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Error Handling
+## Workflow Files
 
-All workflows are configured to:
+| File                          | Purpose                          |
+| ----------------------------- | -------------------------------- |
+| `content-generator.json`      | Main content generation workflow |
+| `content-approval.json`       | Approval and posting workflow    |
+| `workflow-error-handler.json` | Error handling utilities         |
 
-1. Continue on error (don't stop entire workflow)
-2. Route errors to the Error Handler workflow
-3. Log errors to Error_Logs sheet
-4. Update status column with ❌ emoji
+---
 
-### Email Notifications (Optional)
+## Content Generator Nodes
 
-To add email alerts for errors:
+### 1. Content Form Webhook
 
-1. Open `workflow-error-handler.json` in n8n
-2. After **Log Error to Sheets**, add **Send Email** node
-3. Configure with your email settings
-4. Connect the nodes
+- **Type:** Webhook
+- **Path:** `/content-generator`
+- **Method:** POST
+- **Purpose:** Receives form submission
+
+### 2. Prepare Input
+
+- **Type:** Code
+- **Purpose:** Extracts and normalizes input data
+- **Outputs:** sessionId, platforms, content source, newsletter settings
+
+### 3. Generate Content
+
+- **Type:** Google Gemini Chat Model
+- **Purpose:** Generates platform-specific content
+- **Model:** gemini-1.5-flash
+- **Output:** JSON with tweets, linkedin, newsletter, instagram, skool
+
+### 4. Build Preview Response
+
+- **Type:** Code
+- **Purpose:** Creates interactive HTML preview
+- **Key Functions:**
+  - Parses LLM JSON output
+  - Sanitizes control characters
+  - Creates pipe-delimited payload
+  - Encodes payload as base64
+  - Generates responsive preview HTML
+
+### 5. Respond with HTML
+
+- **Type:** Respond to Webhook
+- **Purpose:** Returns preview page to user
+
+---
+
+## Content Approval Nodes
+
+### 1. Approval Webhook
+
+- **Type:** Webhook
+- **Path:** `/content-approval-confirm`
+- **Purpose:** Receives approval click with encoded payload
+
+### 2. Decode Payload
+
+- **Type:** Code
+- **Purpose:** Decodes pipe-delimited payload
+- **Process:**
+  1. Base64 decode outer payload
+  2. Split by pipe delimiter
+  3. Extract platform flags and settings
+  4. Base64 decode LLM text
+  5. JSON parse LLM output
+
+### 3. Prepare Tasks
+
+- **Type:** Code
+- **Purpose:** Routes content to platform-specific nodes
+
+### 4. Platform Routing (IF nodes)
+
+- **Is X?** → Post to X
+- **Is LinkedIn?** → Post to LinkedIn
+- **Is Newsletter?** → Build Email HTML → Send via Resend
+
+### 5. Post to X
+
+- **Type:** Twitter (X) OAuth2
+- **Purpose:** Posts tweets via API
+
+### 6. Post to LinkedIn
+
+- **Type:** LinkedIn OAuth2
+- **Purpose:** Posts to LinkedIn feed
+
+### 7. Build Email HTML
+
+- **Type:** Code
+- **Purpose:** Generates newsletter email template
+- **Features:**
+  - Solid color backgrounds (Outlook compatible)
+  - Includes Instagram/Skool content if selected
+  - Responsive table-based layout
+
+### 8. Send via Resend
+
+- **Type:** HTTP Request
+- **Purpose:** Sends email via Resend API
+
+### 9. Build Confirmation
+
+- **Type:** Code
+- **Purpose:** Creates success/error page with results
+
+---
+
+## Payload Format
+
+The system uses a **pipe-delimited** format instead of JSON:
+
+```
+sessionId|x|linkedin|newsletter|instagram|skool|recipients|senderName|base64LlmText
+```
+
+| Position | Field       | Example                     |
+| -------- | ----------- | --------------------------- |
+| 0        | Session ID  | `session-1734175234567`     |
+| 1        | X/Twitter   | `1` (enabled) or `0`        |
+| 2        | LinkedIn    | `1` or `0`                  |
+| 3        | Newsletter  | `1` or `0`                  |
+| 4        | Instagram   | `1` or `0`                  |
+| 5        | Skool       | `1` or `0`                  |
+| 6        | Recipients  | `email1@x.com,email2@x.com` |
+| 7        | Sender Name | `Newsletter Name`           |
+| 8        | LLM Output  | Base64-encoded JSON         |
+
+**Why pipe-delimited?**
+
+- LLM output contains control characters that break JSON parsing
+- Nested JSON structures are fragile when base64 encoded
+- Pipe format keeps LLM output isolated in its own base64 segment
+
+---
+
+## Required Credentials
+
+Configure in n8n Settings → Credentials:
+
+| Credential        | Type             | Used By          |
+| ----------------- | ---------------- | ---------------- |
+| **Google Gemini** | API Key          | Generate Content |
+| **Twitter (X)**   | OAuth 2.0        | Post to X        |
+| **LinkedIn**      | OAuth 2.0        | Post to LinkedIn |
+| **Resend**        | HTTP Header Auth | Send via Resend  |
+
+---
+
+## Importing Workflows
+
+1. Open n8n
+2. Go to Workflows → Import from File
+3. Select `content-generator.json`
+4. Repeat for `content-approval.json`
+5. Configure credentials in each workflow
+6. Activate both workflows
 
 ---
 
 ## Testing
 
-### Test Ingestion
+1. **Test Generator:**
+   - POST to `/webhook/content-generator` with form data
+   - Verify preview page appears
 
-1. Open the Ingestion workflow
-2. Click **Test Step** on Form Trigger
-3. Open the form URL in browser
-4. Submit test data
-5. Check:
-   - ✅ Row appears in Raw_Transcripts
-   - ✅ Status shows ✅ or ⏳
-
-### Test Full Pipeline
-
-1. Submit a real transcript via form
-2. Watch executions in n8n
-3. Check each sheet for data
-4. Verify no errors in Error_Logs
+2. **Test Approval:**
+   - Click "Approve and Post" on preview
+   - Verify posts appear on platforms
+   - Check confirmation page for errors
 
 ---
 
 ## Troubleshooting
 
-### Workflow not triggering
+### Preview shows "Error parsing AI response"
 
-- Check workflow is activated (toggle on)
-- Verify Execute Workflow node points to correct workflow
+- Check Gemini API key is valid
+- Verify prompt format in Generate Content node
 
-### API errors
+### "Bad control character" error
 
-- Check credentials are configured correctly
-- Verify API keys are valid
-- Check rate limits
+- Fixed in current version with pipe-delimited payload
+- Re-import workflows if using old version
 
-### Empty content
+### Posts not appearing
 
-- Check API response in execution log
-- Verify prompt is being sent correctly
+- Check OAuth credentials are valid
+- Verify API rate limits not exceeded
+- Check n8n execution logs
 
-### Sheets not updating
+### Newsletter not sending
 
-- Re-authorize Google Sheets credential
-- Check sheet names match exactly
-
----
-
-## Execution Flow
-
-```
-Form Submit
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ INGESTION WORKFLOW                                              │
-│ Form → Set Metadata → Store → Execute Idea Extraction           │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ IDEA EXTRACTION WORKFLOW                                        │
-│ GLM-4.6 ─┐                                                      │
-│          ├─→ Merge & Parse → Store → Execute Content Generation │
-│ Kimi-K2 ─┘                                                      │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ CONTENT GENERATION WORKFLOW                                     │
-│ 6 parallel API calls (GLM + Kimi × 3 platforms)                │
-│ → Merge All → Execute Curation                                  │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ CURATION WORKFLOW                                               │
-│ Gemini → Compare → Pick Best → Store Final Content              │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-Done! Content in Generated_Content sheet with ✅ status
-```
-
----
-
-_For detailed prompt content, see the `/prompts/` folder as reference._
+- Verify Resend API key
+- Check recipient email format
+- Confirm "From" address is verified in Resend
