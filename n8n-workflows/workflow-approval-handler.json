@@ -1,0 +1,252 @@
+{
+  "name": "Content Approval - Post Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "content-approval-confirm",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Approval Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "approval-confirm-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decode the content payload from the approval URL\nconst query = $json.query || {};\nconst encodedData = query.data || '';\n\nif (!encodedData) {\n  return [{\n    json: {\n      success: false,\n      error: 'No content data provided',\n      html: '<html><body><h1>Error</h1><p>No content data found. Please go back and try again.</p></body></html>'\n    }\n  }];\n}\n\ntry {\n  const decoded = Buffer.from(encodedData, 'base64').toString('utf-8');\n  const payload = JSON.parse(decoded);\n  \n  return [{\n    json: {\n      success: true,\n      sessionId: payload.sessionId,\n      platforms: payload.platforms,\n      content: payload.content,\n      createdAt: payload.createdAt\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      success: false,\n      error: 'Failed to decode content: ' + error.message,\n      html: '<html><body><h1>Error</h1><p>Failed to decode content. Please go back and try again.</p></body></html>'\n    }\n  }];\n}"
+      },
+      "id": "decode-payload",
+      "name": "Decode Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-valid",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-valid",
+      "name": "Valid Payload?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare items for posting based on platform selection\nconst data = $json;\nconst platforms = data.platforms || {};\nconst content = data.content || {};\n\nconst tasks = [];\n\n// Add X/Twitter tasks\nif (platforms.x && content.tweets) {\n  content.tweets.forEach((tweet, i) => {\n    tasks.push({\n      platform: 'x',\n      index: i + 1,\n      content: tweet.content,\n      type: tweet.type\n    });\n  });\n}\n\n// Add LinkedIn task\nif (platforms.linkedin && content.linkedin) {\n  const li = content.linkedin;\n  const fullPost = [li.hook, li.body, li.question].filter(Boolean).join('\\n\\n');\n  tasks.push({\n    platform: 'linkedin',\n    index: 1,\n    content: fullPost\n  });\n}\n\n// Add Newsletter task (for logging/output - actual sending would need email integration)\nif (platforms.newsletter && content.newsletter) {\n  tasks.push({\n    platform: 'newsletter',\n    index: 1,\n    content: JSON.stringify(content.newsletter),\n    subject: content.newsletter.subject\n  });\n}\n\nreturn tasks.map(task => ({ json: { ...task, sessionId: data.sessionId } }));"
+      },
+      "id": "prepare-tasks",
+      "name": "Prepare Post Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-x",
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "x",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-x-platform",
+      "name": "Is X?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.content }}",
+        "additionalFields": {}
+      },
+      "id": "post-to-x",
+      "name": "Post to X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [1100, 100],
+      "credentials": {
+        "twitterOAuth2Api": { "id": "", "name": "X account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-linkedin",
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "linkedin",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-linkedin-platform",
+      "name": "Is LinkedIn?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "person": "",
+        "text": "={{ $json.content }}",
+        "additionalFields": { "visibility": "PUBLIC" }
+      },
+      "id": "post-to-linkedin",
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [1320, 300],
+      "credentials": {
+        "linkedInOAuth2Api": { "id": "", "name": "LinkedIn OAuth2 API" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all results and build confirmation page\nconst allItems = $('Post to X').all().concat($('Post to LinkedIn').all());\nconst originalData = $('Decode Payload').first().json;\n\nconst results = {\n  x: [],\n  linkedin: [],\n  newsletter: []\n};\n\n// Process X results\n$('Post to X').all().forEach(item => {\n  if (item.json?.data?.id) {\n    results.x.push({\n      id: item.json.data.id,\n      text: item.json.data.text,\n      url: `https://x.com/i/status/${item.json.data.id}`\n    });\n  }\n});\n\n// Process LinkedIn results\n$('Post to LinkedIn').all().forEach(item => {\n  if (item.json?.urn) {\n    results.linkedin.push({\n      id: item.json.urn,\n      url: `https://www.linkedin.com/feed/update/${item.json.urn}`\n    });\n  }\n});\n\nconst css = `\n<style>\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #10b981 0%, #059669 100%); min-height: 100vh; padding: 40px 20px; margin: 0; }\n  .container { max-width: 700px; margin: 0 auto; }\n  .card { background: white; border-radius: 16px; padding: 30px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }\n  .header { text-align: center; color: white; margin-bottom: 30px; }\n  .header h1 { font-size: 2.5em; margin: 0; }\n  .success-icon { font-size: 4em; margin-bottom: 10px; }\n  .result-item { padding: 16px; background: #f0fdf4; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid #10b981; }\n  .result-item a { color: #059669; text-decoration: none; font-weight: 500; }\n  .result-item a:hover { text-decoration: underline; }\n  .platform-label { font-weight: 600; color: #065f46; margin-bottom: 8px; }\n</style>`;\n\nlet html = css;\nhtml += '<div class=\"container\">';\nhtml += '<div class=\"header\"><div class=\"success-icon\">🎉</div><h1>Published Successfully!</h1></div>';\n\nhtml += '<div class=\"card\">';\n\nif (results.x.length > 0) {\n  html += '<div class=\"platform-label\">𝕏 Twitter</div>';\n  results.x.forEach((r, i) => {\n    html += `<div class=\"result-item\">Tweet ${i+1}: <a href=\"${r.url}\" target=\"_blank\">View on X →</a></div>`;\n  });\n}\n\nif (results.linkedin.length > 0) {\n  html += '<div class=\"platform-label\" style=\"margin-top:20px;\">in LinkedIn</div>';\n  results.linkedin.forEach(r => {\n    html += `<div class=\"result-item\"><a href=\"${r.url}\" target=\"_blank\">View on LinkedIn →</a></div>`;\n  });\n}\n\nif (originalData.platforms?.newsletter) {\n  html += '<div class=\"platform-label\" style=\"margin-top:20px;\">📧 Newsletter</div>';\n  html += '<div class=\"result-item\">Newsletter content generated (email sending not configured)</div>';\n}\n\nhtml += '</div>';\nhtml += '<div class=\"card\" style=\"text-align:center;\"><p>✅ All content has been published to your selected platforms!</p></div>';\nhtml += '</div>';\n\nreturn [{ json: { html, results } }];"
+      },
+      "id": "build-confirmation",
+      "name": "Build Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 300]
+    },
+    {
+      "parameters": {},
+      "id": "merge",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1320, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "text/html; charset=utf-8" }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1760, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "text/html; charset=utf-8" }
+            ]
+          }
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 400]
+    },
+    {
+      "parameters": {
+        "content": "## Approval Webhook Handler\n\n**Receives:**\n- Encoded content from approval button\n\n**Processes:**\n1. Decode payload\n2. Split into platform tasks\n3. Post to X (if selected)\n4. Post to LinkedIn (if selected)\n5. Return confirmation page\n\n**Note:**\nNewsletter output is generated\nbut email sending needs separate\nintegration (SendGrid, etc.)",
+        "height": 320,
+        "width": 340,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-60, 60],
+      "typeVersion": 1,
+      "id": "note",
+      "name": "Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Approval Webhook": {
+      "main": [[{ "node": "Decode Payload", "type": "main", "index": 0 }]]
+    },
+    "Decode Payload": {
+      "main": [[{ "node": "Valid Payload?", "type": "main", "index": 0 }]]
+    },
+    "Valid Payload?": {
+      "main": [
+        [{ "node": "Prepare Post Tasks", "type": "main", "index": 0 }],
+        [{ "node": "Respond Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Post Tasks": {
+      "main": [[{ "node": "Is X?", "type": "main", "index": 0 }]]
+    },
+    "Is X?": {
+      "main": [
+        [{ "node": "Post to X", "type": "main", "index": 0 }],
+        [{ "node": "Is LinkedIn?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post to X": {
+      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+    },
+    "Is LinkedIn?": {
+      "main": [
+        [{ "node": "Post to LinkedIn", "type": "main", "index": 0 }],
+        [{ "node": "Build Confirmation", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post to LinkedIn": {
+      "main": [[{ "node": "Build Confirmation", "type": "main", "index": 0 }]]
+    },
+    "Merge Results": {
+      "main": [[{ "node": "Is LinkedIn?", "type": "main", "index": 0 }]]
+    },
+    "Build Confirmation": {
+      "main": [[{ "node": "Respond Success", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "approval-handler-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": ["approval", "posting", "webhook"]
+}
