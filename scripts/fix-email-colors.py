@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Fix email template colors to avoid white-on-white text issues.
+Fix email template - add fallback background colors for email clients 
+that don't support gradients, and ensure all text has proper contrast.
 """
 
 import json
 
 APPROVAL_PATH = '/Users/tonyholovka/workspace/max-content/n8n-workflows/content-approval.json'
 
-# Updated email template with proper colors (no white on white)
+# Updated email template with fallback solid colors for gradient backgrounds
 EMAIL_CODE = '''// Build HTML email from newsletter data
 const decodedPayload = $('Decode Payload').first().json;
 const newsletterSettings = decodedPayload.newsletter || {};
@@ -37,7 +38,7 @@ if (platforms.instagram && instagram.length > 0) {
       <td style="padding:16px;background:#ffffff;border-radius:8px;margin-bottom:12px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="background:linear-gradient(135deg,#E4405F,#833AB4);color:white;padding:8px 12px;border-radius:4px;font-size:12px;font-weight:bold;display:inline-block;">CAPTION ${idx + 1}</td>
+            <td><span style="background:#E4405F;color:#ffffff;padding:8px 12px;border-radius:4px;font-size:12px;font-weight:bold;">CAPTION ${idx + 1}</span></td>
           </tr>
           <tr>
             <td style="padding-top:12px;font-weight:600;color:#1f2937;font-size:16px;">${ig.hook || ''}</td>
@@ -56,11 +57,11 @@ if (platforms.instagram && instagram.length > 0) {
   
   instagramHtml = `
     <tr>
-      <td style="padding:24px;background:linear-gradient(135deg,#fdf2f8 0%,#fce7f3 100%);border-radius:12px;">
+      <td style="padding:24px;background:#fce7f3;border-radius:12px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="padding-bottom:16px;">
-              <span style="background:#E4405F;color:white;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;">&#128247; INSTAGRAM READY</span>
+              <span style="background:#E4405F;color:#ffffff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;">&#128247; INSTAGRAM READY</span>
             </td>
           </tr>
           ${igCaptions}
@@ -84,11 +85,11 @@ if (platforms.skool && skool.title) {
   
   skoolHtml = `
     <tr>
-      <td style="padding:24px;background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);border-radius:12px;">
+      <td style="padding:24px;background:#e0e7ff;border-radius:12px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="padding-bottom:16px;">
-              <span style="background:#5865F2;color:white;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;">&#127891; SKOOL COMMUNITY</span>
+              <span style="background:#5865F2;color:#ffffff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;">&#127891; SKOOL COMMUNITY</span>
             </td>
           </tr>
           <tr>
@@ -102,7 +103,7 @@ if (platforms.skool && skool.title) {
                 </tr>
                 ${takeawaysList ? `<tr><td><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">${takeawaysList}</table></td></tr>` : ''}
                 <tr>
-                  <td style="background:#5865F2;color:white;padding:14px;border-radius:8px;font-style:italic;">
+                  <td style="background:#5865F2;color:#ffffff;padding:14px;border-radius:8px;font-style:italic;">
                     &#128172; ${skool.discussion || ''}
                   </td>
                 </tr>
@@ -129,12 +130,17 @@ const emailHtml = `
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
           
-          <!-- HEADER -->
+          <!-- HEADER with solid purple fallback -->
           <tr>
-            <td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:40px 30px;text-align:center;">
+            <td style="background-color:#667eea;padding:40px 30px;text-align:center;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="font-size:26px;font-weight:700;color:#ffffff;text-shadow:0 2px 4px rgba(0,0,0,0.2);">
+                  <td style="font-size:26px;font-weight:700;color:#1f2937;padding-bottom:8px;">
+                    &#128231; Newsletter
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size:22px;font-weight:600;color:#ffffff;">
                     ${nl.subject || 'Newsletter'}
                   </td>
                 </tr>
@@ -180,9 +186,15 @@ const emailHtml = `
           ${nl.cta ? `
           <tr>
             <td style="padding:12px 30px 32px;text-align:center;background:#ffffff;">
-              <a href="#" style="display:inline-block;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#ffffff;padding:14px 36px;border-radius:30px;text-decoration:none;font-weight:600;font-size:15px;">
-                ${nl.cta} &#8594;
-              </a>
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="background:#667eea;border-radius:30px;">
+                    <a href="#" style="display:inline-block;color:#ffffff;padding:14px 36px;text-decoration:none;font-weight:600;font-size:15px;">
+                      ${nl.cta} &#8594;
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           ` : ''}
@@ -278,7 +290,12 @@ def main():
     with open(APPROVAL_PATH, 'r') as f:
         json.load(f)
     print("JSON validation passed!")
-    print("\n✅ Email template fixed!")
+    print("\n✅ Email template fixed with proper fallback colors!")
+    print("\nKey changes:")
+    print("  - Header uses solid #667eea purple (no gradient)")
+    print("  - Added dark emoji label above subject")
+    print("  - Instagram/Skool sections use solid background colors")
+    print("  - All text has proper contrast")
 
 if __name__ == '__main__':
     main()
