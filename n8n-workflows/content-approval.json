@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare items for posting based on platform selection\nconst data = $json;\nconst platforms = data.platforms || {};\nconst content = data.content || {};\n\nconst tasks = [];\n\n// Add X/Twitter tasks\nif (platforms.x && content.tweets) {\n  content.tweets.forEach((tweet, i) => {\n    tasks.push({\n      platform: 'x',\n      index: i + 1,\n      content: tweet.content,\n      type: tweet.type\n    });\n  });\n}\n\n// Add LinkedIn task with professional formatting\nif (platforms.linkedin && content.linkedin) {\n  const li = content.linkedin;\n  let formattedPost = '';\n  if (li.hook) formattedPost += li.hook + '\\n\\n';\n  if (li.body) formattedPost += li.body + '\\n\\n';\n  if (li.question) formattedPost += li.question;\n  \n  tasks.push({\n    platform: 'linkedin',\n    index: 1,\n    content: formattedPost.trim(),\n    hook: li.hook,\n    body: li.body,\n    question: li.question\n  });\n}\n\n// Add Newsletter task\nif (platforms.newsletter && content.newsletter) {\n  tasks.push({\n    platform: 'newsletter',\n    index: 1,\n    content: JSON.stringify(content.newsletter),\n    subject: content.newsletter.subject,\n    newsletterData: content.newsletter\n  });\n}\n\nif (tasks.length === 0) {\n  tasks.push({\n    platform: 'none',\n    content: 'No platforms selected',\n    originalContent: content\n  });\n}\n\nreturn tasks.map(task => ({ json: { ...task, sessionId: data.sessionId, originalContent: content } }));"
+        "jsCode": "// Prepare items for posting based on platform selection\nconst data = $json;\nconst platforms = data.platforms || {};\nconst content = data.content || {};\n\nconst tasks = [];\n\n// Add X/Twitter tasks\nif (platforms.x && content.tweets) {\n  content.tweets.forEach((tweet, i) => {\n    tasks.push({\n      platform: 'x',\n      index: i + 1,\n      content: tweet.content,\n      type: tweet.type\n    });\n  });\n}\n\n// Add LinkedIn task with professional formatting\nif (platforms.linkedin && content.linkedin) {\n  const li = content.linkedin;\n  let formattedPost = '';\n  if (li.hook) formattedPost += li.hook + '\\n\\n';\n  if (li.body) formattedPost += li.body + '\\n\\n';\n  if (li.question) formattedPost += li.question;\n  \n  tasks.push({\n    platform: 'linkedin',\n    index: 1,\n    content: formattedPost.trim(),\n    hook: li.hook,\n    body: li.body,\n    question: li.question\n  });\n}\n\n// Add Newsletter task with full data for email\nif (platforms.newsletter && content.newsletter) {\n  const nl = content.newsletter;\n  tasks.push({\n    platform: 'newsletter',\n    index: 1,\n    subject: nl.subject,\n    intro: nl.intro,\n    points: nl.points || [],\n    cta: nl.cta,\n    newsletterData: nl\n  });\n}\n\nif (tasks.length === 0) {\n  tasks.push({\n    platform: 'none',\n    content: 'No platforms selected',\n    originalContent: content\n  });\n}\n\nreturn tasks.map(task => ({ json: { ...task, sessionId: data.sessionId, originalContent: content } }));"
       },
       "id": "prepare-tasks",
       "name": "Prepare Post Tasks",
@@ -126,7 +126,7 @@
       "name": "Post to LinkedIn",
       "type": "n8n-nodes-base.linkedIn",
       "typeVersion": 1,
-      "position": [1320, 300],
+      "position": [1320, 200],
       "credentials": {
         "linkedInOAuth2Api": { "id": "", "name": "LinkedIn OAuth2 API" }
       },
@@ -134,21 +134,90 @@
     },
     {
       "parameters": {
-        "jsCode": "// Collect all results and build confirmation/error page\nconst originalData = $('Decode Payload').first().json;\nconst content = originalData.content || {};\nconst platforms = originalData.platforms || {};\n\nconst results = { x: [], linkedin: [], newsletter: null };\nconst errors = [];\n\n// Process X results and errors\ntry {\n  $('Post to X').all().forEach(function(item) {\n    if (item.json && (item.json.error || item.json.message || item.json.detail)) {\n      var errorMsg = item.json.error || item.json.message || item.json.detail || 'Unknown error';\n      errors.push({\n        platform: 'X/Twitter',\n        error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),\n        code: item.json.status || item.json.code || ''\n      });\n    } else if (item.json && item.json.data && item.json.data.id) {\n      results.x.push({\n        id: item.json.data.id,\n        text: item.json.data.text,\n        url: 'https://x.com/i/status/' + item.json.data.id\n      });\n    }\n  });\n} catch (e) {\n  if (platforms.x) {\n    errors.push({ platform: 'X/Twitter', error: 'Failed to post: ' + e.message });\n  }\n}\n\n// Process LinkedIn results and errors\ntry {\n  $('Post to LinkedIn').all().forEach(function(item) {\n    if (item.json && (item.json.error || item.json.message || item.json.serviceErrorCode)) {\n      var errorMsg = item.json.error || item.json.message || 'Unknown error';\n      errors.push({\n        platform: 'LinkedIn',\n        error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),\n        code: item.json.serviceErrorCode || item.json.status || ''\n      });\n    } else if (item.json && (item.json.urn || item.json.id)) {\n      var urn = item.json.urn || item.json.id;\n      results.linkedin.push({\n        id: urn,\n        url: 'https://www.linkedin.com/feed/update/' + urn\n      });\n    }\n  });\n} catch (e) {\n  if (platforms.linkedin) {\n    errors.push({ platform: 'LinkedIn', error: 'Failed to post: ' + e.message });\n  }\n}\n\nvar hasErrors = errors.length > 0;\nvar hasSuccess = results.x.length > 0 || results.linkedin.length > 0;\n\n// Build HTML\nvar bgColor = hasErrors && !hasSuccess ? '#dc2626' : hasErrors ? '#f59e0b' : '#10b981';\nvar css = '<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:' + bgColor + ';min-height:100vh;padding:40px 20px;margin:0}.container{max-width:800px;margin:0 auto}.card{background:#fff;border-radius:16px;padding:28px;margin-bottom:20px;box-shadow:0 10px 40px rgba(0,0,0,0.2)}.header{text-align:center;color:#fff;margin-bottom:30px}.header h1{font-size:2.5em;margin:0}.status-icon{font-size:4em;margin-bottom:10px}.error-box{background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;margin-bottom:16px}.error-title{color:#991b1b;font-weight:600;margin:0 0 8px}.error-message{color:#7f1d1d;font-family:monospace;font-size:0.9em;background:#fee2e2;padding:12px;border-radius:8px;word-break:break-word}.success-item{background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid #10b981}.view-link{color:#059669;text-decoration:none;font-weight:500}.summary-card{background:#1a1a2e;color:#fff;text-align:center;padding:24px}.summary-stats{display:flex;justify-content:center;gap:30px;margin-top:16px}.stat{text-align:center}.stat-number{font-size:2em;font-weight:700}.stat-label{font-size:0.85em;opacity:0.8}</style>';\n\nvar html = css + '<div class=\"container\">';\n\n// Header\nif (hasErrors && !hasSuccess) {\n  html += '<div class=\"header\"><div class=\"status-icon\">X</div><h1>Publishing Failed</h1><p>There were errors posting your content</p></div>';\n} else if (hasErrors) {\n  html += '<div class=\"header\"><div class=\"status-icon\">!</div><h1>Partial Success</h1><p>Some content was posted, but there were errors</p></div>';\n} else {\n  html += '<div class=\"header\"><div class=\"status-icon\">OK</div><h1>Published Successfully!</h1><p>Your content is now live</p></div>';\n}\n\n// Errors\nif (errors.length > 0) {\n  html += '<div class=\"card\"><h3>Errors</h3>';\n  for (var i = 0; i < errors.length; i++) {\n    var err = errors[i];\n    html += '<div class=\"error-box\">';\n    html += '<div class=\"error-title\">' + err.platform + (err.code ? ' (Code: ' + err.code + ')' : '') + '</div>';\n    html += '<div class=\"error-message\">' + err.error + '</div>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// X Success\nif (results.x.length > 0) {\n  html += '<div class=\"card\"><h3>X/Twitter - ' + results.x.length + ' Posted</h3>';\n  var tweets = content.tweets || [];\n  for (var j = 0; j < results.x.length; j++) {\n    var r = results.x[j];\n    var txt = (tweets[j] && tweets[j].content) || r.text || '';\n    html += '<div class=\"success-item\">';\n    html += '<span>' + txt.substring(0, 100) + (txt.length > 100 ? '...' : '') + '</span>';\n    html += '<br><a class=\"view-link\" href=\"' + r.url + '\" target=\"_blank\">View on X</a>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// LinkedIn Success\nif (results.linkedin.length > 0) {\n  var li = content.linkedin || {};\n  html += '<div class=\"card\"><h3>LinkedIn - Posted</h3>';\n  html += '<div class=\"success-item\">';\n  if (li.hook) html += '<strong>' + li.hook + '</strong><br>';\n  if (li.body) html += li.body.substring(0, 150) + '...<br>';\n  for (var k = 0; k < results.linkedin.length; k++) {\n    html += '<a class=\"view-link\" href=\"' + results.linkedin[k].url + '\" target=\"_blank\">View on LinkedIn</a>';\n  }\n  html += '</div></div>';\n}\n\n// Newsletter\nif (platforms.newsletter && content.newsletter) {\n  html += '<div class=\"card\"><h3>Newsletter - Ready to Send</h3>';\n  html += '<p>Subject: ' + (content.newsletter.subject || 'Newsletter') + '</p>';\n  html += '<p style=\"color:#666\">Email sending requires integration (SendGrid, etc.)</p>';\n  html += '</div>';\n}\n\n// Summary\nhtml += '<div class=\"card summary-card\">';\nif (hasErrors && !hasSuccess) {\n  html += '<h3>No Content Posted</h3><p>Please check the errors above</p>';\n} else if (hasErrors) {\n  html += '<h3>Partially Complete</h3>';\n} else {\n  html += '<h3>All Done!</h3>';\n}\nhtml += '<div class=\"summary-stats\">';\nif (results.x.length > 0) html += '<div class=\"stat\"><div class=\"stat-number\">' + results.x.length + '</div><div class=\"stat-label\">Tweets</div></div>';\nif (results.linkedin.length > 0) html += '<div class=\"stat\"><div class=\"stat-number\">' + results.linkedin.length + '</div><div class=\"stat-label\">LinkedIn</div></div>';\nif (errors.length > 0) html += '<div class=\"stat\"><div class=\"stat-number\" style=\"color:#f87171\">' + errors.length + '</div><div class=\"stat-label\">Errors</div></div>';\nhtml += '</div></div></div>';\n\nreturn [{ json: { html: html, results: results, errors: errors } }];"
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-newsletter",
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "newsletter",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "is-newsletter-platform",
+      "name": "Is Newsletter?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1320, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build HTML email from newsletter data\nconst nl = $json.newsletterData || $json;\n\nconst emailHtml = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f4f5; margin: 0; padding: 40px 20px; }\n    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }\n    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; color: white; }\n    .header h1 { margin: 0; font-size: 1.8em; }\n    .content { padding: 30px; }\n    .intro { font-size: 1.1em; line-height: 1.7; color: #374151; margin-bottom: 24px; }\n    .points-section { background: #f8f9ff; border-radius: 8px; padding: 20px; margin-bottom: 24px; }\n    .points-title { font-weight: 600; color: #1f2937; margin-bottom: 12px; }\n    .point { padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #4b5563; }\n    .point:last-child { border-bottom: none; }\n    .point::before { content: \"→ \"; color: #667eea; font-weight: 600; }\n    .cta-section { text-align: center; padding: 20px 0; }\n    .cta-btn { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; }\n    .footer { background: #f9fafb; padding: 20px 30px; text-align: center; color: #6b7280; font-size: 0.9em; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>${nl.subject || 'Newsletter'}</h1>\n    </div>\n    <div class=\"content\">\n      <div class=\"intro\">${nl.intro || ''}</div>\n      ${(nl.points && nl.points.length > 0) ? `\n      <div class=\"points-section\">\n        <div class=\"points-title\">Key Takeaways:</div>\n        ${nl.points.map(p => `<div class=\"point\">${p}</div>`).join('')}\n      </div>\n      ` : ''}\n      ${nl.cta ? `\n      <div class=\"cta-section\">\n        <a href=\"#\" class=\"cta-btn\">${nl.cta}</a>\n      </div>\n      ` : ''}\n    </div>\n    <div class=\"footer\">\n      You received this email because you subscribed to our newsletter.\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    platform: 'newsletter',\n    subject: nl.subject || 'Newsletter',\n    htmlBody: emailHtml,\n    newsletterData: nl,\n    originalContent: $json.originalContent\n  }\n}];"
+      },
+      "id": "build-email",
+      "name": "Build Email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"newsletter@yourdomain.com\",\n  \"to\": [\"subscriber@example.com\"],\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.htmlBody) }}\n}",
+        "options": {}
+      },
+      "id": "send-resend",
+      "name": "Send via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 400],
+      "credentials": {
+        "httpHeaderAuth": { "id": "", "name": "Resend API Key" }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "id": "merge-x",
+      "name": "Merge X Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1320, 100]
+    },
+    {
+      "parameters": {},
+      "id": "merge-linkedin",
+      "name": "Merge LinkedIn Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1540, 200]
+    },
+    {
+      "parameters": {},
+      "id": "merge-newsletter",
+      "name": "Merge Newsletter Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1980, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all results and build confirmation/error page\nconst originalData = $('Decode Payload').first().json;\nconst content = originalData.content || {};\nconst platforms = originalData.platforms || {};\n\nconst results = { x: [], linkedin: [], newsletter: null };\nconst errors = [];\n\n// Process X results and errors\ntry {\n  $('Post to X').all().forEach(function(item) {\n    if (item.json && (item.json.error || item.json.message || item.json.detail)) {\n      var errorMsg = item.json.error || item.json.message || item.json.detail || 'Unknown error';\n      errors.push({\n        platform: 'X/Twitter',\n        error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),\n        code: item.json.status || item.json.code || ''\n      });\n    } else if (item.json && item.json.data && item.json.data.id) {\n      results.x.push({\n        id: item.json.data.id,\n        text: item.json.data.text,\n        url: 'https://x.com/i/status/' + item.json.data.id\n      });\n    }\n  });\n} catch (e) {}\n\n// Process LinkedIn results and errors\ntry {\n  $('Post to LinkedIn').all().forEach(function(item) {\n    if (item.json && (item.json.error || item.json.message || item.json.serviceErrorCode)) {\n      var errorMsg = item.json.error || item.json.message || 'Unknown error';\n      errors.push({\n        platform: 'LinkedIn',\n        error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),\n        code: item.json.serviceErrorCode || item.json.status || ''\n      });\n    } else if (item.json && (item.json.urn || item.json.id)) {\n      var urn = item.json.urn || item.json.id;\n      results.linkedin.push({\n        id: urn,\n        url: 'https://www.linkedin.com/feed/update/' + urn\n      });\n    }\n  });\n} catch (e) {}\n\n// Process Newsletter/Resend results and errors\ntry {\n  $('Send via Resend').all().forEach(function(item) {\n    if (item.json && item.json.error) {\n      var errorMsg = item.json.error.message || item.json.error || 'Failed to send email';\n      errors.push({\n        platform: 'Newsletter (Resend)',\n        error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),\n        code: item.json.statusCode || ''\n      });\n    } else if (item.json && item.json.id) {\n      results.newsletter = {\n        id: item.json.id,\n        sent: true\n      };\n    }\n  });\n} catch (e) {}\n\nvar hasErrors = errors.length > 0;\nvar hasSuccess = results.x.length > 0 || results.linkedin.length > 0 || results.newsletter;\n\n// Build HTML\nvar bgColor = hasErrors && !hasSuccess ? '#dc2626' : hasErrors ? '#f59e0b' : '#10b981';\nvar css = '<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:' + bgColor + ';min-height:100vh;padding:40px 20px;margin:0}.container{max-width:800px;margin:0 auto}.card{background:#fff;border-radius:16px;padding:28px;margin-bottom:20px;box-shadow:0 10px 40px rgba(0,0,0,0.2)}.header{text-align:center;color:#fff;margin-bottom:30px}.header h1{font-size:2.5em;margin:0}.status-icon{font-size:4em;margin-bottom:10px}.error-box{background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;margin-bottom:16px}.error-title{color:#991b1b;font-weight:600;margin:0 0 8px}.error-message{color:#7f1d1d;font-family:monospace;font-size:0.9em;background:#fee2e2;padding:12px;border-radius:8px;word-break:break-word}.success-item{background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid #10b981}.view-link{color:#059669;text-decoration:none;font-weight:500}.summary-card{background:#1a1a2e;color:#fff;text-align:center;padding:24px}.summary-stats{display:flex;justify-content:center;gap:30px;margin-top:16px}.stat{text-align:center}.stat-number{font-size:2em;font-weight:700}.stat-label{font-size:0.85em;opacity:0.8}</style>';\n\nvar html = css + '<div class=\"container\">';\n\n// Header\nif (hasErrors && !hasSuccess) {\n  html += '<div class=\"header\"><div class=\"status-icon\">X</div><h1>Publishing Failed</h1><p>There were errors posting your content</p></div>';\n} else if (hasErrors) {\n  html += '<div class=\"header\"><div class=\"status-icon\">!</div><h1>Partial Success</h1><p>Some content was posted, but there were errors</p></div>';\n} else {\n  html += '<div class=\"header\"><div class=\"status-icon\">OK</div><h1>Published Successfully!</h1><p>Your content is now live</p></div>';\n}\n\n// Errors\nif (errors.length > 0) {\n  html += '<div class=\"card\"><h3>Errors</h3>';\n  for (var i = 0; i < errors.length; i++) {\n    var err = errors[i];\n    html += '<div class=\"error-box\">';\n    html += '<div class=\"error-title\">' + err.platform + (err.code ? ' (Code: ' + err.code + ')' : '') + '</div>';\n    html += '<div class=\"error-message\">' + err.error + '</div>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// X Success\nif (results.x.length > 0) {\n  html += '<div class=\"card\"><h3>X/Twitter - ' + results.x.length + ' Posted</h3>';\n  var tweets = content.tweets || [];\n  for (var j = 0; j < results.x.length; j++) {\n    var r = results.x[j];\n    var txt = (tweets[j] && tweets[j].content) || r.text || '';\n    html += '<div class=\"success-item\">';\n    html += '<span>' + txt.substring(0, 100) + (txt.length > 100 ? '...' : '') + '</span>';\n    html += '<br><a class=\"view-link\" href=\"' + r.url + '\" target=\"_blank\">View on X</a>';\n    html += '</div>';\n  }\n  html += '</div>';\n}\n\n// LinkedIn Success\nif (results.linkedin.length > 0) {\n  var li = content.linkedin || {};\n  html += '<div class=\"card\"><h3>LinkedIn - Posted</h3>';\n  html += '<div class=\"success-item\">';\n  if (li.hook) html += '<strong>' + li.hook + '</strong><br>';\n  if (li.body) html += li.body.substring(0, 150) + '...<br>';\n  for (var k = 0; k < results.linkedin.length; k++) {\n    html += '<a class=\"view-link\" href=\"' + results.linkedin[k].url + '\" target=\"_blank\">View on LinkedIn</a>';\n  }\n  html += '</div></div>';\n}\n\n// Newsletter Success\nif (results.newsletter && results.newsletter.sent) {\n  var nl = content.newsletter || {};\n  html += '<div class=\"card\"><h3>Newsletter - Sent via Resend</h3>';\n  html += '<div class=\"success-item\" style=\"border-left-color:#f59e0b;\">';\n  html += '<strong>Subject:</strong> ' + (nl.subject || 'Newsletter') + '<br>';\n  html += '<span style=\"color:#666\">Email ID: ' + results.newsletter.id + '</span>';\n  html += '</div></div>';\n}\n\n// Summary\nhtml += '<div class=\"card summary-card\">';\nif (hasErrors && !hasSuccess) {\n  html += '<h3>No Content Posted</h3><p>Please check the errors above</p>';\n} else if (hasErrors) {\n  html += '<h3>Partially Complete</h3>';\n} else {\n  html += '<h3>All Done!</h3>';\n}\nhtml += '<div class=\"summary-stats\">';\nif (results.x.length > 0) html += '<div class=\"stat\"><div class=\"stat-number\">' + results.x.length + '</div><div class=\"stat-label\">Tweets</div></div>';\nif (results.linkedin.length > 0) html += '<div class=\"stat\"><div class=\"stat-number\">' + results.linkedin.length + '</div><div class=\"stat-label\">LinkedIn</div></div>';\nif (results.newsletter) html += '<div class=\"stat\"><div class=\"stat-number\">1</div><div class=\"stat-label\">Email Sent</div></div>';\nif (errors.length > 0) html += '<div class=\"stat\"><div class=\"stat-number\" style=\"color:#f87171\">' + errors.length + '</div><div class=\"stat-label\">Errors</div></div>';\nhtml += '</div></div></div>';\n\nreturn [{ json: { html: html, results: results, errors: errors } }];"
       },
       "id": "build-confirmation",
       "name": "Build Confirmation",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, 300]
-    },
-    {
-      "parameters": {},
-      "id": "merge",
-      "name": "Merge Results",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [1320, 100]
+      "position": [2200, 300]
     },
     {
       "parameters": {
@@ -166,7 +235,7 @@
       "name": "Respond Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1760, 300]
+      "position": [2420, 300]
     },
     {
       "parameters": {
@@ -188,13 +257,13 @@
     },
     {
       "parameters": {
-        "content": "## Approval Handler with Error Display\n\n**Features:**\n- Shows API errors (rate limits, auth issues)\n- Different header colors for status\n- Continues even if one platform fails\n- Shows partial success when some posts work",
-        "height": 200,
+        "content": "## Approval Handler with Resend Email\n\n**Platforms:**\n- X/Twitter (native node)\n- LinkedIn (native node)\n- Newsletter via Resend API\n\n**Features:**\n- Error handling for all platforms\n- Beautiful HTML email template\n- Partial success support\n\n**Setup Resend:**\n1. Get API key from resend.com\n2. Create HTTP Header Auth credential\n3. Header: Authorization\n4. Value: Bearer re_xxxxx",
+        "height": 320,
         "width": 340,
         "color": 6
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-60, 100],
+      "position": [-60, 60],
       "typeVersion": 1,
       "id": "note",
       "name": "Note"
@@ -224,19 +293,37 @@
       ]
     },
     "Post to X": {
-      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Merge X Results", "type": "main", "index": 0 }]]
+    },
+    "Merge X Results": {
+      "main": [[{ "node": "Is LinkedIn?", "type": "main", "index": 0 }]]
     },
     "Is LinkedIn?": {
       "main": [
         [{ "node": "Post to LinkedIn", "type": "main", "index": 0 }],
-        [{ "node": "Build Confirmation", "type": "main", "index": 0 }]
+        [{ "node": "Is Newsletter?", "type": "main", "index": 0 }]
       ]
     },
     "Post to LinkedIn": {
-      "main": [[{ "node": "Build Confirmation", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Merge LinkedIn Results", "type": "main", "index": 0 }]]
     },
-    "Merge Results": {
-      "main": [[{ "node": "Is LinkedIn?", "type": "main", "index": 0 }]]
+    "Merge LinkedIn Results": {
+      "main": [[{ "node": "Is Newsletter?", "type": "main", "index": 0 }]]
+    },
+    "Is Newsletter?": {
+      "main": [
+        [{ "node": "Build Email HTML", "type": "main", "index": 0 }],
+        [{ "node": "Build Confirmation", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Email HTML": {
+      "main": [[{ "node": "Send via Resend", "type": "main", "index": 0 }]]
+    },
+    "Send via Resend": {
+      "main": [[{ "node": "Merge Newsletter Results", "type": "main", "index": 0 }]]
+    },
+    "Merge Newsletter Results": {
+      "main": [[{ "node": "Build Confirmation", "type": "main", "index": 0 }]]
     },
     "Build Confirmation": {
       "main": [[{ "node": "Respond Success", "type": "main", "index": 0 }]]
@@ -246,9 +333,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "approval-handler-v2",
+  "versionId": "approval-handler-v3",
   "meta": {
     "templateCredsSetupCompleted": true
   },
-  "tags": ["approval", "posting", "webhook"]
+  "tags": ["approval", "posting", "webhook", "resend"]
 }
