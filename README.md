@@ -161,12 +161,12 @@ max-content/
 
 **Hostinger VPS (Hackathon Submission)**
 
-| Property   | Value                      |
-| ---------- | -------------------------- |
-| Hostname   | `srv1197870.hstgr.cloud`   |
-| IP Address | `72.62.71.116`             |
-| SSH        | `ssh root@72.62.71.116`    |
-| n8n URL    | `http://72.62.71.116:5678` |
+| Property   | Value                                  |
+| ---------- | -------------------------------------- |
+| Hostname   | `srv1197870.hstgr.cloud`               |
+| IP Address | `72.62.71.116`                         |
+| SSH        | `ssh root@72.62.71.116`                |
+| n8n URL    | `https://n8n.hostinger.macinations.au` |
 
 ---
 

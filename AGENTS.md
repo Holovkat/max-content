@@ -22,13 +22,13 @@
 
 ## 🖥️ Production Environment
 
-| Property       | Value                      |
-| -------------- | -------------------------- |
-| **VPS Host**   | Hostinger                  |
-| **Hostname**   | `srv1197870.hstgr.cloud`   |
-| **IP Address** | `72.62.71.116`             |
-| **SSH Access** | `ssh root@72.62.71.116`    |
-| **n8n URL**    | `http://72.62.71.116:5678` |
+| Property       | Value                                  |
+| -------------- | -------------------------------------- |
+| **VPS Host**   | Hostinger                              |
+| **Hostname**   | `srv1197870.hstgr.cloud`               |
+| **IP Address** | `72.62.71.116`                         |
+| **SSH Access** | `ssh root@72.62.71.116`                |
+| **n8n URL**    | `https://n8n.hostinger.macinations.au` |
 
 ---
 
