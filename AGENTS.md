@@ -3,6 +3,8 @@
 > **AI-Powered Content Repurposing Engine**  
 > n8n workflows that transform long-form content into platform-ready social posts.
 
+🎬 **Demo Video:** [Watch on Loom](https://www.loom.com/share/8acb2b032a324820bd7aa5448af064ab)
+
 ---
 
 ## Project Snapshot
@@ -15,6 +17,18 @@
 | **Platforms** | X/Twitter, LinkedIn, Newsletter, Instagram, Skool |
 | **Auto-Post** | X, LinkedIn, Newsletter (via Resend)              |
 | **Copy-Only** | Instagram, Skool                                  |
+
+---
+
+## 🖥️ Production Environment
+
+| Property       | Value                      |
+| -------------- | -------------------------- |
+| **VPS Host**   | Hostinger                  |
+| **Hostname**   | `srv1197870.hstgr.cloud`   |
+| **IP Address** | `72.62.71.116`             |
+| **SSH Access** | `ssh root@72.62.71.116`    |
+| **n8n URL**    | `http://72.62.71.116:5678` |
 
 ---
 

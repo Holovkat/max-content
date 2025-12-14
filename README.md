@@ -7,6 +7,8 @@
 [![Platform](https://img.shields.io/badge/Platform-n8n-orange)]()
 [![AI](https://img.shields.io/badge/AI-Google%20Gemini-blue)]()
 
+> 🎬 **[Watch Demo Video](https://www.loom.com/share/8acb2b032a324820bd7aa5448af064ab)** - See the full workflow in action!
+
 ---
 
 ## 🚀 What It Does
@@ -152,6 +154,19 @@ max-content/
 
 4. **Access the form:**
    - Navigate to: `https://your-n8n-instance/webhook/content-generator`
+
+---
+
+## 🖥️ Production Environment
+
+**Hostinger VPS (Hackathon Submission)**
+
+| Property   | Value                      |
+| ---------- | -------------------------- |
+| Hostname   | `srv1197870.hstgr.cloud`   |
+| IP Address | `72.62.71.116`             |
+| SSH        | `ssh root@72.62.71.116`    |
+| n8n URL    | `http://72.62.71.116:5678` |
 
 ---
 

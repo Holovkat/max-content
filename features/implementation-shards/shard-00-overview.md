@@ -4,27 +4,34 @@
 
 **Project:** Hostinger x n8n Hackathon  
 **Deadline:** December 14, 2024 (11:59 PM EST)  
-**Status:** ✅ Implementation Complete
+**Status:** ✅ Implementation Complete  
+**Demo Video:** [Watch on Loom](https://www.loom.com/share/8acb2b032a324820bd7aa5448af064ab)
 
 ---
 
 ## Shard Execution Summary
 
-| Shard  | Name                             | Status  | Notes                     |
-| ------ | -------------------------------- | ------- | ------------------------- |
-| **01** | Hostinger VPS Setup              | ✅ Done | VPS provisioned           |
-| **02** | n8n Installation & Configuration | ✅ Done | n8n running               |
-| **03** | Google Credentials Setup         | ✅ Done | Gemini API configured     |
-| **04** | Google Sheets Structure          | ⏭️ Skip | Direct posting instead    |
-| **05** | Core Workflow - Ingestion        | ✅ Done | In content-generator.json |
-| **06** | Idea Extraction Node             | ✅ Done | In content-generator.json |
-| **07** | Twitter Generation               | ✅ Done | Unified generation        |
-| **08** | LinkedIn Generation              | ✅ Done | Unified generation        |
-| **09** | Newsletter Generation            | ✅ Done | + Instagram/Skool added   |
-| **10** | Quality Gate Implementation      | ⏭️ Skip | Human review via preview  |
-| **11** | Testing & Refinement             | ✅ Done | Iterative testing         |
-| **12** | Demo Assets Creation             | 🔲 TODO | Final step                |
-| **13** | Custom UI _(OPTIONAL)_           | ✅ Done | Via n8n form/webhook      |
+| Shard  | Name                             | Status  | Notes                                                                       |
+| ------ | -------------------------------- | ------- | --------------------------------------------------------------------------- |
+| **01** | Hostinger VPS Setup              | ✅ Done | VPS provisioned                                                             |
+| **02** | n8n Installation & Configuration | ✅ Done | n8n running                                                                 |
+| **03** | Google Credentials Setup         | ✅ Done | Gemini API configured                                                       |
+| **04** | Google Sheets Structure          | ⏭️ Skip | Direct posting instead                                                      |
+| Shard  | Name                             | Status  | Notes                                                                       |
+| ------ | -------------------------------- | ------- | ------------------------------------------------                            |
+| **01** | Hostinger VPS Setup              | ✅ Done | VPS provisioned                                                             |
+| **02** | n8n Installation & Configuration | ✅ Done | n8n running                                                                 |
+| **03** | Google Credentials Setup         | ✅ Done | Gemini API configured                                                       |
+| **04** | Google Sheets Structure          | ⏭️ Skip | Direct posting instead                                                      |
+| **05** | Core Workflow - Ingestion        | ✅ Done | In content-generator.json                                                   |
+| **06** | Idea Extraction Node             | ✅ Done | In content-generator.json                                                   |
+| **07** | Twitter Generation               | ✅ Done | Unified generation                                                          |
+| **08** | LinkedIn Generation              | ✅ Done | Unified generation                                                          |
+| **09** | Newsletter Generation            | ✅ Done | + Instagram/Skool added                                                     |
+| **10** | Quality Gate Implementation      | ⏭️ Skip | Human review via preview                                                    |
+| **11** | Testing & Refinement             | ✅ Done | Iterative testing                                                           |
+| **12** | Demo Assets Creation             | ✅ Done | [Demo on Loom](https://www.loom.com/share/8acb2b032a324820bd7aa5448af064ab) |
+| **13** | Custom UI _(OPTIONAL)_           | ✅ Done | Via n8n form/webhook                                                        |
 
 ---
 
