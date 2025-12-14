@@ -69,17 +69,18 @@
     },
     {
       "parameters": {
-        "model": "moonshotai/kimi-k2-instruct-0905",
+        "modelName": "models/gemini-1.5-flash",
         "options": { "temperature": 0.7 }
       },
-      "id": "groq-model",
-      "name": "Groq Chat Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "id": "gemini-model",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [320, 520],
       "credentials": {
-        "groqApi": { "id": "8MsvIxF9vGRE2U0Y", "name": "Groq account" }
-      }
+        "googlePalmApi": { "id": "", "name": "Google Gemini API" }
+      },
+      "notes": "🔧 Configure your Gemini API credential"
     },
     {
       "parameters": {
@@ -161,7 +162,7 @@
     },
     {
       "parameters": {
-        "content": "## POC: AI Agent with Tools\n\n**Flow:**\n1. Form Trigger\n2. Prepare Input\n3. AI Agent\n   - Groq Chat Model\n   - Simple Memory\n   - Structured Output Parser\n   - **Post to X Tool** (calls sub-workflow)\n4. Build HTML Response\n5. Respond to Form\n\n**Important:**\nAfter import, configure the\nPost to X Tool's workflowId!",
+        "content": "## POC: AI Agent with Tools\n\n**Flow:**\n1. Form Trigger\n2. Prepare Input\n3. AI Agent\n   - Google Gemini Chat Model\n   - Simple Memory\n   - Structured Output Parser\n   - **Post to X Tool** (calls sub-workflow)\n4. Build HTML Response\n5. Respond to Form\n\n**Important:**\nAfter import, configure the\nPost to X Tool's workflowId!",
         "height": 380,
         "width": 340,
         "color": 5
@@ -184,7 +185,7 @@
     "AI Agent": {
       "main": [[{ "node": "Build HTML Response", "type": "main", "index": 0 }]]
     },
-    "Groq Chat Model": {
+    "Google Gemini Chat Model": {
       "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
     },
     "Simple Memory": {
