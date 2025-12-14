@@ -134,7 +134,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Convert tweets array to individual items\nconst agentOutput = $('AI Agent').first().json;\nconst tweets = agentOutput.tweets || [];\n\n// Handle empty tweets array\nif (!tweets || tweets.length === 0) {\n  return [{\n    json: {\n      index: 0,\n      total: 0,\n      content: '',\n      type: 'error',\n      error: 'No tweets generated',\n      agentOutput: agentOutput\n    }\n  }];\n}\n\n// Map tweets to individual items\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content || '',\n    type: tweet.type || 'unknown',\n    agentOutput: agentOutput\n  }\n}));"
+        "jsCode": "// Convert tweets array to individual items\n// AI Agent wraps output in 'output' object\nconst agentOutput = $('AI Agent').first().json;\nconst output = agentOutput.output || agentOutput;\nconst tweets = output.tweets || [];\n\nconsole.log('Agent output keys:', Object.keys(agentOutput));\nconsole.log('Tweets found:', tweets.length);\n\n// Handle empty tweets array\nif (!tweets || tweets.length === 0) {\n  return [{\n    json: {\n      index: 0,\n      total: 0,\n      content: '',\n      type: 'error',\n      error: 'No tweets generated',\n      output: output\n    }\n  }];\n}\n\n// Map tweets to individual items\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content || '',\n    type: tweet.type || 'unknown',\n    output: output\n  }\n}));"
       },
       "id": "split-tweets",
       "name": "Split Tweets",
