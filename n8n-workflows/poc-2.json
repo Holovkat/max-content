@@ -1,0 +1,478 @@
+{
+  "name": "poc",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ai-content-creator",
+        "formTitle": "AI Content Creator (Agent POC)",
+        "formDescription": "Generate and post multiple tweets from a transcript",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Transcript",
+              "fieldType": "textarea",
+              "placeholder": "Paste your video transcript here...",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Number of Tweets",
+              "fieldType": "number",
+              "placeholder": "5"
+            },
+            {
+              "fieldLabel": "Post to X?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "No - Just generate"
+                  },
+                  {
+                    "option": "Yes - Post all tweets"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ddca0cbc-9174-4b60-949c-549a97c4f19d",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        4416,
+        1248
+      ],
+      "webhookId": "951ab57d-78f5-48f8-8d44-6831ebcbcbab"
+    },
+    {
+      "parameters": {
+        "jsCode": "const formData = $('Form Trigger').first().json;\nconst tweetCount = parseInt(formData['Number of Tweets']) || 5;\n\nreturn [{\n  json: {\n    ...formData,\n    sessionId: `session-${Date.now()}`,\n    tweetCount: Math.min(Math.max(tweetCount, 3), 10),\n    postToX: formData['Post to X?'] === 'Yes - Post all tweets'\n  }\n}];"
+      },
+      "id": "1f7d6368-68dd-4723-b7a0-f500e1d0464f",
+      "name": "Prepare Session",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4640,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this transcript and create social media content.\n\n## TRANSCRIPT:\n{{ $json.Transcript }}\n\n## REQUIREMENTS:\n- Generate exactly {{ $json.tweetCount }} tweets\n- Each tweet under 280 characters\n- No hashtags, no emojis at the start\n- Make each tweet unique and valuable\n- Also create 1 LinkedIn post\n\nReturn the structured output with all tweets and LinkedIn content.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert content strategist. Create engaging, specific content. Match the tone of the original. Each tweet should stand alone and provide value."
+        }
+      },
+      "id": "ab0c2934-3f3b-434c-a8c6-92103ad2d8e8",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        4864,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct-0905",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "4579010e-ef93-4a4a-bdc3-24f192fd49cd",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        4736,
+        1472
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "8MsvIxF9vGRE2U0Y",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}"
+      },
+      "id": "bff0d17e-d801-4bd8-ac15-575b83c611dc",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        4864,
+        1472
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tweets\": {\n      \"type\": \"array\",\n      \"description\": \"Array of 3-10 tweets\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"content\": { \"type\": \"string\", \"description\": \"Tweet text under 280 chars\" },\n          \"type\": { \"type\": \"string\", \"description\": \"Type: contrarian, tactical, story, insight, question\" }\n        }\n      }\n    },\n    \"linkedin_hook\": { \"type\": \"string\" },\n    \"linkedin_body\": { \"type\": \"string\" },\n    \"linkedin_question\": { \"type\": \"string\" },\n    \"key_ideas\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    }\n  },\n  \"required\": [\"tweets\", \"linkedin_hook\", \"linkedin_body\", \"linkedin_question\", \"key_ideas\"]\n}"
+      },
+      "id": "bd1cd495-f8f7-451e-9220-cedee51f10cf",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        5088,
+        1472
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "should-post",
+              "leftValue": "={{ $('Prepare Session').first().json.postToX }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "580816f0-84be-44b1-9f0a-245b61cc7aa3",
+      "name": "Should Post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5200,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert tweets array to individual items with delay scheduling\nconst agentOutput = $('AI Agent').first().json;\nconst output = agentOutput.output || agentOutput;\nconst tweets = output.tweets || [];\n\nif (!tweets || tweets.length === 0) {\n  return [{\n    json: {\n      index: 0,\n      total: 0,\n      content: '',\n      type: 'error',\n      error: 'No tweets generated',\n      output: output\n    }\n  }];\n}\n\n// Return all tweets as separate items\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content || '',\n    type: tweet.type || 'unknown',\n    isFirst: index === 0,\n    isLast: index === tweets.length - 1,\n    output: output\n  }\n}));"
+      },
+      "id": "dea9a8cf-9027-449c-8d4a-b5c923c4f8f9",
+      "name": "Split Tweets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5344,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-content",
+              "leftValue": "={{ $json.content }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1781b33b-c175-4e92-8886-60832d060fff",
+      "name": "Has Content?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5520,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.content }}",
+        "additionalFields": {}
+      },
+      "id": "34be99a6-58ae-45d1-bb51-afde9dc5080f",
+      "name": "Post to X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        5792,
+        1136
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "TtzUMmUcFebH8T9X",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build beautiful HTML response for posted tweets\nconst allPosts = $('Post to X').all();\nconst output = $('Split Tweets').first().json.output;\n\nconst postedTweets = allPosts.map((item, i) => ({\n  id: item.json?.data?.id,\n  text: item.json?.data?.text || ''\n}));\n\nconst css = `\n<style>\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; margin: 0; }\n  .container { max-width: 800px; margin: 0 auto; }\n  .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }\n  .header { text-align: center; color: white; margin-bottom: 30px; }\n  .header h1 { font-size: 2.5em; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }\n  .header p { opacity: 0.9; font-size: 1.1em; }\n  .section-title { display: flex; align-items: center; gap: 10px; font-size: 1.3em; font-weight: 600; color: #333; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #667eea; }\n  .idea-list { list-style: none; padding: 0; margin: 0; }\n  .idea-list li { padding: 12px 16px; background: #f8f9ff; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #667eea; }\n  .tweet-card { background: #f0f9ff; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #e0e7ff; }\n  .tweet-number { display: inline-block; background: #667eea; color: white; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 600; margin-right: 12px; }\n  .tweet-text { font-size: 1.05em; line-height: 1.5; color: #1a1a2e; margin: 8px 0; }\n  .tweet-link { display: inline-block; margin-top: 8px; color: #667eea; text-decoration: none; font-size: 0.9em; }\n  .tweet-link:hover { text-decoration: underline; }\n  .linkedin-section { background: #f0f4ff; padding: 20px; border-radius: 12px; }\n  .linkedin-hook { font-size: 1.2em; font-weight: 600; color: #0077b5; margin-bottom: 12px; }\n  .linkedin-body { line-height: 1.6; color: #333; white-space: pre-line; margin-bottom: 16px; }\n  .linkedin-question { font-style: italic; color: #555; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #0077b5; }\n  .success-badge { display: inline-block; background: #10b981; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 600; margin-bottom: 20px; }\n</style>`;\n\nlet html = css;\nhtml += '<div class=\"container\">';\nhtml += '<div class=\"header\"><h1>🎉 Content Created!</h1><p>Your content has been generated and posted to X</p></div>';\n\n// Key Ideas\nhtml += '<div class=\"card\"><div class=\"section-title\">💡 Key Ideas</div><ul class=\"idea-list\">';\n(output.key_ideas || []).forEach(idea => { html += `<li>${idea}</li>`; });\nhtml += '</ul></div>';\n\n// Tweets\nhtml += `<div class=\"card\"><div class=\"section-title\">🐦 Tweets Posted (${postedTweets.length})</div>`;\npostedTweets.forEach((t, i) => {\n  html += `<div class=\"tweet-card\"><span class=\"tweet-number\">${i+1}</span><span class=\"tweet-text\">${t.text}</span>`;\n  if (t.id) html += `<br><a class=\"tweet-link\" href=\"https://x.com/i/status/${t.id}\" target=\"_blank\">View on X →</a>`;\n  html += '</div>';\n});\nhtml += '</div>';\n\n// LinkedIn\nhtml += '<div class=\"card\"><div class=\"section-title\">💼 LinkedIn Post</div><div class=\"linkedin-section\">';\nhtml += `<div class=\"linkedin-hook\">${output.linkedin_hook || ''}</div>`;\nhtml += `<div class=\"linkedin-body\">${output.linkedin_body || ''}</div>`;\nhtml += `<div class=\"linkedin-question\">${output.linkedin_question || ''}</div>`;\nhtml += '</div></div>';\n\nhtml += '</div>';\n\nreturn [{ json: { html } }];"
+      },
+      "id": "b7b8b7bc-d9f1-4263-a0f5-3fd6c7f32e76",
+      "name": "Build Posted Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6176,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build beautiful HTML response for generated (not posted) content\nconst agentOutput = $('AI Agent').first().json;\nconst output = agentOutput.output || agentOutput;\nconst tweets = output.tweets || [];\n\nconst css = `\n<style>\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); min-height: 100vh; padding: 40px 20px; margin: 0; }\n  .container { max-width: 800px; margin: 0 auto; }\n  .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }\n  .header { text-align: center; color: white; margin-bottom: 30px; }\n  .header h1 { font-size: 2.5em; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }\n  .header p { opacity: 0.9; font-size: 1.1em; }\n  .section-title { display: flex; align-items: center; gap: 10px; font-size: 1.3em; font-weight: 600; color: #333; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #11998e; }\n  .idea-list { list-style: none; padding: 0; margin: 0; }\n  .idea-list li { padding: 12px 16px; background: #f0fff4; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #11998e; }\n  .tweet-card { background: #f0fff4; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #d1fae5; }\n  .tweet-number { display: inline-block; background: #11998e; color: white; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 600; margin-right: 12px; }\n  .tweet-type { display: inline-block; background: #fef3c7; color: #92400e; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 500; margin-left: 8px; }\n  .tweet-text { font-size: 1.05em; line-height: 1.5; color: #1a1a2e; margin: 8px 0 0 40px; }\n  .linkedin-section { background: #f0f4ff; padding: 20px; border-radius: 12px; }\n  .linkedin-hook { font-size: 1.2em; font-weight: 600; color: #0077b5; margin-bottom: 12px; }\n  .linkedin-body { line-height: 1.6; color: #333; white-space: pre-line; margin-bottom: 16px; }\n  .linkedin-question { font-style: italic; color: #555; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #0077b5; }\n  .copy-btn { background: #11998e; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9em; margin-top: 8px; }\n  .copy-btn:hover { background: #0d7d6c; }\n  .draft-badge { display: inline-block; background: #fbbf24; color: #78350f; padding: 6px 16px; border-radius: 20px; font-weight: 600; }\n</style>`;\n\nlet html = css;\nhtml += '<div class=\"container\">';\nhtml += '<div class=\"header\"><h1>✨ Content Ready!</h1><p>Your content has been generated - copy and post manually</p><span class=\"draft-badge\">Draft Mode</span></div>';\n\n// Key Ideas\nhtml += '<div class=\"card\"><div class=\"section-title\">💡 Key Ideas</div><ul class=\"idea-list\">';\n(output.key_ideas || []).forEach(idea => { html += `<li>${idea}</li>`; });\nhtml += '</ul></div>';\n\n// Tweets\nhtml += `<div class=\"card\"><div class=\"section-title\">🐦 Tweets (${tweets.length})</div>`;\ntweets.forEach((t, i) => {\n  html += `<div class=\"tweet-card\"><span class=\"tweet-number\">${i+1}</span><span class=\"tweet-type\">${t.type || 'tweet'}</span><div class=\"tweet-text\">${t.content || ''}</div></div>`;\n});\nhtml += '</div>';\n\n// LinkedIn\nhtml += '<div class=\"card\"><div class=\"section-title\">💼 LinkedIn Post</div><div class=\"linkedin-section\">';\nhtml += `<div class=\"linkedin-hook\">${output.linkedin_hook || ''}</div>`;\nhtml += `<div class=\"linkedin-body\">${output.linkedin_body || ''}</div>`;\nhtml += `<div class=\"linkedin-question\">${output.linkedin_question || ''}</div>`;\nhtml += '</div></div>';\n\nhtml += '</div>';\n\nreturn [{ json: { html } }];"
+      },
+      "id": "42416318-eb02-46be-a938-0c977b658d90",
+      "name": "Build No-Post Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5744,
+        1328
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "dcbb4dbd-68e7-496f-8293-d71915ae6dfd",
+      "name": "Merge Responses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        6432,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "d6b7a4de-041a-4271-b27f-05d65d77406f",
+      "name": "Respond to Form",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        6688,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## POC: Multi-Tweet Poster (Simplified)\n\n**Flow:**\n1. AI Agent generates all tweets in ONE call\n2. Split into individual items\n3. Each item → Post to X\n4. If not last → Wait 60s\n5. Build response when all done\n\n**Key: No loop node!**\nItems flow through naturally.\nWait only happens between tweets.",
+        "height": 400,
+        "width": 400,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4304,
+        816
+      ],
+      "typeVersion": 1,
+      "id": "27a62e8c-f7de-4dc7-9a62-4f5b96bbd7bc",
+      "name": "Note: Overview"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Session": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Should Post?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Post?": {
+      "main": [
+        [
+          {
+            "node": "Split Tweets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build No-Post Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Tweets": {
+      "main": [
+        [
+          {
+            "node": "Has Content?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Content?": {
+      "main": [
+        [
+          {
+            "node": "Post to X",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build No-Post Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to X": {
+      "main": [
+        [
+          {
+            "node": "Build Posted Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build No-Post Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Posted Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Responses": {
+      "main": [
+        [
+          {
+            "node": "Respond to Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f7dcfe14-41dc-4104-b9e3-18309f55bb4f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
+  },
+  "id": "R7tzZu07byZxSuex",
+  "tags": []
+}
