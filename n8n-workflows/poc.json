@@ -64,15 +64,12 @@
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [440, 300],
-      "notes": "🤖 ONE call to generate all tweets"
+      "position": [440, 300]
     },
     {
       "parameters": {
         "model": "moonshotai/kimi-k2-instruct-0905",
-        "options": {
-          "temperature": 0.7
-        }
+        "options": { "temperature": 0.7 }
       },
       "id": "groq-chat-model",
       "name": "Groq Chat Model",
@@ -80,10 +77,7 @@
       "typeVersion": 1,
       "position": [320, 520],
       "credentials": {
-        "groqApi": {
-          "id": "8MsvIxF9vGRE2U0Y",
-          "name": "Groq account"
-        }
+        "groqApi": { "id": "8MsvIxF9vGRE2U0Y", "name": "Groq account" }
       }
     },
     {
@@ -107,8 +101,7 @@
       "name": "Structured Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
-      "position": [560, 520],
-      "notes": "📋 Output: tweets[] array with 3-10 items"
+      "position": [560, 520]
     },
     {
       "parameters": {
@@ -134,26 +127,35 @@
     },
     {
       "parameters": {
-        "jsCode": "// Convert tweets array to individual items\n// AI Agent wraps output in 'output' object\nconst agentOutput = $('AI Agent').first().json;\nconst output = agentOutput.output || agentOutput;\nconst tweets = output.tweets || [];\n\nconsole.log('Agent output keys:', Object.keys(agentOutput));\nconsole.log('Tweets found:', tweets.length);\n\n// Handle empty tweets array\nif (!tweets || tweets.length === 0) {\n  return [{\n    json: {\n      index: 0,\n      total: 0,\n      content: '',\n      type: 'error',\n      error: 'No tweets generated',\n      output: output\n    }\n  }];\n}\n\n// Map tweets to individual items\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content || '',\n    type: tweet.type || 'unknown',\n    output: output\n  }\n}));"
+        "jsCode": "// Convert tweets array to individual items with delay scheduling\nconst agentOutput = $('AI Agent').first().json;\nconst output = agentOutput.output || agentOutput;\nconst tweets = output.tweets || [];\n\nif (!tweets || tweets.length === 0) {\n  return [{\n    json: {\n      index: 0,\n      total: 0,\n      content: '',\n      type: 'error',\n      error: 'No tweets generated',\n      output: output\n    }\n  }];\n}\n\n// Return all tweets as separate items\nreturn tweets.map((tweet, index) => ({\n  json: {\n    index: index + 1,\n    total: tweets.length,\n    content: tweet.content || '',\n    type: tweet.type || 'unknown',\n    isFirst: index === 0,\n    isLast: index === tweets.length - 1,\n    output: output\n  }\n}));"
       },
       "id": "split-tweets",
       "name": "Split Tweets",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [880, 200],
-      "notes": "📋 Converts tweets[] to individual items for looping"
+      "position": [880, 200]
     },
     {
       "parameters": {
-        "batchSize": 1,
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "has-content",
+              "leftValue": "={{ $json.content }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
         "options": {}
       },
-      "id": "loop-tweets",
-      "name": "Loop Tweets",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [1100, 200],
-      "notes": "🔄 Process one tweet at a time"
+      "id": "has-content",
+      "name": "Has Content?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, 200]
     },
     {
       "parameters": {
@@ -164,14 +166,32 @@
       "name": "Post to X",
       "type": "n8n-nodes-base.twitter",
       "typeVersion": 2,
-      "position": [1320, 200],
+      "position": [1320, 100],
       "credentials": {
-        "twitterOAuth2Api": {
-          "id": "TtzUMmUcFebH8T9X",
-          "name": "X account"
-        }
+        "twitterOAuth2Api": { "id": "TtzUMmUcFebH8T9X", "name": "X account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "not-last",
+              "leftValue": "={{ $('Split Tweets').item.json.isLast }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "notes": "🐦 Posts each tweet"
+      "id": "is-not-last",
+      "name": "Not Last Tweet?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1540, 100]
     },
     {
       "parameters": {
@@ -182,22 +202,21 @@
       "name": "Wait 60s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1540, 200],
-      "notes": "⏳ 60 second delay between tweets"
+      "position": [1760, 0]
     },
     {
       "parameters": {
-        "jsCode": "// Collect all posted tweets\nconst allItems = $('Post to X').all();\nconst agentOutput = $('Split Tweets').first().json.agentOutput;\n\nconst postedTweets = allItems.map((item, i) => ({\n  id: item.json?.data?.id,\n  text: item.json?.data?.text?.substring(0, 50) + '...'\n}));\n\nlet message = '✅ Content Generated & Posted!\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (agentOutput.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += `\\n\\n🐦 TWEETS POSTED (${postedTweets.length}):\\n`;\npostedTweets.forEach((t, i) => {\n  message += `${i+1}. ${t.text}\\n   → https://x.com/i/status/${t.id}\\n`;\n});\nmessage += '\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${agentOutput.linkedin_hook}\\n`;\nmessage += `Body: ${agentOutput.linkedin_body?.substring(0, 100)}...\\n`;\nmessage += `Question: ${agentOutput.linkedin_question}`;\n\nreturn [{ json: { message } }];"
+        "jsCode": "// Collect results from all posted tweets\nconst allPosts = $('Post to X').all();\nconst output = $('Split Tweets').first().json.output;\n\nconst postedTweets = allPosts.map((item, i) => ({\n  id: item.json?.data?.id,\n  text: (item.json?.data?.text || '').substring(0, 50) + '...'\n}));\n\nlet message = '✅ Content Generated & Posted!\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (output.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += `\\n\\n🐦 TWEETS POSTED (${postedTweets.length}):\\n`;\npostedTweets.forEach((t, i) => {\n  if (t.id) {\n    message += `${i+1}. ${t.text}\\n   → https://x.com/i/status/${t.id}\\n`;\n  }\n});\nmessage += '\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${output.linkedin_hook}\\n`;\nmessage += `Body: ${(output.linkedin_body || '').substring(0, 100)}...\\n`;\nmessage += `Question: ${output.linkedin_question}`;\n\nreturn [{ json: { message } }];"
       },
       "id": "build-posted-response",
       "name": "Build Posted Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 400]
+      "position": [1760, 200]
     },
     {
       "parameters": {
-        "jsCode": "// Just show generated content without posting\nconst agentOutput = $('AI Agent').first().json;\n\nlet message = '✅ Content Generated (not posted)\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (agentOutput.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += `\\n\\n🐦 TWEETS (${agentOutput.tweets?.length || 0}):\\n`;\n(agentOutput.tweets || []).forEach((t, i) => {\n  message += `${i+1}. [${t.type}] ${t.content}\\n`;\n});\nmessage += '\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${agentOutput.linkedin_hook}\\n`;\nmessage += `Body: ${agentOutput.linkedin_body}\\n`;\nmessage += `Question: ${agentOutput.linkedin_question}`;\n\nreturn [{ json: { message } }];"
+        "jsCode": "const agentOutput = $('AI Agent').first().json;\nconst output = agentOutput.output || agentOutput;\n\nlet message = '✅ Content Generated (not posted)\\n\\n';\nmessage += '📝 KEY IDEAS:\\n';\nmessage += (output.key_ideas || []).map(i => `• ${i}`).join('\\n');\nmessage += `\\n\\n🐦 TWEETS (${output.tweets?.length || 0}):\\n`;\n(output.tweets || []).forEach((t, i) => {\n  message += `${i+1}. [${t.type}] ${t.content}\\n`;\n});\nmessage += '\\n💼 LINKEDIN POST:\\n';\nmessage += `Hook: ${output.linkedin_hook}\\n`;\nmessage += `Body: ${output.linkedin_body}\\n`;\nmessage += `Question: ${output.linkedin_question}`;\n\nreturn [{ json: { message } }];"
       },
       "id": "build-no-post-response",
       "name": "Build No-Post Response",
@@ -211,7 +230,7 @@
       "name": "Merge Responses",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [1540, 400]
+      "position": [1980, 300]
     },
     {
       "parameters": {
@@ -223,46 +242,17 @@
       "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1760, 400]
+      "position": [2200, 300]
     },
     {
       "parameters": {
-        "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
-          "conditions": [
-            {
-              "id": "has-content",
-              "leftValue": "={{ $json.content }}",
-              "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty" }
-            },
-            {
-              "id": "not-error",
-              "leftValue": "={{ $json.type }}",
-              "rightValue": "error",
-              "operator": { "type": "string", "operation": "notEquals" }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "has-valid-tweets",
-      "name": "Has Valid Tweets?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [980, 200],
-      "notes": "✅ Checks tweet has content and is not an error"
-    },
-    {
-      "parameters": {
-        "content": "## POC: Multi-Tweet Poster\n\n**Flow:**\n1. AI Agent generates 3-10 tweets in ONE call\n2. Split into individual items\n3. Check if valid tweets exist\n4. Loop: Post → Wait 60s → Next\n5. Collect results & respond\n\n**Rate Limit Protection:**\n60-second delay between X API calls",
-        "height": 380,
+        "content": "## POC: Multi-Tweet Poster (Simplified)\n\n**Flow:**\n1. AI Agent generates all tweets in ONE call\n2. Split into individual items\n3. Each item → Post to X\n4. If not last → Wait 60s\n5. Build response when all done\n\n**Key: No loop node!**\nItems flow through naturally.\nWait only happens between tweets.",
+        "height": 400,
         "width": 400,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-60, 100],
+      "position": [-60, 80],
       "typeVersion": 1,
       "id": "note-overview",
       "name": "Note: Overview"
@@ -295,25 +285,25 @@
       ]
     },
     "Split Tweets": {
-      "main": [[{ "node": "Has Valid Tweets?", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Has Content?", "type": "main", "index": 0 }]]
     },
-    "Has Valid Tweets?": {
+    "Has Content?": {
       "main": [
-        [{ "node": "Loop Tweets", "type": "main", "index": 0 }],
+        [{ "node": "Post to X", "type": "main", "index": 0 }],
         [{ "node": "Build No-Post Response", "type": "main", "index": 0 }]
       ]
     },
-    "Loop Tweets": {
+    "Post to X": {
+      "main": [[{ "node": "Not Last Tweet?", "type": "main", "index": 0 }]]
+    },
+    "Not Last Tweet?": {
       "main": [
-        [{ "node": "Post to X", "type": "main", "index": 0 }],
+        [{ "node": "Wait 60s", "type": "main", "index": 0 }],
         [{ "node": "Build Posted Response", "type": "main", "index": 0 }]
       ]
     },
-    "Post to X": {
-      "main": [[{ "node": "Wait 60s", "type": "main", "index": 0 }]]
-    },
     "Wait 60s": {
-      "main": [[{ "node": "Loop Tweets", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
     },
     "Build No-Post Response": {
       "main": [[{ "node": "Merge Responses", "type": "main", "index": 0 }]]
@@ -329,7 +319,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d5e3d527-da18-4f37-a879-efa4dbb94365",
+  "versionId": "e6e3d527-da18-4f37-a879-efa4dbb94366",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "d9154bec20a8ff27699705f29c2ba6cb7985977b93557dd9b4bc3763d6e05879"
