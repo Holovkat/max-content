@@ -1,159 +1,142 @@
-# Shard 12: Demo Assets Creation
+# Shard 12: Demo Assets Creation - 🔲 PENDING
 
 ## Content Repurposing Engine
 
-**Est. Time:** 60-90 min | **Depends on:** Shard 11 | **Outcome:** Ready for hackathon submission
+**Status:** 🔲 Pending (Final Step)  
+**Est. Time:** 30-60 min  
+**Depends on:** All other shards complete
 
 ---
 
 ## Part A: Demo Video (1-2 minutes)
 
-### 12.1 Video Structure
+### Recommended Structure
 
-**Shot List:**
+| Time      | Scene    | What to Show                                                     |
+| --------- | -------- | ---------------------------------------------------------------- |
+| 0:00-0:10 | Hook     | "Watch me turn any content into 5 platform posts with one click" |
+| 0:10-0:30 | Input    | Form → paste content → select platforms → submit                 |
+| 0:30-0:50 | Preview  | Show generated content for all platforms                         |
+| 0:50-1:10 | Approval | Click "Approve and Post" button                                  |
+| 1:10-1:30 | Results  | Show confirmation page with posted content                       |
+| 1:30-1:50 | Proof    | Show actual posts on X/LinkedIn (if time)                        |
+| 1:50-2:00 | Wrap     | "One input. Five platforms. Zero friction."                      |
 
-| Time      | Scene           | What to Show                                                          |
-| --------- | --------------- | --------------------------------------------------------------------- |
-| 0:00-0:10 | Hook            | "Watch me turn a 30-min video into 9 social posts in under 2 minutes" |
-| 0:10-0:25 | Input           | Form → paste transcript → submit                                      |
-| 0:25-0:45 | Processing      | n8n canvas with nodes executing (speed up if needed)                  |
-| 0:45-1:00 | AI Working      | Show Gemini nodes processing, mention quality gate                    |
-| 1:00-1:30 | Output          | Google Sheets → show 5 tweets, 3 LinkedIn, 1 newsletter               |
-| 1:30-1:50 | Quality Preview | Read one LinkedIn post aloud, show quality score                      |
-| 1:50-2:00 | Wrap            | "Zero cost. Premium quality. Built on n8n + Hostinger."               |
+### Recording Checklist
 
-### 12.2 Recording Tips
-
-- [ ] Use screen recording (QuickTime, OBS, or Loom)
+- [ ] Screen recording software ready (QuickTime, OBS, Loom)
+- [ ] Clean browser (hide bookmarks, close other tabs)
+- [ ] n8n workflows activated
+- [ ] Test content ready to paste
 - [ ] Record at 1080p minimum
-- [ ] Clean browser (hide bookmarks, tabs)
-- [ ] Pre-load the form and n8n canvas
-- [ ] Speed up processing sections (2x) if workflow takes long
-- [ ] Add simple music (optional, keep volume low)
 
-### 12.3 Record the Demo
+### Recording Steps
 
-1. [ ] Open form in clean browser window
-2. [ ] Have n8n open in another tab
-3. [ ] Start recording
-4. [ ] Submit form with test transcript
-5. [ ] Switch to n8n, show execution
-6. [ ] Switch to Google Sheets, show outputs
-7. [ ] Read one piece of content
-8. [ ] End with summary statement
-9. [ ] Stop recording
+1. [ ] Open form webhook URL
+2. [ ] Start recording
+3. [ ] Fill in form with test content
+4. [ ] Select all platforms
+5. [ ] Add newsletter recipients
+6. [ ] Submit form
+7. [ ] Show preview page (scroll through content)
+8. [ ] Click approve button
+9. [ ] Show confirmation page
+10. [ ] Stop recording
 
-### 12.4 Edit Video
+### Editing
 
-1. [ ] Trim dead time
-2. [ ] Add text overlays if helpful
-3. [ ] Speed up processing sections
-4. [ ] Export as MP4, 1080p
-5. [ ] Check final length: 1:00-2:00
+- [ ] Trim dead time
+- [ ] Speed up any loading sections (2x)
+- [ ] Add text overlays if helpful
+- [ ] Export as MP4, 1080p
+- [ ] Verify length: 1-2 minutes
 
 ---
 
 ## Part B: Written Submission (100-300 words)
 
-### 12.5 Write Submission Text
+### Template
 
 ```markdown
-# Content Repurposing Engine
+# Max Content - AI-Powered Content Repurposing Engine
 
-Transforms video transcripts into platform-ready social content using
-AI-powered extraction and a premium quality gate.
+Transform long-form content into platform-ready social posts with one click.
 
 ## What It Does
 
-1. **Input**: Paste a video transcript via web form
-2. **Extract**: AI identifies key ideas, quotes, and frameworks
-3. **Generate**: Creates 9 content pieces:
-   - 5 Twitter posts
-   - 3 LinkedIn posts
-   - 1 Newsletter section
-4. **Quality Gate**: Second-pass AI critique scores each piece
-5. **Output**: Stored in Google Sheets for review and scheduling
+1. **Input**: Submit content via web form (YouTube URL, transcript, or raw text)
+2. **Generate**: AI creates platform-specific content using Google Gemini
+3. **Preview**: Review all generated content before posting
+4. **Publish**: One-click approval posts to X, LinkedIn, and sends newsletters
+
+## Platforms Supported
+
+- **X/Twitter**: Punchy tweets with hooks (auto-post)
+- **LinkedIn**: Professional posts with white space (auto-post)
+- **Newsletter**: Email with key takeaways (sent via Resend)
+- **Instagram**: Engaging captions (copy-ready)
+- **Skool**: Community discussion posts (copy-ready)
 
 ## What Makes It Different
 
-- **Voice DNA Calibration**: Content matches the creator's authentic voice
-- **Quality Gate**: Every post is scored on hook, specificity, value, and CTA
-- **Zero Ongoing Costs**: Runs on Gemini free tier + Google Sheets
+- **Single input, multiple outputs**: One form generates all platforms
+- **Visual preview**: See exactly what will post before approving
+- **Actual posting**: Not just generation - it posts and sends
+- **Quality content**: Hook → Value → CTA structure, no AI slop
 
 ## Tech Stack
 
-- **Hosting**: Hostinger VPS (self-hosted)
-- **Orchestration**: n8n (Docker)
-- **AI**: Google Gemini Flash (free tier)
-- **Storage**: Google Sheets
+- **Orchestration**: n8n (self-hosted on Hostinger VPS)
+- **AI**: Google Gemini Flash
+- **Posting**: Twitter API, LinkedIn API, Resend
+- **Cost**: Zero ongoing fees (free tier APIs)
 
-## Why It Matters
+## Result
 
-Creators spend hours repurposing long-form content. This engine does
-it in under 2 minutes while maintaining quality that sounds human,
-not like "AI slop."
-
-Built for the creator who values quality over quantity.
+What used to take hours of manual repurposing now happens in under 2 minutes.
+One click. Five platforms. Done.
 ```
 
-- [ ] Adjust word count: aim for 200-250 words
-- [ ] Customize based on your specific implementation
+- [ ] Customize based on your demo
+- [ ] Verify word count: 100-300 words
 
 ---
 
-## Part C: Final Checks
+## Part C: Submission Checklist
 
-### 12.6 Pre-Submission Checklist
+### Technical ✅
 
-**Technical:**
+- [x] n8n is running and accessible
+- [x] Workflows are activated
+- [x] Form webhook URL works
+- [x] Credentials configured
 
-- [ ] VPS is running and accessible
-- [ ] n8n is running and can execute workflow
-- [ ] Form URL works from public internet
-- [ ] Google Sheets has sample output data
+### Content Needed
 
-**Content:**
+- [ ] Demo video recorded and edited
+- [ ] Written submission finalized
+- [ ] Any additional screenshots
 
-- [ ] Demo video is 1-2 minutes
-- [ ] Video clearly shows: input → processing → output
-- [ ] Written submission is 100-300 words
-- [ ] Both explain what makes this different
+### Submission
 
-**Quality:**
-
-- [ ] Sample content in Sheets looks good enough to show
-- [ ] At least one piece of content you'd be proud to share
-
-### 12.7 Backup Everything
-
-- [ ] Export n8n workflow (Settings → Download)
-- [ ] Screenshot key workflow sections
-- [ ] Copy Google Sheets URL
-- [ ] Save video file locally
+- [ ] Navigate to hackathon submission page
+- [ ] Upload/link demo video
+- [ ] Paste written submission
+- [ ] Include required URLs
+- [ ] Submit before deadline
 
 ---
 
-## Submission
+## 🎉 After Submission
 
-### 12.8 Submit on Skool
-
-1. [ ] Go to hackathon submission page
-2. [ ] Upload video or paste video link
-3. [ ] Paste written submission
-4. [ ] Include any required links (VPS URL, form URL, Sheets URL)
-5. [ ] Submit before **December 14, 11:59 PM EST**
-
----
-
-## 🎉 CONGRATULATIONS!
-
-If you've completed all 12 shards, you have:
+You will have built:
 
 - ✅ Self-hosted n8n on Hostinger VPS
-- ✅ Full content repurposing workflow
-- ✅ AI-powered idea extraction
-- ✅ Multi-platform content generation
-- ✅ Quality gate with scoring
-- ✅ Demo video and submission ready
+- ✅ Unified content generation workflow
+- ✅ Multi-platform posting (X, LinkedIn, Newsletter)
+- ✅ Instagram + Skool content generation
+- ✅ Interactive preview with approval flow
+- ✅ Professional email template
+- ✅ Demo video and write-up
 
-**Good luck with the hackathon!** 🚀
+**Good luck! 🚀**
