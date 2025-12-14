@@ -1,5 +1,5 @@
 {
-  "name": "Content Approval - Post Handler",
+  "name": "Content Approval Handler",
   "nodes": [
     {
       "parameters": {
