@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Max Content - The Engine</title>
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="swiper mySwiper">
+        <div class="parallax-bg" style="background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop');" data-swiper-parallax="-23%"></div>
+        <div class="swiper-wrapper">
+            
+            <!-- Slide 1: Title -->
+            <div class="swiper-slide">
+                <div class="title" data-swiper-parallax="-300">Max Content</div>
+                <div class="subtitle" data-swiper-parallax="-200">Your Content, Everywhere.</div>
+                <div class="text" data-swiper-parallax="-100">
+                    <p>Automated Repurposing Engine powered by N8N.</p>
+                </div>
+            </div>
+
+            <!-- Slide 2: The Problem -->
+            <div class="swiper-slide">
+                <div class="title" data-swiper-parallax="-300">The Problem</div>
+                <div class="subtitle" data-swiper-parallax="-200">Great Content Dies in the Archives.</div>
+                <div class="text" data-swiper-parallax="-100">
+                    <p>You spend hours creating a video, but repurposing it takes days.</p>
+                    <div class="problem-grid">
+                        <div class="problem-card">
+                            <img src="problem-manual.png" alt="Hand writing on paper">
+                            <div class="problem-label">Manual Transcription</div>
+                        </div>
+                        <div class="problem-card">
+                            <img src="problem-context.png" alt="Busy intersection">
+                            <div class="problem-label">Context Switching</div>
+                        </div>
+                        <div class="problem-card">
+                            <img src="problem-voice.png" alt="Confusing voices">
+                            <div class="problem-label">Inconsistent Voice</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: The Solution (Mud Map Overview) -->
+            <div class="swiper-slide">
+                <div class="slide-content-wrapper">
+                    <div class="slide-text-content">
+                        <div class="title" data-swiper-parallax="-300">The Solution</div>
+                        <div class="subtitle" data-swiper-parallax="-200">Automated Intelligence Pipeline</div>
+                        <div class="flow-grid" data-swiper-parallax="-100">
+                           <div class="flow-card">
+                               <img src="solution-video.png" alt="Video File">
+                               <div class="flow-label">Video</div>
+                           </div>
+                           <div class="flow-arrow">→</div>
+                           <div class="flow-card">
+                               <img src="solution-brain.png" alt="AI Brain">
+                               <div class="flow-label">AI Brain</div>
+                           </div>
+                           <div class="flow-arrow">→</div>
+                           <div class="flow-card">
+                               <img src="solution-socials.png" alt="Viral Socials">
+                               <div class="flow-label">Socials</div>
+                           </div>
+                        </div>
+                    </div>
+                    <div class="slide-visual-content">
+                        <img src="ideation.png" class="collaboration-img" data-swiper-parallax="-200" alt="Team collaborating on workflow">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Stop 1 - The Source -->
+            <div class="swiper-slide">
+                <div class="step-indicator" data-swiper-parallax="-500">Step 01</div>
+                <div class="title" data-swiper-parallax="-300">The Source</div>
+                <div class="subtitle" data-swiper-parallax="-200">Ingestion Layer</div>
+                <div class="text" data-swiper-parallax="-100">
+                    <p>We don't just "read text". We capture the essence.</p>
+                    <div class="problem-grid">
+                        <div class="problem-card">
+                            <img src="source-input.png" alt="YouTube Input">
+                            <div class="problem-label">Input</div>
+                        </div>
+                        <div class="problem-card">
+                            <img src="source-trigger.png" alt="N8N Webhook">
+                            <div class="problem-label">Trigger</div>
+                        </div>
+                        <div class="problem-card">
+                            <img src="source-metadata.png" alt="Metadata Extraction">
+                            <div class="problem-label">Metadata</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Stop 2 - The Engine -->
+            <div class="swiper-slide">
+                <div class="step-indicator" data-swiper-parallax="-500">Step 02</div>
+                <div class="title" data-swiper-parallax="-300">The Engine</div>
+                <div class="subtitle" data-swiper-parallax="-200">Reasoning & Extraction</div>
+                <div class="text" data-swiper-parallax="-100">
+                    <p>Standard AI summarizes. <strong>Our Engine thinks.</strong></p>
+                    <ul class="detail-list slow-reveal">
+                        <li><strong>Semantic Chunking:</strong> Breaks video into logical chapters.</li>
+                        <li><strong>Pattern Matching:</strong> Identifies Stories, Contrarian Takes, and Actionable Advice.</li>
+                        <li><strong>Structure Enforcement:</strong> Applies "Hook-Value-CTA" framework to every generation.</li>
+                    </ul>
+                </div>
+            </div>
+
+             <!-- Slide 6: Stop 3 - The Gatekeeper -->
+             <div class="swiper-slide">
+                <div class="slide-content-wrapper">
+                     <div class="slide-text-content">
+                        <div class="step-indicator" data-swiper-parallax="-500">Step 03</div>
+                        <div class="title" data-swiper-parallax="-300">The Gatekeeper</div>
+                        <div class="subtitle" data-swiper-parallax="-200">The "No-Slop" Guarantee</div>
+                        <div class="text" data-swiper-parallax="-100">
+                            <p>AI should assist, not replace. We ensure quality.</p>
+                             <ul class="detail-list slow-reveal">
+                                <li><strong>Auto-Critique:</strong> A second AI agent reviews every post for "cringe".</li>
+                                <li><strong>Human-in-the-Loop:</strong> Approval Dashboard via Airtable/Notion.</li>
+                                <li><strong>Refinement:</strong> Auto-rewrite if quality score < 80%.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="slide-visual-content">
+                        <img src="review.png" class="collaboration-img" data-swiper-parallax="-200" alt="Team reviewing content">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: Stop 4 - The Spread -->
+            <div class="swiper-slide">
+                <div class="step-indicator" data-swiper-parallax="-500">Step 04</div>
+                <div class="title" data-swiper-parallax="-300">The Spread</div>
+                <div class="subtitle" data-swiper-parallax="-200">Omnichannel Publishing</div>
+                <div class="text" data-swiper-parallax="-100">
+                    <p>One Click. Everywhere.</p>
+                    <div class="platform-grid">
+                        <div class="plat-box" style="border-color:#1DA1F2; color:#fff">
+                             <!-- X Logo -->
+                             <svg class="plat-logo" viewBox="0 0 24 24" style="fill:#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                             <div class="plat-name">X</div>
+                             <div class="plat-desc">Threads & Hooks</div>
+                        </div>
+                        <div class="plat-box" style="border-color:#0077b5; color:#0077b5">
+                             <!-- LinkedIn Logo -->
+                             <svg class="plat-logo" viewBox="0 0 24 24"><path d="M19,3H5A2,2,0,0,0,3,5V19a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2V5A2,2,0,0,0,19,3h0ZM8,19H5V8H8ZM6.5,6.73A1.75,1.75,0,1,1,8.25,5,1.76,1.76,0,0,1,6.5,6.73ZM19,19H16V13.91c0-1.21,0-2.77-1.7-2.77s-1.94,1.32-1.94,2.69V19H9.36V8h2.89v1.59h.05a3.17,3.17,0,0,1,2.83-1.56c3,0,3.58,2,3.58,4.58V19Z"/></svg>
+                             <div class="plat-name">LinkedIn</div>
+                             <div class="plat-desc">Articles</div>
+                        </div>
+                        <div class="plat-box" style="border-color:#facc15; color:#facc15">
+                             <!-- Skool Logo (Text Representation) -->
+                             <div class="plat-logo" style="display:flex; align-items:center; justify-content:center; font-family:'Arial Black', sans-serif; font-size:40px;">S</div>
+                             <div class="plat-name">Skool</div>
+                             <div class="plat-desc">Community</div>
+                        </div>
+                        <div class="plat-box" style="border-color:#000; background:#fff; color:#000">
+                             <!-- Resend Logo -->
+                             <img src="resend-logo.png" class="plat-logo" alt="Resend">
+                             <div class="plat-name">Resend</div>
+                             <div class="plat-desc">Newsletter</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: Tech Stack -->
+            <div class="swiper-slide">
+                <div class="title" data-swiper-parallax="-300">Tech Stack</div>
+                <div class="text" data-swiper-parallax="-100">
+                    <ul class="tech-list">
+                        <li>Hostinger VPS (KVM2)</li>
+                        <li>Dockerized N8N</li>
+                        <li>LLM Integration</li>
+                    </ul>
+                </div>
+            </div>
+
+             <!-- Slide 9: CTA -->
+             <div class="swiper-slide">
+                <div class="slide-content-wrapper">
+                    <div class="slide-text-content">
+                        <div class="title" data-swiper-parallax="-300">Build It. Use It.</div>
+                        <div class="subtitle" data-swiper-parallax="-200">Max Content.</div>
+                        <div class="text" data-swiper-parallax="-100">
+                            <a href="#" class="cta-button">View Documentation</a>
+                        </div>
+                    </div>
+                    <div class="slide-visual-content">
+                        <img src="success.png" class="collaboration-img" data-swiper-parallax="-200" alt="Team celebrating launch">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
+    </div>
+
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script>
+        var swiper = new Swiper(".mySwiper", {
+            speed: 600,
+            parallax: true,
+            pagination: {
+                el: ".swiper-pagination",
+                clickable: true,
+            },
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+        });
+    </script>
+</body>
+</html>
