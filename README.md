@@ -216,6 +216,32 @@ sessionId|x|linkedin|newsletter|instagram|skool|recipients|senderName|base64LlmT
 
 ---
 
+## 📖 Documentation
+
+### Comprehensive Implementation Guide
+
+For **detailed setup instructions, architecture deep-dives, troubleshooting, and advanced topics**, see the **[Complete Implementation Guide](implementation/dec-2025/IMPLEMENTATION-GUIDE.html)**.
+
+This guide includes:
+- Step-by-step setup with screenshots and code examples
+- Architecture diagrams and workflow explanations  
+- Voice DNA framework and editorial standards
+- Payload encoding technical details
+- Common issues and fixes
+- Advanced: Multi-model architecture and quality gates
+
+**Perfect for:** New users setting up the system, developers customizing workflows, or anyone wanting to understand the internals.
+
+### Quick Reference Docs
+
+- **AGENTS.md** - AI agent framework guidelines
+- **features/voice-dna-framework.md** - LLM prompts and voice calibration
+- **features/technical-requirements-spec.md** - Architecture specification
+- **n8n-workflows/input-schema.md** - API input format
+- **n8n-workflows/docs/** - Workflow-specific documentation
+
+---
+
 ## 📄 License
 
 MIT License – Built for the Hostinger x n8n Hackathon
