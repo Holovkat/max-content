@@ -3,210 +3,462 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Building an AI-Powered Content Repurposing Engine: The Max Content Complete Guide</title>
+    <title>Max Content: The Complete Implementation Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
     <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --danger: #f56565;
+            --dark: #2d3748;
+            --gray: #718096;
+            --light-gray: #f7fafc;
+            --code-bg: #2d3748;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            line-height: 1.7;
+            color: var(--dark);
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background: #fafafa;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-size: 16px;
         }
+
         article {
             background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 60px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
         }
+
+        article::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
         h1 {
-            font-size: 2.5em;
-            font-weight: 700;
-            margin-bottom: 0.3em;
-            color: #111;
+            font-size: 2.8em;
+            font-weight: 800;
+            margin: 0 0 0.5em 0;
+            color: var(--dark);
             line-height: 1.2;
+            letter-spacing: -0.5px;
         }
+
         .subtitle {
-            font-size: 1.2em;
-            color: #666;
-            margin-bottom: 2em;
-        }
-        h2 {
-            font-size: 1.8em;
-            margin-top: 2em;
-            margin-bottom: 0.8em;
-            padding-bottom: 0.3em;
-            border-bottom: 2px solid #667eea;
-            color: #222;
-        }
-        h3 {
-            font-size: 1.4em;
-            margin-top: 1.8em;
-            margin-bottom: 0.6em;
-            color: #333;
-        }
-        h4 {
-            font-size: 1.1em;
-            margin-top: 1.2em;
-            margin-bottom: 0.4em;
-            color: #444;
-        }
-        p {
-            margin-bottom: 1.2em;
-        }
-        .lead {
-            font-size: 1.1em;
-            color: #444;
-            margin-bottom: 1.5em;
-            padding: 1em;
-            background: #f8f9ff;
-            border-left: 4px solid #667eea;
-            border-radius: 4px;
-        }
-        .highlight-box {
-            background: #fff8e6;
-            border: 1px solid #ffd43b;
-            padding: 1em;
-            margin: 1.5em 0;
-            border-radius: 4px;
-        }
-        .warning-box {
-            background: #fff2f2;
-            border: 1px solid #ff6b6b;
-            padding: 1em;
-            margin: 1.5em 0;
-            border-radius: 4px;
-        }
-        .code-block {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 1.2em;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 1.2em 0;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9em;
+            font-size: 1.3em;
+            color: var(--gray);
+            margin-bottom: 2.5em;
+            font-weight: 400;
             line-height: 1.5;
         }
+
+        .meta {
+            color: var(--gray);
+            font-size: 0.95em;
+            margin-bottom: 3em;
+            padding-bottom: 1.5em;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            gap: 2em;
+            flex-wrap: wrap;
+        }
+
+        .meta strong {
+            color: var(--dark);
+        }
+
+        h2 {
+            font-size: 2em;
+            margin: 3em 0 1.2em 0;
+            padding-bottom: 0.5em;
+            border-bottom: 3px solid var(--primary);
+            color: var(--dark);
+            font-weight: 700;
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100px;
+            height: 3px;
+            background: var(--secondary);
+        }
+
+        h3 {
+            font-size: 1.5em;
+            margin: 2.5em 0 1em 0;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        h4 {
+            font-size: 1.2em;
+            margin: 2em 0 0.8em 0;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 1.5em;
+            color: #4a5568;
+        }
+
+        .lead {
+            font-size: 1.15em;
+            color: var(--dark);
+            margin: 2em 0;
+            padding: 1.8em;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border-left: 5px solid var(--primary);
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .lead em {
+            font-style: normal;
+            color: var(--dark);
+        }
+
+        ul, ol {
+            margin: 1.5em 0;
+            padding-left: 2em;
+        }
+
+        li {
+            margin-bottom: 0.8em;
+            line-height: 1.7;
+        }
+
+        .toc {
+            background: var(--light-gray);
+            padding: 2em;
+            border-radius: 8px;
+            margin: 2em 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .toc h2 {
+            margin-top: 0;
+            font-size: 1.4em;
+            border: none;
+        }
+
+        .toc h2::after {
+            display: none;
+        }
+
+        .toc ol {
+            counter-reset: toc-counter;
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc li {
+            counter-increment: toc-counter;
+            margin-bottom: 0.8em;
+            position: relative;
+            padding-left: 2.5em;
+        }
+
+        .toc li::before {
+            content: counter(toc-counter) ".";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .toc a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.3em 0;
+            display: block;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--primary);
+        }
+
+        .card {
+            background: white;
+            border-left: 5px solid var(--primary);
+            padding: 1.8em;
+            margin: 2em 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .card.warning {
+            border-left-color: var(--warning);
+            background: #fef5e7;
+        }
+
+        .card.success {
+            border-left-color: var(--success);
+            background: #f0fff4;
+        }
+
+        .card.info {
+            border-left-color: var(--primary);
+            background: #f7fafc;
+        }
+
+        .card.danger {
+            border-left-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: var(--dark);
+        }
+
+        .card.warning h4 {
+            color: var(--warning);
+        }
+
+        .card.success h4 {
+            color: var(--success);
+        }
+
+        .card.danger h4 {
+            color: var(--danger);
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1.5em 0;
+            margin: 2em 0;
             font-size: 0.95em;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
+
         th {
-            background: #667eea;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            padding: 12px 8px;
+            padding: 16px 12px;
             text-align: left;
             font-weight: 600;
-        }
-        td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #ddd;
-        }
-        tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-        ul, ol {
-            margin: 1em 0;
-            padding-left: 2em;
-        }
-        li {
-            margin-bottom: 0.6em;
-        }
-        .callout {
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            padding: 1em;
-            margin: 1.5em 0;
-            border-radius: 4px;
             font-size: 0.95em;
         }
-        .meta {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 2em;
-            padding-bottom: 1em;
-            border-bottom: 1px solid #eee;
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
         }
-        .checklist li {
-            list-style-type: none;
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .code-wrapper {
             position: relative;
-            padding-left: 2em;
+            margin: 2em 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
-        .checklist li:before {
-            content: "☐";
+
+        .code-header {
+            background: var(--code-bg);
+            color: white;
+            padding: 12px 16px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-wrapper pre {
+            margin: 0 !important;
+            border-radius: 0 !important;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .code-wrapper code {
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace !important;
+            font-size: 0.85em !important;
+            line-height: 1.6 !important;
+        }
+
+        .mermaid {
+            text-align: center;
+            margin: 2.5em 0;
+            padding: 2em;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .mermaid svg {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist li {
+            position: relative;
+            padding-left: 2.5em;
+            margin-bottom: 1.2em;
+        }
+
+        .checklist li::before {
+            content: '☐';
             position: absolute;
             left: 0;
-            font-size: 1.2em;
-            color: #667eea;
+            color: var(--primary);
+            font-size: 1.4em;
+            top: -0.1em;
         }
-        .author-box {
-            background: #f5f5f5;
-            padding: 1em;
-            border-radius: 4px;
+
+        .meta-box {
+            background: var(--light-gray);
+            padding: 1.5em;
+            border-radius: 8px;
             margin: 2em 0;
+            border: 1px solid #e2e8f0;
         }
+
+        .meta-box h4 {
+            margin-top: 0;
+            color: var(--dark);
+        }
+
         a {
-            color: #667eea;
+            color: var(--primary);
             text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
         }
+
         a:hover {
+            color: var(--primary-dark);
             text-decoration: underline;
         }
-        .flow-diagram {
-            background: #f8f9fa;
-            padding: 1em;
-            border-radius: 4px;
-            font-family: monospace;
-            margin: 1.5em 0;
-            line-height: 1.4;
+
+        strong {
+            color: var(--dark);
         }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
             }
+            
             article {
-                padding: 20px;
+                padding: 30px 20px;
             }
+            
             h1 {
-                font-size: 2em;
+                font-size: 2.2em;
             }
+            
             h2 {
-                font-size: 1.5em;
+                font-size: 1.6em;
             }
+            
+            .meta {
+                flex-direction: column;
+                gap: 0.5em;
+            }
+        }
+
+        /* Mermaid theme customization */
+        .mermaid .node rect {
+            fill: var(--primary) !important;
+            stroke: var(--primary-dark) !important;
+        }
+
+        .mermaid .node text {
+            fill: white !important;
+            font-weight: 600 !important;
+        }
+
+        .mermaid .edgePath path {
+            stroke: var(--gray) !important;
+            stroke-width: 2px !important;
+        }
+
+        .mermaid .edgeLabel {
+            background-color: white !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
         }
     </style>
 </head>
 <body>
     <article>
-        <h1>Building an AI-Powered Content Repurposing Engine: The Max Content Complete Guide</h1>
+        <h1>Max Content: The Complete Implementation Guide</h1>
         <p class="subtitle">Transform single video transcripts into 9+ platform-ready social posts with zero AI slop and human editorial control</p>
         
         <div class="meta">
-            <strong>Reading Time:</strong> 25 minutes | <strong>Difficulty:</strong> Intermediate | <strong>Stack:</strong> n8n + Google Gemini + Node.js
+            <div><strong>Reading Time:</strong> <span id="reading-time"></span> minutes</div>
+            <div><strong>Difficulty:</strong> Intermediate</div>
+            <div><strong>Stack:</strong> n8n + Google Gemini + Node.js</div>
         </div>
 
         <div class="lead">
-            <p><em>Content creators face a brutal truth: long-form content gets uploaded once but needs to be recycled endlessly to reach different audiences. Manual repurposing is tedious, inconsistent, and prevents rapid iteration. Max Content solves this by automating the entire workflow with intelligent AI while maintaining magazine-quality editorial standards.</em></p>
+            <em>Content creators face a brutal truth: long-form content gets uploaded once but needs to be recycled endlessly to reach different audiences. Manual repurposing is tedious, inconsistent, and prevents rapid iteration. Max Content solves this by automating the entire workflow with intelligent AI while maintaining magazine-quality editorial standards.</em>
         </div>
 
-        <h2>Table of Contents</h2>
-        <ol>
-            <li><a href="#problem">The Problem: Content Death by a Thousand Cuts</a></li>
-            <li><a href="#solution">The Solution: One Input, Nine Outputs</a></li>
-            <li><a href="#architecture">Architecture: How It All Fits Together</a></li>
-            <li><a href="#prerequisites">What You'll Need</a></li>
-            <li><a href="#setup">Step-by-Step Implementation</a></li>
-            <li><a href="#voice">Voice DNA: Why This Isn't Generic AI Slop</a></li>
-            <li><a href="#payload">Payload Encoding: The Pipe-Delimited Trick</a></li>
-            <li><a href="#troubleshooting">Common Issues & Fixes</a></li>
-            <li><a href="#enhancements">Advanced: Multi-Model and Quality Gates</a></li>
-        </ol>
+        <div class="toc">
+            <h2>📋 Table of Contents</h2>
+            <ol>
+                <li><a href="#problem">The Problem: Content Death by a Thousand Cuts</a></li>
+                <li><a href="#solution">The Solution: One Input, Nine Outputs</a></li>
+                <li><a href="#architecture">Architecture: How It All Fits Together</a></li>
+                <li><a href="#prerequisites">What You'll Need</a></li>
+                <li><a href="#setup">Step-by-Step Implementation</a></li>
+                <li><a href="#voice">Voice DNA: Why This Isn't Generic AI Slop</a></li>
+                <li><a href="#payload">Payload Encoding: The Technical Deep Dive</a></li>
+                <li><a href="#troubleshooting">Common Issues & Fixes</a></li>
+                <li><a href="#enhancements">Advanced: Multi-Model & Quality Gates</a></li>
+            </ol>
+        </div>
 
-        <h2 id="problem">The Problem: Content Death by a Thousand Cuts</h2>
+        <h2 id="problem">⚠️ The Problem: Content Death by a Thousand Cuts</h2>
         
         <p>Picture this: You spend hours creating an insightful 45-minute YouTube video about building AI agents. The content is gold—specific examples, frameworks, numbers. You hit publish, wait for the algorithm to work its magic, and accept that your 45-minute investment will generate views for 48 hours, then fade into obscurity.</p>
         
@@ -221,59 +473,102 @@
         
         <p>Manually extracting these, rewriting for each platform, and maintaining consistent quality takes <strong>3-4 hours per video</strong>. Most creators simply don't do it consistently. The result? Valuable insights reach only a fraction of potential audiences.</p>
 
-        <p>Even worse, generic AI tools produce bland, robotic content that reads like every other motivational post on LinkedIn:</p>
-        
-        <div class="warning-box">
-            <strong>❌ Generic AI Slop Output:</strong> "In today's rapidly evolving digital landscape, AI agents are revolutionizing business operations. Entrepreneurs must embrace this paradigm shift to remain competitive. #innovation #AI #future"
+        <div class="card danger">
+            <h4>❌ Generic AI Slop Output</h4>
+            <p><em>"In today's rapidly evolving digital landscape, AI agents are revolutionizing business operations. Entrepreneurs must embrace this paradigm shift to remain competitive. #innovation #AI #future"</em></p>
+            <p>This is what most AI tools produce. It's bland, generic, and adds zero value.</p>
         </div>
 
-        <h2 id="solution">The Solution: One Input, Nine Outputs</h2>
+        <h2 id="solution">✨ The Solution: One Input, Nine Outputs</h2>
         
-        <div class="highlight-box">
-            <strong>Max Value:</strong> One transcript → 9+ platform-specific posts (5 tweets, 3 LinkedIn, 1 newsletter, plus Instagram/Skool) ready to publish with editorial oversight
+        <div class="card success">
+            <h4>🎯 Max Value Proposition</h4>
+            <p><strong>One transcript → 9+ platform-specific posts</strong> (5 tweets, 3 LinkedIn, 1 newsletter, plus Instagram/Skool) ready to publish with editorial oversight</p>
         </div>
 
         <p>Max Content is a complete automation pipeline that repurposes long-form content into platform-ready posts while maintaining human editorial control and magazine-quality writing standards.</p>
 
-        <h3>Core Flow</h3>
+        <h3>📊 Core Flow</h3>
 
-        <div class="flow-diagram">
-YouTube Transcript
-       ↓
-Content Generator Workflow
-  • Parse input
-  • 1x Gemini call produces ALL content
-  • Build interactive HTML preview
-       ↓
-Preview Page (Human Review)
-  • See all generated posts
-  • Review for quality
-  • Click "Approve and Post"
-       ↓
-Content Approval Workflow
-  • Auto-posts to X/Twitter
-  • Auto-posts to LinkedIn
-  • Sends newsletter via email
-  • Returns confirmation page
+        <div class="mermaid">
+flowchart TD
+    A[YouTube Transcript] --> B{Content Generator Workflow}
+    B --> C[Parse Input]
+    C --> D[Single Gemini Call]
+    D --> E[Build HTML Preview]
+    E --> F[Interactive Preview Page]
+    F --> G[Human Review & Approve]
+    G --> H{Content Approval Workflow}
+    H --> I[Post to X/Twitter]
+    H --> J[Post to LinkedIn]
+    H --> K[Send Newsletter]
+    H --> L[Confirmation Page]
+
+    style A fill:#667eea
+    style B fill:#764ba2
+    style F fill:#48bb78
+    style H fill:#ed8936
+    style L fill:#48bb78
         </div>
 
-        <h3>What You'll Walk Away With</h3>
+        <h3>📦 What You'll Walk Away With</h3>
 
-        <ul>
-            <li><strong>X/Twitter:</strong> 5 tweets (contrarian, tactical, framework, observations)</li>
-            <li><strong>LinkedIn:</strong> 3 posts (deep lesson, framework breakdown, story-driven)</li>
-            <li><strong>Newsletter:</strong> 400-600 word email section with actionable takeaways</li>
-            <li><strong>Instagram:</strong> Emotionally-driven captions with hooks and calls-to-action</li>
-            <li><strong>Skool:</strong> Community discussion starters</li>
-        </ul>
+        <table>
+            <tr>
+                <th>Platform</th>
+                <th>Output</th>
+                <th>Quantity</th>
+            </tr>
+            <tr>
+                <td><strong>X/Twitter</strong></td>
+                <td>Contrarian • Tactical • Mistake • Framework • Observation tweets</td>
+                <td>5 tweets</td>
+            </tr>
+            <tr>
+                <td><strong>LinkedIn</strong></td>
+                <td>Deep lesson • Framework breakdown • Story-driven posts</td>
+                <td>3 posts</td>
+            </tr>
+            <tr>
+                <td><strong>Newsletter</strong></td>
+                <td>400-600 word email with Hook → Value → CTA structure</td>
+                <td>1 section</td>
+            </tr>
+            <tr>
+                <td><strong>Instagram</strong></td>
+                <td>Emotionally-driven captions with engagement hooks</td>
+                <td>2-3 captions</td>
+            </tr>
+            <tr>
+                <td><strong>Skool</strong></td>
+                <td>Community discussion starters with takeaways</td>
+                <td>1 post</td>
+            </tr>
+        </table>
 
-        <h2 id="architecture">Architecture: How It All Fits Together</h2>
+        <h2 id="architecture">🏗️ Architecture: How It All Fits Together</h2>
 
-        <h3>The Two Workflows</h3>
+        <div class="card info">
+            <h4>💡 Architecture Overview</h4>
+            <p>The system uses two n8n workflows working in sequence. The first generates content and creates a preview. The second handles publishing after human approval.</p>
+        </div>
 
-        <h4>1. Content Generator (<code>content-generator.json</code>)</h4>
+        <h3>🔧 Workflow 1: Content Generator</h3>
 
-        <p>Five nodes that transform input into preview:</p>
+        <div class="mermaid">
+flowchart LR
+    A[Content Form Webhook] --> B[Prepare Input
+Generate Session ID]
+    B --> C[Generate Content
+Single Gemini Call]
+    C --> D[Build Preview Response
+HTML + Encode Payload]
+    D --> E[Respond with HTML
+Interactive Preview]
+
+    style C fill:#667eea
+    style E fill:#48bb78
+        </div>
 
         <table>
             <tr>
@@ -288,7 +583,7 @@ Content Approval Workflow
             </tr>
             <tr>
                 <td><strong>Prepare Input</strong></td>
-                <td>Generates session ID, organizes platform flags</td>
+                <td>Generates session ID, normalizes data, organizes platform flags</td>
                 <td>Normalized data structure</td>
             </tr>
             <tr>
@@ -308,79 +603,69 @@ Content Approval Workflow
             </tr>
         </table>
 
-        <h4>2. Content Approval (<code>content-approval.json</code>)</h4>
+        <h3>🔧 Workflow 2: Content Approval</h3>
 
-        <p>Nine nodes that handle publishing after approval:</p>
+        <div class="mermaid">
+flowchart TD
+    A[Approval Webhook] --> B[Decode Payload
+Parse Pipe-Delimited]
+    B --> C{Platform Flags}
+    C --> D[Post to X/Twitter]
+    C --> E[Post to LinkedIn]
+    C --> F[Build Email HTML]
+    F --> G[Send via Resend]
+    D --> H[Build Confirmation]
+    E --> H
+    G --> H
+    H --> I[Respond with HTML
+Success/Error]
 
-        <table>
-            <tr>
-                <th>Node</th>
-                <th>Purpose</th>
-                <th>Condition</th>
-            </tr>
-            <tr>
-                <td><strong>Approval Webhook</strong></td>
-                <td>Receives encoded payload from button click</td>
-                <td>Always triggered</td>
-            </tr>
-            <tr>
-                <td><strong>Decode Payload</strong></td>
-                <td>Parses pipe-delimited format, extracts LLM content</td>
-                <td>Always</td>
-            </tr>
-            <tr>
-                <td><strong>Post to X/Twitter</strong></td>
-                <td>Posts tweets via Twitter API</td>
-                <td>If X platform selected</td>
-            </tr>
-            <tr>
-                <td><strong>Post to LinkedIn</strong></td>
-                <td>Posts via LinkedIn API</td>
-                <td>If LinkedIn platform selected</td>
-            </tr>
-            <tr>
-                <td><strong>Build Email HTML</strong></td>
-                <td>Creates Outlook-compatible newsletter template</td>
-                <td>If newsletter selected</td>
-            </tr>
-            <tr>
-                <td><strong>Send via Resend</strong></td>
-                <td>Calls Resend API to deliver newsletter</td>
-                <td>If newsletter selected</td>
-            </tr>
-        </table>
+    style B fill:#667eea
+    style H fill:#48bb78
+        </div>
 
-        <h3>Why Pipe-Delimited Payload?</h3>
+        <h3>🛡️ Why Pipe-Delimited Payload?</h3>
 
-        <p>Most workflows use JSON encoding. Max Content uses pipe-delimited format. Here's why:</p>
+        <div class="card info">
+            <h4>💡 The Problem with JSON</h4>
+            <p>LLM output contains control characters that break JSON parsing. Pipe-delimited format isolates the problematic data.</p>
+        </div>
 
-        <div class="code-block">
-// Problem: LLM output contains control characters that break JSON parsing
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>🔧 Payload Encoding Strategy</span>
+                <span>JavaScript</span>
+            </div>
+            <pre><code class="language-javascript">// Problem: LLM output contains control characters that break JSON
 const badJson = '{"key": "value\x00\x1F"}';  // \x00 = null, \x1F = unit separator
 
 // Solution: Isolate LLM data in separate base64 segment
 const payload = [
-  sessionId,
-  xFlag,
-  linkedinFlag,
-  recipients,
-  base64EncodedLlmText  // LLM data here, safely encoded
+  sessionId,                    // position 0
+  xFlag ? '1' : '0',            // position 1
+  linkedinFlag ? '1' : '0',     // position 2
+  newsletterFlag ? '1' : '0',   // position 3
+  recipients.join(','),         // position 4
+  senderName,                   // position 5
+  base64EncodedLlmText          // position 6: safely encoded LLM data
 ].join('|');
 
-// Then base64 encode entire payload
-const encodedPayload = Buffer.from(payload).toString('base64');
-// Result: sessionId|1|0|user@email.com|eyJrZXlfaWRlYXMi... (base64)
+// Result: sessionId|1|0|1|user@email.com|Max|eyJrZXlfaWRlYXMi... (base64)
+const encodedPayload = Buffer.from(payload).toString('base64');</code></pre>
         </div>
 
-        <p><strong>Benefits:</strong></p>
-        <ul>
-            <li>LLM output with control characters doesn't break parsing</li>
-            <li>Simple string split operations (fast)</li>
-            <li>Isolates potentially problematic data</li>
-            <li>Nest-proof (no JSON-in-JSON fragility)</li>
-        </ul>
+        <div class="card success">
+            <h4>✅ Benefits of Pipe-Delimited Encoding</h4>
+            <ul>
+                <li><strong>Isolates Problem Data:</strong> LLM output with control characters doesn't break parsing</li>
+                <li><strong>No JSON-in-JSON Nesting:</strong> Avoids double-escaping hell</li>
+                <li><strong>Fast String Operations:</strong> Splitting by pipe is O(n) and cheap</li>
+                <li><strong>Human-Readable:</strong> You can visually inspect base64-decoded payload</li>
+                <li><strong>Transport Agnostic:</strong> Works with webhooks, query strings, email links</li>
+            </ul>
+        </div>
 
-        <h2 id="prerequisites">What You'll Need</h2>
+        <h2 id="prerequisites">🛠️ What You'll Need</h2>
 
         <table>
             <tr>
@@ -427,20 +712,27 @@ const encodedPayload = Buffer.from(payload).toString('base64');
             </tr>
         </table>
 
-        <h3>External Accounts Required</h3>
+        <h3>📋 External Accounts Required</h3>
 
-        <ol>
+        <div class="checklist">
             <li><strong>Google Account</strong> → Gemini API key at <a href="https://ai.google.dev">ai.google.dev</a></li>
             <li><strong>Twitter Developer</strong> → Create app at <a href="https://developer.twitter.com">developer.twitter.com</a> (takes 1-2 days for approval)</li>
             <li><strong>LinkedIn Developer</strong> → Create app at <a href="https://linkedin.com/developers">linkedin.com/developers</a> (instant)</li>
             <li><strong>Resend</strong> → Sign up at <a href="https://resend.com">resend.com</a> (free tier available)</li>
-        </ol>
-
-        <div class="callout">
-            <strong>💡 Pro Tip:</strong> Create all developer accounts in parallel on Day 1. Twitter approval is the slowest (1-2 days), so get that started first.
         </div>
 
-        <h2 id="setup">Step-by-Step Implementation</h2>
+        <div class="card info">
+            <h4>💡 Pro Tip</h4>
+            <p>Create all developer accounts in parallel on Day 1. Twitter approval is the slowest (1-2 days), so get that started first.</p>
+        </div>
+
+        <h2 id="setup">🚀 Step-by-Step Implementation</h2>
+
+        <div class="card info">
+            <h4>⏱️ Timeline</h4>
+            <p><strong>Total Setup Time:</strong> 2-4 hours (depending on Twitter approval)</p>
+            <p><strong>Breakdown:</strong> Infrastructure (30min) → Credentials (15min) → Import (10min) → Testing (45min)</p>
+        </div>
 
         <h3>Phase 1: Infrastructure Setup (30 minutes)</h3>
 
@@ -455,8 +747,12 @@ const encodedPayload = Buffer.from(payload).toString('base64');
 
         <h4>Step 2: Install n8n</h4>
 
-        <div class="code-block">
-# SSH into your VPS
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>🐳 Docker Deployment</span>
+                <span>Bash</span>
+            </div>
+            <pre><code class="language-bash"># SSH into your VPS
 ssh root@YOUR_IP_ADDRESS
 
 # Install Docker if not present
@@ -470,7 +766,7 @@ docker run -it --rm --name n8n -p 5678:5678 \
   -e N8N_BASIC_AUTH_PASSWORD=YOUR_SECURE_PASSWORD \
   -e N8N_HOST=YOUR_IP_ADDRESS \
   -v ~/.n8n:/home/node/.n8n \
-  n8nio/n8n
+  n8nio/n8n</code></pre>
         </div>
 
         <p>Access n8n at: <code>https://YOUR_IP:5678</code></p>
@@ -526,10 +822,14 @@ docker run -it --rm --name n8n -p 5678:5678 \
 
         <h4>Step 7: Get the Workflow Files</h4>
 
-        <div class="code-block">
-# On your local machine
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>📂 Clone Repository</span>
+                <span>Bash</span>
+            </div>
+            <pre><code class="language-bash"># On your local machine
 git clone https://github.com/your-username/max-content.git
-cd max-content/n8n-workflows/
+cd max-content/n8n-workflows/</code></pre>
         </div>
 
         <h4>Step 8: Import Content Generator</h4>
@@ -571,10 +871,12 @@ cd max-content/n8n-workflows/
             <li>Copy the webhook URL (looks like <code>https://YOUR_IP:5678/webhook/YOUR_ID</code>)</li>
         </ol>
 
-        <p>Create a test payload:</p>
-        <div class="code-block">
-# Create test-data.json
-{
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>🧪 Test Payload</span>
+                <span>JSON</span>
+            </div>
+            <pre><code class="language-json">{
   "video_title": "How to Automate E-commerce Support with AI Agents",
   "transcript": "Last month, our support team was drowning in 200+ tickets per day. Most were basic questions about order status, returns, and password resets. We spent $15K on offshore support that got 60% CSAT. Then we built an AI agent in a weekend that handles 85% of volume and increased CSAT to 92%.\n\nThe key insight: don't try to build a perfect bot on day one. Start with the 10 most common utterances. We used LlamaIndex to parse our help docs, built a simple intent classifier, and connected it to Shopify's API. Total cost: $12/month in API calls.\n\nBiggest mistake: we tried to over-automate. The agent crashed when someone said 'I need help finding my package but the tracking number isn't working.' Now we have a human handoff trigger when confidence is below 0.7\n\nFramework: 1) Map 20 most common intents, 2) Build simple decision tree, 3) Add human fallback for edge cases, 4) Measure CSAT weekly, 5) Expand only when you have 95%+ accuracy\n\nWhich metric should I cover next? Reply below and I'll share our exact Python script.",
   "platforms": {
@@ -584,14 +886,17 @@ cd max-content/n8n-workflows/
   },
   "recipients": "test@example.com",
   "sender_name": "Max Content Team"
-}
+}</code></pre>
         </div>
 
-        <p>Send the test:</p>
-        <div class="code-block">
-curl -X POST "https://YOUR_IP:5678/webhook/YOUR_ID" \
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>📡 Send Test Request</span>
+                <span>cURL</span>
+            </div>
+            <pre><code class="language-bash">curl -X POST "https://YOUR_IP:5678/webhook/YOUR_ID" \
   -H "Content-Type: application/json" \
-  -d @test-data.json
+  -d @test-data.json</code></pre>
         </div>
 
         <p>Expect response: HTML preview page with all your generated content</p>
@@ -607,15 +912,16 @@ curl -X POST "https://YOUR_IP:5678/webhook/YOUR_ID" \
             <li>Review the confirmation page</li>
         </ol>
 
-        <div class="callout">
-            <strong>💡 Debugging Tip:</strong> If posts don't appear, check n8n execution logs (Workflows → Executions → View details). Common issues: expired OAuth tokens, rate limits, or malformed payloads.
+        <div class="card info">
+            <h4>🔍 Debugging Tip</h4>
+            <p>If posts don't appear, check n8n execution logs (Workflows → Executions → View details). Common issues: expired OAuth tokens, rate limits, or malformed payloads.</p>
         </div>
 
-        <h2 id="voice">Voice DNA: Why This Isn't Generic AI Slop</h2>
+        <h2 id="voice">🎭 Voice DNA: Why This Isn't Generic AI Slop</h2>
 
         <p>The difference between useful automation and just more AI-generated noise is <strong>voice calibration</strong> and <strong>editorial principles</strong>.</p>
 
-        <h3>Target Voice: Liam Ottley / Morningside AI</h3>
+        <h3>🎯 Target Voice: Liam Ottley / Morningside AI</h3>
 
         <table>
             <tr>
@@ -640,29 +946,34 @@ curl -X POST "https://YOUR_IP:5678/webhook/YOUR_ID" \
             </tr>
         </table>
 
-        <h3>Signature Patterns</h3>
+        <h3>✍️ Signature Patterns</h3>
 
-        <div class="highlight-box">
-            <strong>✅ Revenue Transparency:</strong> "$100k MRR", "60+ team members", actual business metrics
+        <div class="card success">
+            <h4>💰 Revenue Transparency</h4>
+            <p>"$100k MRR", "60+ team members", actual business metrics—not vague "we're growing fast"</p>
         </div>
 
-        <div class="highlight-box">
-            <strong>✅ Mistake-First Learning:</strong> "I screwed this up so you don't have to"
+        <div class="card success">
+            <h4>❌ Mistake-First Learning</h4>
+            <p>"I screwed this up so you don't have to"—starts with failures, not just successes</p>
         </div>
 
-        <div class="highlight-box">
-            <strong>✅ Action Orientation:</strong> "Build your first AI agent this weekend" (not "learn about AI agents")
+        <div class="card success">
+            <h4>⚡ Action Orientation</h4>
+            <p>"Build your first AI agent this weekend" (not "learn about AI agents")</p>
         </div>
 
-        <div class="highlight-box">
-            <strong>✅ Framework Thinking:</strong> "The 3-Step Method", "The Reverse-Build Strategy", named methodologies
+        <div class="card success">
+            <h4>📐 Framework Thinking</h4>
+            <p>"The 3-Step Method", "The Reverse-Build Strategy"—named, numbered methodologies</p>
         </div>
 
-        <div class="highlight-box">
-            <strong>✅ No Jargon Gatekeeping:</strong> Explains concepts clearly, defines terms when needed
+        <div class="card success">
+            <h4>🎯 No Jargon Gatekeeping</h4>
+            <p>Explains concepts clearly, defines terms when needed—assumes intelligence but not expertise</p>
         </div>
 
-        <h3>Editorial Principles (The Anti-Slop Rules)</h3>
+        <h3>📋 Editorial Principles (The Anti-Slop Rules)</h3>
 
         <table>
             <tr>
@@ -687,33 +998,41 @@ curl -X POST "https://YOUR_IP:5678/webhook/YOUR_ID" \
             </tr>
         </table>
 
-        <h3>Banned Phrases (The AI Slop Hall of Shame)</h3>
+        <h3>🚫 Banned Phrases (The AI Slop Hall of Shame)</h3>
 
-        <div class="warning-box">
-            <strong>❌ Generic Openers That Will Fail Quality Check:</strong>
-            <ul>
-                <li>"In today's rapidly changing world..."</li>
-                <li>"Are you tired of..."</li>
-                <li>"The future is here..."</li>
-                <li>"AI is revolutionizing..."</li>
-                <li>"Picture this: [followed by generic scenario]"</li>
-                <li>"I woke up this morning and realized..."</li>
-                <li>"The secret to [topic] is..."</li>
-            </ul>
+        <div class="card danger">
+            <h4>❌ Generic Openers That Will Fail Quality Check</h4>
+            <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin-top: 1em;">
+                <ul>
+                    <li>"In today's rapidly changing world..."</li>
+                    <li>"Are you tired of..."</li>
+                    <li>"The future is here..."</li>
+                    <li>"AI is revolutionizing..."</li>
+                </ul>
+                <ul>
+                    <li>"Picture this: [generic scenario]"</li>
+                    <li>"I woke up this morning and realized..."</li>
+                    <li>"The secret to [topic] is..."</li>
+                    <li>"In this article, we'll explore..."</li>
+                </ul>
+            </div>
         </div>
 
-        <h3>The Unified Prompt Template</h3>
+        <h3>📝 The Unified Prompt Template</h3>
 
         <p>Here's the actual prompt that generates all content in one shot:</p>
 
-        <div class="code-block">
-## SYSTEM PROMPT
+        <div class="card info">
+            <h4>System Prompt</h4>
+            <p><strong>Role:</strong> Senior content strategist at The Atlantic who deeply understands AI automation and startups. Analytical rigor of a journalist + practical mindset of an entrepreneur like Liam Ottley.</p>
+        </div>
 
-You are a senior content strategist at The Atlantic who deeply understands 
-AI automation and startups. You have the analytical rigor of a journalist 
-combined with the practical mindset of an entrepreneur like Liam Ottley.
-
-## TASK
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>🎯 Content Generation Prompt</span>
+                <span>Markdown</span>
+            </div>
+            <pre><code class="language-markdown">## TASK
 
 Analyze the following transcript and produce:
 
@@ -724,19 +1043,19 @@ Analyze the following transcript and produce:
 
 ### 2. TWITTER POSTS (exactly 5)
 Generate 5 different tweet types:
-- Contrarian: "Most people think X. Here's why that's wrong."
-- Tactical: "Here's the exact process I use for..."
-- Mistake: "I lost $X by not doing this..."
-- Framework: "The 3-step method that..."
-- Observation: "What nobody tells you about..."
+- **Contrarian:** "Most people think X. Here's why that's wrong."
+- **Tactical:** "Here's the exact process I use for..."
+- **Mistake:** "I lost $X by not doing this..."
+- **Framework:** "The 3-step method that..."
+- **Observation:** "What nobody tells you about..."
 
 Each must be 200-280 chars, follow Hook→Value→CTA structure
 
 ### 3. LINKEDIN POSTS (exactly 3)
 Generate 3 different post types:
-- Deep Lesson: Extended insight with full context
-- Framework Post: Step-by-step breakdown
-- Story Post: Narrative-driven lesson
+- **Deep Lesson:** Extended insight with full context
+- **Framework Post:** Step-by-step breakdown  
+- **Story Post:** Narrative-driven lesson
 
 Each 1200-1800 chars, heavy line breaks, specific numbers/examples
 
@@ -766,17 +1085,18 @@ Voice: Liam Ottley/Morningside AI - direct, practical, numbers-forward
 
 ## QUALITY RULES
 
-✅ Specific examples, numbers, moments (not vague advice)
-✅ Platform-native voice and length
-✅ Hook→Value→CTA structure on every piece
-❌ Generic filler ("In today's fast-paced world...")
-❌ Obvious AI-generated patterns
+✅ Specific examples, numbers, moments (not vague advice)  
+✅ Platform-native voice and length  
+✅ Hook→Value→CTA structure on every piece  
+❌ Generic filler ("In today's fast-paced world...")  
+❌ Obvious AI-generated patterns  
 ❌ Clickbait that doesn't deliver
 
 ## OUTPUT FORMAT
 
 Return ONLY valid JSON (no markdown):
 
+```json
 {
   "key_ideas": [{"title": "...", "insight": "...", "evidence": "..."}],
   "tweets": [{"type": "...", "content": "...", "hook_technique": "..."}],
@@ -785,16 +1105,36 @@ Return ONLY valid JSON (no markdown):
   "instagram": [{"hook": "...", "body": "...", "cta": "..."}],
   "skool": {"title": "...", "intro": "...", "takeaways": ["..."], "question": "..."}
 }
+```</code></pre>
         </div>
 
-        <h2 id="payload">Payload Encoding: The Technical Deep Dive</h2>
+        <h2 id="payload">🔬 Payload Encoding: The Technical Deep Dive</h2>
 
         <p>The pipe-delimited encoding system is the unsung hero that prevents payload corruption. Here's exactly how it works:</p>
 
-        <h3>Encoding Process (Content Generator)</h3>
+        <h3>📤 Encoding Process (Content Generator)</h3>
 
-        <div class="code-block">
-// Step 1: Sanitize LLM output (remove control characters)
+        <div class="mermaid">
+sequenceDiagram
+    participant LLM as Gemini AI
+    participant Encoder as Build Preview
+    participant Payload as Encoded Payload
+    
+    LLM->>Encoder: Raw JSON output
+    Encoder->>Encoder: Sanitize (remove control chars)
+    Encoder->>Encoder: Base64 encode LLM text
+    Encoder->>Encoder: Create pipe-delimited string
+    Encoder->>Payload: Base64 encode entire payload
+    
+    Note over Payload: Result: sessionId|1|0|1|user@email.com|eyJrZXlfa...
+        </div>
+
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>🔐 Encoding Implementation</span>
+                <span>JavaScript</span>
+            </div>
+            <pre><code class="language-javascript">// Step 1: Sanitize LLM output (remove control characters)
 const llmOutput = $('Generate Content').first().json;
 const sanitizedOutput = JSON.stringify(llmOutput)
   .replace(/[\x00-\x1F\x7F]/g, ' ')  // Remove null, separators, DEL
@@ -826,13 +1166,33 @@ const encodedPayload = Buffer.from(payload).toString('base64');
 
 // Step 5: Create approval URL
 const approvalUrl = 
-  `${baseUrl}/webhook/content-approval-confirm?payload=${encodedPayload}`;
+  `${baseUrl}/webhook/content-approval-confirm?payload=${encodedPayload}`;</code></pre>
         </div>
 
-        <h3>Decoding Process (Content Approval)</h3>
+        <h3>📥 Decoding Process (Content Approval)</h3>
 
-        <div class="code-block">
-// Step 1: Extract payload from query string
+        <div class="mermaid">
+sequenceDiagram
+    participant Webhook as Approval Webhook
+    participant Decoder as Decode Payload
+    participant Parser as JSON Parser
+    
+    Webhook->>Decoder: Receive encoded payload
+    Decoder->>Decoder: Base64 decode outer payload
+    Decoder->>Decoder: Split by pipe character
+    Decoder->>Decoder: Extract field positions
+    Decoder->>Decoder: Base64 decode LLM text
+    Decoder->>Parser: Parse LLM JSON
+    
+    Note over Parser: Result: {key_ideas: [...], tweets: [...]}
+        </div>
+
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>🔓 Decoding Implementation</span>
+                <span>JavaScript</span>
+            </div>
+            <pre><code class="language-javascript">// Step 1: Extract payload from query string
 const encodedPayload = $webhook.query.payload;
 
 // Step 2: Base64 decode outer payload
@@ -854,37 +1214,39 @@ const base64LlmText = parts[6];       // "eyJrZXlfa..."
 // Step 5: Base64 decode and parse LLM JSON
 const llmText = Buffer.from(base64LlmText, 'base64').toString();
 const llmOutput = JSON.parse(llmText);
-// Result: { "key_ideas": [...], "tweets": [...], ... }
+// Result: { "key_ideas": [...], "tweets": [...], ... }</code></pre>
         </div>
 
-        <h3>Why This Works</h3>
-
-        <ul>
-            <li><strong>Isolates Problem Data:</strong> LLM output (with weird characters) lives in its own base64 segment</li>
-            <li><strong>No JSON-in-JSON Nesting:</strong> Avoids double-escaping hell</li>
-            <li><strong>Fast String Operations:</strong> Splitting a string by pipe is O(n) and cheap</li>
-            <li><strong>Human-Readable:</strong> You can visually inspect base64-decoded payload</li>
-            <li><strong>Transport Agnostic:</strong> Works with webhooks, query strings, email links</li>
-        </ul>
-
-        <h2 id="troubleshooting">Common Issues & Fixes</h2>
-
-        <h3>Issue 1: "Error: Invalid JSON in LLM output"</h3>
-
-        <div class="warning-box">
-            <strong>Symptoms:</strong> Content approval fails at "Decode Payload" step with JSON.parse error
+        <div class="card success">
+            <h4>✅ Why This Works</h4>
+            <ul>
+                <li><strong>Isolates Problem Data:</strong> LLM output (with weird characters) lives in its own base64 segment</li>
+                <li><strong>No JSON-in-JSON Nesting:</strong> Avoids double-escaping hell</li>
+                <li><strong>Fast String Operations:</strong> Splitting by pipe is O(n) and cheap</li>
+                <li><strong>Human-Readable:</strong> You can visually inspect base64-decoded payload</li>
+                <li><strong>Transport Agnostic:</strong> Works with webhooks, query strings, email links</li>
+            </ul>
         </div>
 
-        <p><strong>Causes:</strong></p>
-        <ul>
-            <li>LLM returned markdown code fences (```json ... ```)</li>
-            <li>Control characters in LLM text (null bytes, etc.)</li>
-            <li>Truncated response (LLM hit max tokens)</li>
-        </ul>
+        <h2 id="troubleshooting">🔧 Common Issues & Fixes</h2>
 
-        <p><strong>Fix:</strong></p>
-        <div class="code-block">
-// In Build Preview Response node, add sanitization:
+        <div class="card danger">
+            <h4>❌ Issue 1: "Error: Invalid JSON in LLM output"</h4>
+            <p><strong>Symptoms:</strong> Content approval fails at "Decode Payload" step with JSON.parse error</p>
+            
+            <h4>Possible Causes:</h4>
+            <ul>
+                <li>LLM returned markdown code fences (```json ... ```)</li>
+                <li>Control characters in LLM text (null bytes, etc.)</li>
+                <li>Truncated response (LLM hit max tokens)</li>
+            </ul>
+
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>🛠️ Sanitization Fix</span>
+                    <span>JavaScript</span>
+                </div>
+                <pre><code class="language-javascript">// In Build Preview Response node, add sanitization:
 const rawResponse = $('Generate Content').first().json;
 
 // Remove markdown fences
@@ -901,57 +1263,49 @@ try {
   JSON.parse(sanitized);
 } catch (e) {
   throw new Error(`Invalid JSON from LLM: ${e.message}\n\n${sanitized.substring(0, 200)}...`);
-}
+}</code></pre>
+            </div>
         </div>
 
-        <h3>Issue 2: "Error posting to Twitter/X: 403 Forbidden"</h3>
+        <div class="card danger">
+            <h4>❌ Issue 2: "Error posting to Twitter/X: 403 Forbidden"</h4>
+            <p><strong>Symptoms:</strong> Content approval workflow fails at "Post to X" node</p>
+            
+            <h4>Possible Causes:</h4>
+            <ul>
+                <li>OAuth token expired (need to refresh credentials in n8n)</li>
+                <li>API rate limit exceeded (15 requests per 15 minutes)</li>
+                <li>Content violates Twitter policy (duplicates, spam)</li>
+                <li>App permissions not set correctly (need "Read and Write")</li>
+            </ul>
 
-        <div class="warning-box">
-            <strong>Symptoms:</strong> Content approval workflow fails at "Post to X" node
-        </div>
-
-        <p><strong>Causes:</strong></p>
-        <ul>
-            <li>OAuth token expired (need to refresh credentials in n8n)</li>
-            <li>API rate limit exceeded (15 requests per 15 minutes)</li>
-            <li>Content violates Twitter policy (duplicates, spam)</li>
-            <li>App permissions not set correctly (need "Read and Write")</li>
-        </ul>
-
-        <p><strong>Fix:</strong> Check n8n execution logs, re-authorize OAuth, add rate limiting:</p>
-        <div class="code-block">
-// In Post to X node, add delay to avoid rate limits
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>⏱️ Rate Limiting Fix</span>
+                    <span>JavaScript</span>
+                </div>
+                <pre><code class="language-javascript">// In Post to X node, add delay to avoid rate limits
 const tweets = [...];
 for (let i = 0; i < tweets.length; i++) {
   await postTweet(tweets[i]);
   if (i < tweets.length - 1) {
     await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
   }
-}
+}</code></pre>
+            </div>
         </div>
 
-        <h3>Issue 3: "Error posting to LinkedIn: Unauthorized"</h3>
+        <div class="card danger">
+            <h4>❌ Issue 3: Newsletter shows white text on white background (Outlook)</h4>
+            <p><strong>Symptoms:</strong> Email looks correct in Gmail, broken in Outlook (white text on white)</p>
+            <p><strong>Cause:</strong> Outlook doesn't support CSS gradients. The newsletter uses white text on gradient backgrounds.</p>
 
-        <p><strong>Causes:</strong></p>
-        <ul>
-            <li>LinkedIn OAuth token expired (n8n auto-refreshes, but might fail)</li>
-            <li>App doesn't have "w_member_social" permission</li>
-            <li>Trying to post to company page without proper permissions</li>
-        </ul>
-
-        <p><strong>Fix:</strong> Re-authorize LinkedIn credential, ensure correct scopes are requested during OAuth flow.</p>
-
-        <h3>Issue 4: Newsletter shows white text on white background (Outlook)</h3>
-
-        <div class="warning-box">
-            <strong>Symptoms:</strong> Email looks correct in Gmail, broken in Outlook (white text on white)
-        </div>
-
-        <p><strong>Cause:</strong> Outlook doesn't support CSS gradients. The newsletter uses white text on gradient backgrounds.</p>
-
-        <p><strong>Fix:</strong> Replace gradients with solid colors:</p>
-        <div class="code-block">
-<!-- BEFORE - breaks in Outlook -->
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>🎨 Email Template Fix</span>
+                    <span>HTML</span>
+                </div>
+                <pre><code class="language-html"><!-- BEFORE - breaks in Outlook -->
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
   <p style="color: white;">Text here</p>
 </div>
@@ -959,60 +1313,52 @@ for (let i = 0; i < tweets.length; i++) {
 <!-- AFTER - works everywhere -->
 <div style="background-color: #667eea;">
   <p style="color: white;">Text here</p>
-</div>
+</div></code></pre>
+            </div>
         </div>
 
-        <h3>Issue 5: "Error: Cannot read property 'json' of undefined"</h3>
+        <h2 id="enhancements">🚀 Advanced: Multi-Model & Quality Gates</h2>
 
-        <p><strong>Causes:</strong></p>
-        <ul>
-            <li>Previous node didn't execute (conditional execution)</li>
-            <li>Node name changed but reference didn't update</li>
-            <li>Trying to access data from wrong execution branch</li>
-        </ul>
-
-        <p><strong>Fix:</strong> Check that all nodes execute, verify node names match exactly, add defensive checks:</p>
-        <div class="code-block">
-// Instead of:
-const data = $('Generate Content').first().json;
-
-// Use:
-const prevNode = $('Generate Content');
-if (!prevNode || !prevNode.first()) {
-  throw new Error('Generate Content node did not execute or returned empty');
-}
-const data = prevNode.first().json;
+        <div class="card info">
+            <h4>💡 MVP vs. Production</h4>
+            <p>The current implementation uses a single Gemini call for simplicity. The documented spec includes multi-model architecture and automated quality gates for production deployments.</p>
         </div>
 
-        <h2 id="enhancements">Advanced: Multi-Model and Quality Gates</h2>
+        <h3>🤖 Multi-Model Architecture</h3>
 
-        <h3>Multi-Model Architecture (Scaling Beyond MVP)</h3>
+        <div class="mermaid">
+flowchart LR
+    A[Input Transcript] --> B[GLM-4 Generator]
+    A --> C[Kimi-K2 Generator]
+    B --> D[Gemini Curator
+Select Best Output]
+    C --> D
+    D --> E[Gemini Critic
+Score Quality]
+    E --> F{Score >= Threshold?}
+    F -->|Yes| G[Human Preview]
+    F -->|No| H[Regenerate with Feedback]
+    H --> D
 
-        <p>The documented spec mentions three AI models working together:</p>
-
-        <div class="flow-diagram">
-Input Transcript
-       ↓
-[ GLM-4 + Kimi-K2 ] → Generate initial content (parallel)
-       ↓
-[ Gemini Flash ] → Curate and select best outputs
-       ↓
-[ Gemini Flash ] → Critique and score quality
-       ↓
-[ Human Preview ] → Final approval
+    style D fill:#667eea
+    style E fill:#ed8936
         </div>
 
-        <p><strong>Benefits of Multi-Model:</strong></p>
-        <ul>
-            <li><strong>Reduced Bias:</strong> Different models have different strengths/weaknesses</li>
-            <li><strong>Higher Quality:</strong> Curator (Gemini) picks best from two generators</li>
-            <li><strong>Redundancy:</strong> If one API fails, fallback to single model</li>
-        </ul>
+        <div class="card success">
+            <h4>✅ Benefits of Multi-Model</h4>
+            <ul>
+                <li><strong>Reduced Bias:</strong> Different models have different strengths/weaknesses</li>
+                <li><strong>Higher Quality:</strong> Curator (Gemini) picks best from two generators</li>
+                <li><strong>Redundancy:</strong> If one API fails, fallback to single model</li>
+            </ul>
+        </div>
 
-        <p><strong>Implementation:</strong> Run GLM-4 and Kimi-K2 in parallel, pass both outputs to Gemini curator node that selects the best version:</p>
-
-        <div class="code-block">
-// In Gemini Curator node:
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>🎯 Curator Implementation</span>
+                <span>JavaScript</span>
+            </div>
+            <pre><code class="language-javascript">// In Gemini Curator node:
 const glmOutput = $('GLM-4 Generator').first().json;
 const kimiOutput = $('Kimi-K2 Generator').first().json;
 
@@ -1034,15 +1380,19 @@ Select the version with:
 Return ONLY the winning version as valid JSON.
 `;
 
-const response = await gemini.generate(prompt);
+const response = await gemini.generate(prompt);</code></pre>
         </div>
 
-        <h3>Automated Quality Gate (Optional Enhancement)</h3>
+        <h3>📊 Automated Quality Gate</h3>
 
-        <p>Current MVP uses human preview as quality gate. For true automation, add automated quality scoring:</p>
+        <p>The MVP uses human preview as the quality gate. For true automation at scale, add automated quality scoring:</p>
 
-        <div class="code-block">
-// Quality Rubric (1-5 scale per dimension)
+        <div class="code-wrapper">
+            <div class="code-header">
+                <span>📋 Quality Rubric</span>
+                <span>JavaScript</span>
+            </div>
+            <pre><code class="language-javascript">// Quality scoring (1-5 scale per dimension)
 const qualityRubric = {
   "hook_clarity": {
     1: "Generic/clickbait",
@@ -1057,7 +1407,7 @@ const qualityRubric = {
     3: "Some concrete examples",
     4: "Good use of examples/numbers",
     5: "Names, numbers, moments throughout"
-  },
+  }
   // ... voice_authenticity, value_density, cta_naturalness
 };
 
@@ -1071,16 +1421,16 @@ const scoredContent = await gemini.critique({
 if (scoredContent.total_score < 16) {
   // Regenerate with critique feedback
   return regenerateWithFeedback(scoredContent.feedback);
-}
+}</code></pre>
         </div>
 
-        <h3>Pass Thresholds by Platform</h3>
+        <h3>📈 Pass Thresholds by Platform</h3>
 
         <table>
             <tr>
                 <th>Platform</th>
                 <th>Min Score (out of 25)</th>
-                <th>Regeneration Attempts</th>
+                <th>Max Regeneration Attempts</th>
             </tr>
             <tr>
                 <td>X/Twitter</td>
@@ -1099,76 +1449,68 @@ if (scoredContent.total_score < 16) {
             </tr>
         </table>
 
-        <h2>Final Thoughts: Why This Matters</h2>
+        <div class="card success">
+            <h4>🎯 Why Quality Gates Matter</h4>
+            <p>Automated quality scoring prevents bad content from reaching your audience while maintaining the efficiency of automation. It's the difference between a content engine and a content spam machine.</p>
+        </div>
 
-        <p>Max Content isn't just another automation tool. It's a <strong>content engine</strong> that combines:</p>
+        <h2>🎉 Final Thoughts</h2>
 
-        <ul>
-            <li><strong>Editorial Standards:</strong> Voice calibration prevents AI slop</li>
-            <li><strong>Human Control:</strong> Preview gate ensures quality before publishing</li>
-            <li><strong>Platform Expertise:</strong> Each post optimized for specific platform norms</li>
-            <li><strong>Technical Robustness:</strong> Pipe-delimited encoding handles real-world edge cases</li>
-            <li><strong>Zero Ongoing Cost:</strong> Free tier of Gemini + self-hosted n8n</li>
-        </ul>
-
-        <div class="highlight-box">
-            <strong>Bottom Line:</strong> A 45-minute video can reach 9x more people across 5 platforms with editorial oversight, maintaining quality while dramatically scaling content reach.
+        <div class="card success">
+            <h4>🏆 Bottom Line</h4>
+            <p>A 45-minute video can reach <strong>9x more people</strong> across 5 platforms with editorial oversight, maintaining quality while dramatically scaling content reach.</p>
         </div>
 
         <p>The real magic isn't in the automation—it's in the <strong>editorial standards that make content worth reading</strong> even when generated by AI.</p>
 
-        <h2>Quick Reference</h2>
-
-        <table>
-            <tr>
-                <th>Metric</th>
-                <th>Value</th>
-            </tr>
-            <tr>
-                <td>Total Setup Time</td>
-                <td>2-4 hours (depending on Twitter approval)</td>
-            </tr>
-            <tr>
-                <td>Ongoing Costs</td>
-                <td>$0-5/month (newsletter volume dependent)</td>
-            </tr>
-            <tr>
-                <td>Workflow Execution Time</td>
-                <td>2-3 minutes end-to-end</td>
-            </tr>
-            <tr>
-                <td>Content Created Per Run</td>
-                <td>15+ content pieces (5 tweets, 3 LinkedIn, 1 newsletter, etc.)</td>
-            </tr>
-            <tr>
-                <td>API Calls Per Run</td>
-                <td>~13 (1 generation + 12 quality critique if enabled)</td>
-            </tr>
-            <tr>
-                <td>Input Requirements</td>
-                <td>Transcript + Video Title (100+ chars recommended)</td>
-            </tr>
-        </table>
-
-        <h2>Need Help?</h2>
-
-        <p>Common issues and solutions are documented in the <code>AGENTS.md</code> file. If you're stuck:</p>
-
-        <ol>
-            <li>Check n8n execution logs for specific error messages</li>
-            <li>Verify all credentials are active and not expired</li>
-            <li>Test payload generation with simple transcript first</li>
-            <li>Inspect HTML output for markup errors</li>
-        </ol>
-
-        <div class="author-box">
-            <strong>About This Guide</strong><br>
-            This implementation guide was created from the <a href="https://github.com/your-username/max-content">Max Content</a> project—a production-ready content repurposing engine built for the Hostinger x n8n hackathon. All workflows, prompts, and architecture decisions are battle-tested and live in production.
+        <div class="meta-box">
+            <h4>📊 Quick Reference</h4>
+            <table>
+                <tr>
+                    <td><strong>Total Setup Time</strong></td>
+                    <td>2-4 hours (depending on Twitter approval)</td>
+                </tr>
+                <tr>
+                    <td><strong>Ongoing Costs</strong></td>
+                    <td>$0-5/month (newsletter volume dependent)</td>
+                </tr>
+                <tr>
+                    <td><strong>Workflow Execution</strong></td>
+                    <td>2-3 minutes end-to-end</td>
+                </tr>
+                <tr>
+                    <td><strong>Content Created Per Run</strong></td>
+                    <td>15+ content pieces</td>
+                </tr>
+                <tr>
+                    <td><strong>API Calls Per Run</strong></td>
+                    <td>~13 (1 generation + 12 quality critique if enabled)</td>
+                </tr>
+            </table>
         </div>
 
-        <hr>
+        <hr style="margin: 3em 0; border: none; border-top: 2px solid #e2e8f0;">
         
-        <p><em>Now go transform that 45-minute video into 9 pieces of platform-perfect content. Your audience (and your calendar) will thank you.</em></p>
+        <p style="text-align: center; font-size: 1.1em; color: var(--dark);"><em>Now go transform that 45-minute video into 9 pieces of platform-perfect content. Your audience (and your calendar) will thank you.</em></p>
+
+        <script>
+            // Calculate reading time
+            const text = document.body.innerText;
+            const wordCount = text.split(/\s+/).length;
+            const readingTime = Math.ceil(wordCount / 200);
+            document.getElementById('reading-time').textContent = readingTime;
+
+            // Initialize Mermaid
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                flowchart: {
+                    useMaxWidth: true,
+                    htmlLabels: true,
+                    curve: 'basis'
+                }
+            });
+        </script>
     </article>
 </body>
 </html>
