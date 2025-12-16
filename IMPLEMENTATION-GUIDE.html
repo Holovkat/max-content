@@ -13,14 +13,11 @@
         :root {
             --primary: #667eea;
             --primary-dark: #5a67d8;
-            --secondary: #764ba2;
-            --success: #48bb78;
-            --warning: #ed8936;
-            --danger: #f56565;
             --dark: #2d3748;
             --gray: #718096;
             --light-gray: #f7fafc;
             --code-bg: #2d3748;
+            --border: #e2e8f0;
         }
 
         * {
@@ -29,57 +26,44 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-            line-height: 1.7;
+            line-height: 1.6;
             color: var(--dark);
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: #f5f7fa;
             font-size: 16px;
         }
 
         article {
             background: white;
-            padding: 60px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        article::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            padding: 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         h1 {
-            font-size: 2.8em;
-            font-weight: 800;
-            margin: 0 0 0.5em 0;
+            font-size: 2.4em;
+            font-weight: 700;
+            margin: 0 0 0.8em 0;
             color: var(--dark);
             line-height: 1.2;
-            letter-spacing: -0.5px;
         }
 
         .subtitle {
-            font-size: 1.3em;
+            font-size: 1.2em;
             color: var(--gray);
-            margin-bottom: 2.5em;
+            margin-bottom: 2em;
             font-weight: 400;
             line-height: 1.5;
         }
 
         .meta {
             color: var(--gray);
-            font-size: 0.95em;
-            margin-bottom: 3em;
-            padding-bottom: 1.5em;
-            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.9em;
+            margin-bottom: 2.5em;
+            padding-bottom: 1em;
+            border-bottom: 1px solid var(--border);
             display: flex;
             gap: 2em;
             flex-wrap: wrap;
@@ -87,56 +71,45 @@
 
         .meta strong {
             color: var(--dark);
+            font-weight: 600;
         }
 
         h2 {
-            font-size: 2em;
-            margin: 3em 0 1.2em 0;
-            padding-bottom: 0.5em;
-            border-bottom: 3px solid var(--primary);
-            color: var(--dark);
-            font-weight: 700;
-            position: relative;
-        }
-
-        h2::after {
-            content: '';
-            position: absolute;
-            bottom: -3px;
-            left: 0;
-            width: 100px;
-            height: 3px;
-            background: var(--secondary);
-        }
-
-        h3 {
-            font-size: 1.5em;
+            font-size: 1.8em;
             margin: 2.5em 0 1em 0;
+            padding-bottom: 0.3em;
+            border-bottom: 2px solid var(--primary);
             color: var(--dark);
             font-weight: 600;
         }
 
-        h4 {
-            font-size: 1.2em;
+        h3 {
+            font-size: 1.3em;
             margin: 2em 0 0.8em 0;
             color: var(--dark);
             font-weight: 600;
         }
 
+        h4 {
+            font-size: 1.1em;
+            margin: 1.5em 0 0.6em 0;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
         p {
-            margin-bottom: 1.5em;
+            margin-bottom: 1.2em;
             color: #4a5568;
         }
 
         .lead {
-            font-size: 1.15em;
+            font-size: 1.1em;
             color: var(--dark);
-            margin: 2em 0;
-            padding: 1.8em;
-            background: linear-gradient(135deg, #667eea15, #764ba215);
-            border-left: 5px solid var(--primary);
-            border-radius: 8px;
-            font-weight: 500;
+            margin: 1.5em 0;
+            padding: 1.5em;
+            background: #f8f9ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
         }
 
         .lead em {
@@ -145,44 +118,44 @@
         }
 
         ul, ol {
-            margin: 1.5em 0;
-            padding-left: 2em;
+            margin: 1em 0;
+            padding-left: 1.8em;
         }
 
         li {
-            margin-bottom: 0.8em;
-            line-height: 1.7;
+            margin-bottom: 0.4em;
+            line-height: 1.5;
+            font-size: 0.95em;
         }
 
         .toc {
             background: var(--light-gray);
-            padding: 2em;
-            border-radius: 8px;
-            margin: 2em 0;
-            border: 1px solid #e2e8f0;
+            padding: 1.5em;
+            border-radius: 6px;
+            margin: 1.5em 0;
+            border: 1px solid var(--border);
         }
 
         .toc h2 {
             margin-top: 0;
-            font-size: 1.4em;
+            font-size: 1.3em;
             border: none;
-        }
-
-        .toc h2::after {
-            display: none;
+            padding-bottom: 0;
         }
 
         .toc ol {
             counter-reset: toc-counter;
             list-style: none;
             padding: 0;
+            margin: 0;
         }
 
         .toc li {
             counter-increment: toc-counter;
-            margin-bottom: 0.8em;
+            margin-bottom: 0.5em;
             position: relative;
-            padding-left: 2.5em;
+            padding-left: 2em;
+            font-size: 0.95em;
         }
 
         .toc li::before {
@@ -191,14 +164,14 @@
             left: 0;
             color: var(--primary);
             font-weight: 600;
-            font-size: 0.95em;
+            font-size: 0.9em;
         }
 
         .toc a {
             color: var(--dark);
             text-decoration: none;
             font-weight: 500;
-            padding: 0.3em 0;
+            padding: 0.2em 0;
             display: block;
             transition: color 0.2s;
         }
@@ -208,32 +181,11 @@
         }
 
         .card {
-            background: white;
-            border-left: 5px solid var(--primary);
-            padding: 1.8em;
-            margin: 2em 0;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        .card.warning {
-            border-left-color: var(--warning);
-            background: #fef5e7;
-        }
-
-        .card.success {
-            border-left-color: var(--success);
-            background: #f0fff4;
-        }
-
-        .card.info {
-            border-left-color: var(--primary);
             background: #f7fafc;
-        }
-
-        .card.danger {
-            border-left-color: var(--danger);
-            background: #fff5f5;
+            border-left: 4px solid var(--primary);
+            padding: 1.5em;
+            margin: 1.5em 0;
+            border-radius: 6px;
         }
 
         .card h4 {
@@ -241,41 +193,29 @@
             color: var(--dark);
         }
 
-        .card.warning h4 {
-            color: var(--warning);
-        }
-
-        .card.success h4 {
-            color: var(--success);
-        }
-
-        .card.danger h4 {
-            color: var(--danger);
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 2em 0;
-            font-size: 0.95em;
+            margin: 1.5em 0;
+            font-size: 0.9em;
             background: white;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         th {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 16px 12px;
+            background: white;
+            color: var(--dark);
+            font-weight: 700;
+            padding: 12px;
             text-align: left;
-            font-weight: 600;
-            font-size: 0.95em;
+            border-bottom: 2px solid var(--border);
         }
 
         td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
             vertical-align: top;
         }
 
@@ -289,17 +229,17 @@
 
         .code-wrapper {
             position: relative;
-            margin: 2em 0;
-            border-radius: 8px;
+            margin: 1.5em 0;
+            border-radius: 6px;
             overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .code-header {
             background: var(--code-bg);
             color: white;
-            padding: 12px 16px;
-            font-size: 0.85em;
+            padding: 10px 12px;
+            font-size: 0.8em;
             font-weight: 600;
             display: flex;
             justify-content: space-between;
@@ -315,17 +255,17 @@
 
         .code-wrapper code {
             font-family: 'Fira Code', 'Monaco', 'Consolas', monospace !important;
-            font-size: 0.85em !important;
-            line-height: 1.6 !important;
+            font-size: 0.8em !important;
+            line-height: 1.5 !important;
         }
 
         .mermaid {
             text-align: center;
-            margin: 2.5em 0;
-            padding: 2em;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin: 2em 0;
+            padding: 1.5em;
+            background: #f0f4f8;
+            border-radius: 6px;
+            border: 1px solid var(--border);
         }
 
         .mermaid svg {
@@ -340,8 +280,9 @@
 
         .checklist li {
             position: relative;
-            padding-left: 2.5em;
-            margin-bottom: 1.2em;
+            padding-left: 2em;
+            margin-bottom: 0.6em;
+            font-size: 0.95em;
         }
 
         .checklist li::before {
@@ -349,16 +290,16 @@
             position: absolute;
             left: 0;
             color: var(--primary);
-            font-size: 1.4em;
+            font-size: 1.2em;
             top: -0.1em;
         }
 
         .meta-box {
             background: var(--light-gray);
-            padding: 1.5em;
-            border-radius: 8px;
-            margin: 2em 0;
-            border: 1px solid #e2e8f0;
+            padding: 1.2em;
+            border-radius: 6px;
+            margin: 1.5em 0;
+            border: 1px solid var(--border);
         }
 
         .meta-box h4 {
@@ -380,6 +321,58 @@
 
         strong {
             color: var(--dark);
+            font-weight: 600;
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: #d53f8c;
+        }
+
+        /* Mermaid theme customization - light and neutral */
+        .mermaid .node rect {
+            fill: #e2e8f0 !important;
+            stroke: #cbd5e0 !important;
+            stroke-width: 1px !important;
+        }
+
+        .mermaid .node text {
+            fill: var(--dark) !important;
+            font-weight: 500 !important;
+            font-size: 14px !important;
+        }
+
+        .mermaid .edgePath path {
+            stroke: #a0aec0 !important;
+            stroke-width: 1.5px !important;
+        }
+
+        .mermaid .edgeLabel {
+            background-color: white !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
+            font-size: 12px !important;
+            color: var(--dark) !important;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1em;
+        }
+        
+        .grid ul {
+            margin: 0;
+            padding-left: 1.5em;
+        }
+        
+        .grid li {
+            font-size: 0.9em;
+            margin-bottom: 0.3em;
         }
 
         @media (max-width: 768px) {
@@ -392,39 +385,17 @@
             }
             
             h1 {
-                font-size: 2.2em;
+                font-size: 2em;
             }
             
             h2 {
-                font-size: 1.6em;
+                font-size: 1.4em;
             }
             
             .meta {
                 flex-direction: column;
                 gap: 0.5em;
             }
-        }
-
-        /* Mermaid theme customization */
-        .mermaid .node rect {
-            fill: var(--primary) !important;
-            stroke: var(--primary-dark) !important;
-        }
-
-        .mermaid .node text {
-            fill: white !important;
-            font-weight: 600 !important;
-        }
-
-        .mermaid .edgePath path {
-            stroke: var(--gray) !important;
-            stroke-width: 2px !important;
-        }
-
-        .mermaid .edgeLabel {
-            background-color: white !important;
-            border-radius: 4px !important;
-            padding: 4px 8px !important;
         }
     </style>
 </head>
@@ -444,7 +415,7 @@
         </div>
 
         <div class="toc">
-            <h2>📋 Table of Contents</h2>
+            <h2>Table of Contents</h2>
             <ol>
                 <li><a href="#problem">The Problem: Content Death by a Thousand Cuts</a></li>
                 <li><a href="#solution">The Solution: One Input, Nine Outputs</a></li>
@@ -458,7 +429,7 @@
             </ol>
         </div>
 
-        <h2 id="problem">⚠️ The Problem: Content Death by a Thousand Cuts</h2>
+        <h2 id="problem">The Problem: Content Death by a Thousand Cuts</h2>
         
         <p>Picture this: You spend hours creating an insightful 45-minute YouTube video about building AI agents. The content is gold—specific examples, frameworks, numbers. You hit publish, wait for the algorithm to work its magic, and accept that your 45-minute investment will generate views for 48 hours, then fade into obscurity.</p>
         
@@ -473,22 +444,22 @@
         
         <p>Manually extracting these, rewriting for each platform, and maintaining consistent quality takes <strong>3-4 hours per video</strong>. Most creators simply don't do it consistently. The result? Valuable insights reach only a fraction of potential audiences.</p>
 
-        <div class="card danger">
-            <h4>❌ Generic AI Slop Output</h4>
+        <div class="card">
+            <h4>Generic AI Slop Output</h4>
             <p><em>"In today's rapidly evolving digital landscape, AI agents are revolutionizing business operations. Entrepreneurs must embrace this paradigm shift to remain competitive. #innovation #AI #future"</em></p>
             <p>This is what most AI tools produce. It's bland, generic, and adds zero value.</p>
         </div>
 
-        <h2 id="solution">✨ The Solution: One Input, Nine Outputs</h2>
+        <h2 id="solution">The Solution: One Input, Nine Outputs</h2>
         
-        <div class="card success">
-            <h4>🎯 Max Value Proposition</h4>
+        <div class="card">
+            <h4>Max Value Proposition</h4>
             <p><strong>One transcript → 9+ platform-specific posts</strong> (5 tweets, 3 LinkedIn, 1 newsletter, plus Instagram/Skool) ready to publish with editorial oversight</p>
         </div>
 
         <p>Max Content is a complete automation pipeline that repurposes long-form content into platform-ready posts while maintaining human editorial control and magazine-quality writing standards.</p>
 
-        <h3>📊 Core Flow</h3>
+        <h3>Core Flow</h3>
 
         <div class="mermaid">
 flowchart TD
@@ -503,15 +474,9 @@ flowchart TD
     H --> J[Post to LinkedIn]
     H --> K[Send Newsletter]
     H --> L[Confirmation Page]
-
-    style A fill:#667eea
-    style B fill:#764ba2
-    style F fill:#48bb78
-    style H fill:#ed8936
-    style L fill:#48bb78
         </div>
 
-        <h3>📦 What You'll Walk Away With</h3>
+        <h3>What You'll Walk Away With</h3>
 
         <table>
             <tr>
@@ -546,14 +511,14 @@ flowchart TD
             </tr>
         </table>
 
-        <h2 id="architecture">🏗️ Architecture: How It All Fits Together</h2>
+        <h2 id="architecture">Architecture: How It All Fits Together</h2>
 
-        <div class="card info">
-            <h4>💡 Architecture Overview</h4>
+        <div class="card">
+            <h4>Architecture Overview</h4>
             <p>The system uses two n8n workflows working in sequence. The first generates content and creates a preview. The second handles publishing after human approval.</p>
         </div>
 
-        <h3>🔧 Workflow 1: Content Generator</h3>
+        <h3>Workflow 1: Content Generator</h3>
 
         <div class="mermaid">
 flowchart LR
@@ -565,9 +530,6 @@ Single Gemini Call]
 HTML + Encode Payload]
     D --> E[Respond with HTML
 Interactive Preview]
-
-    style C fill:#667eea
-    style E fill:#48bb78
         </div>
 
         <table>
@@ -603,7 +565,7 @@ Interactive Preview]
             </tr>
         </table>
 
-        <h3>🔧 Workflow 2: Content Approval</h3>
+        <h3>Workflow 2: Content Approval</h3>
 
         <div class="mermaid">
 flowchart TD
@@ -619,21 +581,18 @@ Parse Pipe-Delimited]
     G --> H
     H --> I[Respond with HTML
 Success/Error]
-
-    style B fill:#667eea
-    style H fill:#48bb78
         </div>
 
-        <h3>🛡️ Why Pipe-Delimited Payload?</h3>
+        <h3>Why Pipe-Delimited Payload?</h3>
 
-        <div class="card info">
-            <h4>💡 The Problem with JSON</h4>
+        <div class="card">
+            <h4>The Problem with JSON</h4>
             <p>LLM output contains control characters that break JSON parsing. Pipe-delimited format isolates the problematic data.</p>
         </div>
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>🔧 Payload Encoding Strategy</span>
+                <span>Payload Encoding Strategy</span>
                 <span>JavaScript</span>
             </div>
             <pre><code class="language-javascript">// Problem: LLM output contains control characters that break JSON
@@ -654,8 +613,8 @@ const payload = [
 const encodedPayload = Buffer.from(payload).toString('base64');</code></pre>
         </div>
 
-        <div class="card success">
-            <h4>✅ Benefits of Pipe-Delimited Encoding</h4>
+        <div class="card">
+            <h4>Benefits of Pipe-Delimited Encoding</h4>
             <ul>
                 <li><strong>Isolates Problem Data:</strong> LLM output with control characters doesn't break parsing</li>
                 <li><strong>No JSON-in-JSON Nesting:</strong> Avoids double-escaping hell</li>
@@ -665,7 +624,7 @@ const encodedPayload = Buffer.from(payload).toString('base64');</code></pre>
             </ul>
         </div>
 
-        <h2 id="prerequisites">🛠️ What You'll Need</h2>
+        <h2 id="prerequisites">What You'll Need</h2>
 
         <table>
             <tr>
@@ -712,7 +671,7 @@ const encodedPayload = Buffer.from(payload).toString('base64');</code></pre>
             </tr>
         </table>
 
-        <h3>📋 External Accounts Required</h3>
+        <h3>External Accounts Required</h3>
 
         <div class="checklist">
             <li><strong>Google Account</strong> → Gemini API key at <a href="https://ai.google.dev">ai.google.dev</a></li>
@@ -721,15 +680,15 @@ const encodedPayload = Buffer.from(payload).toString('base64');</code></pre>
             <li><strong>Resend</strong> → Sign up at <a href="https://resend.com">resend.com</a> (free tier available)</li>
         </div>
 
-        <div class="card info">
-            <h4>💡 Pro Tip</h4>
+        <div class="card">
+            <h4>Pro Tip</h4>
             <p>Create all developer accounts in parallel on Day 1. Twitter approval is the slowest (1-2 days), so get that started first.</p>
         </div>
 
-        <h2 id="setup">🚀 Step-by-Step Implementation</h2>
+        <h2 id="setup">Step-by-Step Implementation</h2>
 
-        <div class="card info">
-            <h4>⏱️ Timeline</h4>
+        <div class="card">
+            <h4>Timeline</h4>
             <p><strong>Total Setup Time:</strong> 2-4 hours (depending on Twitter approval)</p>
             <p><strong>Breakdown:</strong> Infrastructure (30min) → Credentials (15min) → Import (10min) → Testing (45min)</p>
         </div>
@@ -749,7 +708,7 @@ const encodedPayload = Buffer.from(payload).toString('base64');</code></pre>
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>🐳 Docker Deployment</span>
+                <span>Docker Deployment</span>
                 <span>Bash</span>
             </div>
             <pre><code class="language-bash"># SSH into your VPS
@@ -824,7 +783,7 @@ docker run -it --rm --name n8n -p 5678:5678 \
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>📂 Clone Repository</span>
+                <span>Clone Repository</span>
                 <span>Bash</span>
             </div>
             <pre><code class="language-bash"># On your local machine
@@ -873,7 +832,7 @@ cd max-content/n8n-workflows/</code></pre>
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>🧪 Test Payload</span>
+                <span>Test Payload</span>
                 <span>JSON</span>
             </div>
             <pre><code class="language-json">{
@@ -891,7 +850,7 @@ cd max-content/n8n-workflows/</code></pre>
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>📡 Send Test Request</span>
+                <span>Send Test Request</span>
                 <span>cURL</span>
             </div>
             <pre><code class="language-bash">curl -X POST "https://YOUR_IP:5678/webhook/YOUR_ID" \
@@ -912,16 +871,16 @@ cd max-content/n8n-workflows/</code></pre>
             <li>Review the confirmation page</li>
         </ol>
 
-        <div class="card info">
-            <h4>🔍 Debugging Tip</h4>
+        <div class="card">
+            <h4>Debugging Tip</h4>
             <p>If posts don't appear, check n8n execution logs (Workflows → Executions → View details). Common issues: expired OAuth tokens, rate limits, or malformed payloads.</p>
         </div>
 
-        <h2 id="voice">🎭 Voice DNA: Why This Isn't Generic AI Slop</h2>
+        <h2 id="voice">Voice DNA: Why This Isn't Generic AI Slop</h2>
 
         <p>The difference between useful automation and just more AI-generated noise is <strong>voice calibration</strong> and <strong>editorial principles</strong>.</p>
 
-        <h3>🎯 Target Voice: Liam Ottley / Morningside AI</h3>
+        <h3>Target Voice: Liam Ottley / Morningside AI</h3>
 
         <table>
             <tr>
@@ -946,34 +905,34 @@ cd max-content/n8n-workflows/</code></pre>
             </tr>
         </table>
 
-        <h3>✍️ Signature Patterns</h3>
+        <h3>Signature Patterns</h3>
 
-        <div class="card success">
-            <h4>💰 Revenue Transparency</h4>
+        <div class="card">
+            <h4>Revenue Transparency</h4>
             <p>"$100k MRR", "60+ team members", actual business metrics—not vague "we're growing fast"</p>
         </div>
 
-        <div class="card success">
-            <h4>❌ Mistake-First Learning</h4>
+        <div class="card">
+            <h4>Mistake-First Learning</h4>
             <p>"I screwed this up so you don't have to"—starts with failures, not just successes</p>
         </div>
 
-        <div class="card success">
-            <h4>⚡ Action Orientation</h4>
+        <div class="card">
+            <h4>Action Orientation</h4>
             <p>"Build your first AI agent this weekend" (not "learn about AI agents")</p>
         </div>
 
-        <div class="card success">
-            <h4>📐 Framework Thinking</h4>
+        <div class="card">
+            <h4>Framework Thinking</h4>
             <p>"The 3-Step Method", "The Reverse-Build Strategy"—named, numbered methodologies</p>
         </div>
 
-        <div class="card success">
-            <h4>🎯 No Jargon Gatekeeping</h4>
+        <div class="card">
+            <h4>No Jargon Gatekeeping</h4>
             <p>Explains concepts clearly, defines terms when needed—assumes intelligence but not expertise</p>
         </div>
 
-        <h3>📋 Editorial Principles (The Anti-Slop Rules)</h3>
+        <h3>Editorial Principles (The Anti-Slop Rules)</h3>
 
         <table>
             <tr>
@@ -998,11 +957,11 @@ cd max-content/n8n-workflows/</code></pre>
             </tr>
         </table>
 
-        <h3>🚫 Banned Phrases (The AI Slop Hall of Shame)</h3>
+        <h3>Banned Phrases (The AI Slop Hall of Shame)</h3>
 
-        <div class="card danger">
-            <h4>❌ Generic Openers That Will Fail Quality Check</h4>
-            <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1em; margin-top: 1em;">
+        <div class="card">
+            <h4>Generic Openers That Will Fail Quality Check</h4>
+            <div class="grid">
                 <ul>
                     <li>"In today's rapidly changing world..."</li>
                     <li>"Are you tired of..."</li>
@@ -1018,18 +977,18 @@ cd max-content/n8n-workflows/</code></pre>
             </div>
         </div>
 
-        <h3>📝 The Unified Prompt Template</h3>
+        <h3>The Unified Prompt Template</h3>
 
         <p>Here's the actual prompt that generates all content in one shot:</p>
 
-        <div class="card info">
+        <div class="card">
             <h4>System Prompt</h4>
             <p><strong>Role:</strong> Senior content strategist at The Atlantic who deeply understands AI automation and startups. Analytical rigor of a journalist + practical mindset of an entrepreneur like Liam Ottley.</p>
         </div>
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>🎯 Content Generation Prompt</span>
+                <span>Content Generation Prompt</span>
                 <span>Markdown</span>
             </div>
             <pre><code class="language-markdown">## TASK
@@ -1108,11 +1067,11 @@ Return ONLY valid JSON (no markdown):
 ```</code></pre>
         </div>
 
-        <h2 id="payload">🔬 Payload Encoding: The Technical Deep Dive</h2>
+        <h2 id="payload">Payload Encoding: The Technical Deep Dive</h2>
 
         <p>The pipe-delimited encoding system is the unsung hero that prevents payload corruption. Here's exactly how it works:</p>
 
-        <h3>📤 Encoding Process (Content Generator)</h3>
+        <h3>Encoding Process (Content Generator)</h3>
 
         <div class="mermaid">
 sequenceDiagram
@@ -1131,7 +1090,7 @@ sequenceDiagram
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>🔐 Encoding Implementation</span>
+                <span>Encoding Implementation</span>
                 <span>JavaScript</span>
             </div>
             <pre><code class="language-javascript">// Step 1: Sanitize LLM output (remove control characters)
@@ -1169,7 +1128,7 @@ const approvalUrl =
   `${baseUrl}/webhook/content-approval-confirm?payload=${encodedPayload}`;</code></pre>
         </div>
 
-        <h3>📥 Decoding Process (Content Approval)</h3>
+        <h3>Decoding Process (Content Approval)</h3>
 
         <div class="mermaid">
 sequenceDiagram
@@ -1189,7 +1148,7 @@ sequenceDiagram
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>🔓 Decoding Implementation</span>
+                <span>Decoding Implementation</span>
                 <span>JavaScript</span>
             </div>
             <pre><code class="language-javascript">// Step 1: Extract payload from query string
@@ -1217,8 +1176,8 @@ const llmOutput = JSON.parse(llmText);
 // Result: { "key_ideas": [...], "tweets": [...], ... }</code></pre>
         </div>
 
-        <div class="card success">
-            <h4>✅ Why This Works</h4>
+        <div class="card">
+            <h4>Why This Works</h4>
             <ul>
                 <li><strong>Isolates Problem Data:</strong> LLM output (with weird characters) lives in its own base64 segment</li>
                 <li><strong>No JSON-in-JSON Nesting:</strong> Avoids double-escaping hell</li>
@@ -1228,10 +1187,10 @@ const llmOutput = JSON.parse(llmText);
             </ul>
         </div>
 
-        <h2 id="troubleshooting">🔧 Common Issues & Fixes</h2>
+        <h2 id="troubleshooting">Common Issues & Fixes</h2>
 
-        <div class="card danger">
-            <h4>❌ Issue 1: "Error: Invalid JSON in LLM output"</h4>
+        <div class="card">
+            <h4>Issue 1: "Error: Invalid JSON in LLM output"</h4>
             <p><strong>Symptoms:</strong> Content approval fails at "Decode Payload" step with JSON.parse error</p>
             
             <h4>Possible Causes:</h4>
@@ -1243,7 +1202,7 @@ const llmOutput = JSON.parse(llmText);
 
             <div class="code-wrapper">
                 <div class="code-header">
-                    <span>🛠️ Sanitization Fix</span>
+                    <span>Sanitization Fix</span>
                     <span>JavaScript</span>
                 </div>
                 <pre><code class="language-javascript">// In Build Preview Response node, add sanitization:
@@ -1267,8 +1226,8 @@ try {
             </div>
         </div>
 
-        <div class="card danger">
-            <h4>❌ Issue 2: "Error posting to Twitter/X: 403 Forbidden"</h4>
+        <div class="card">
+            <h4>Issue 2: "Error posting to Twitter/X: 403 Forbidden"</h4>
             <p><strong>Symptoms:</strong> Content approval workflow fails at "Post to X" node</p>
             
             <h4>Possible Causes:</h4>
@@ -1281,7 +1240,7 @@ try {
 
             <div class="code-wrapper">
                 <div class="code-header">
-                    <span>⏱️ Rate Limiting Fix</span>
+                    <span>Rate Limiting Fix</span>
                     <span>JavaScript</span>
                 </div>
                 <pre><code class="language-javascript">// In Post to X node, add delay to avoid rate limits
@@ -1295,14 +1254,14 @@ for (let i = 0; i < tweets.length; i++) {
             </div>
         </div>
 
-        <div class="card danger">
-            <h4>❌ Issue 3: Newsletter shows white text on white background (Outlook)</h4>
+        <div class="card">
+            <h4>Issue 3: Newsletter shows white text on white background (Outlook)</h4>
             <p><strong>Symptoms:</strong> Email looks correct in Gmail, broken in Outlook (white text on white)</p>
             <p><strong>Cause:</strong> Outlook doesn't support CSS gradients. The newsletter uses white text on gradient backgrounds.</p>
 
             <div class="code-wrapper">
                 <div class="code-header">
-                    <span>🎨 Email Template Fix</span>
+                    <span>Email Template Fix</span>
                     <span>HTML</span>
                 </div>
                 <pre><code class="language-html"><!-- BEFORE - breaks in Outlook -->
@@ -1317,14 +1276,14 @@ for (let i = 0; i < tweets.length; i++) {
             </div>
         </div>
 
-        <h2 id="enhancements">🚀 Advanced: Multi-Model & Quality Gates</h2>
+        <h2 id="enhancements">Advanced: Multi-Model & Quality Gates</h2>
 
-        <div class="card info">
-            <h4>💡 MVP vs. Production</h4>
+        <div class="card">
+            <h4>MVP vs. Production</h4>
             <p>The current implementation uses a single Gemini call for simplicity. The documented spec includes multi-model architecture and automated quality gates for production deployments.</p>
         </div>
 
-        <h3>🤖 Multi-Model Architecture</h3>
+        <h3>Multi-Model Architecture</h3>
 
         <div class="mermaid">
 flowchart LR
@@ -1339,13 +1298,10 @@ Score Quality]
     F -->|Yes| G[Human Preview]
     F -->|No| H[Regenerate with Feedback]
     H --> D
-
-    style D fill:#667eea
-    style E fill:#ed8936
         </div>
 
-        <div class="card success">
-            <h4>✅ Benefits of Multi-Model</h4>
+        <div class="card">
+            <h4>Benefits of Multi-Model</h4>
             <ul>
                 <li><strong>Reduced Bias:</strong> Different models have different strengths/weaknesses</li>
                 <li><strong>Higher Quality:</strong> Curator (Gemini) picks best from two generators</li>
@@ -1355,7 +1311,7 @@ Score Quality]
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>🎯 Curator Implementation</span>
+                <span>Curator Implementation</span>
                 <span>JavaScript</span>
             </div>
             <pre><code class="language-javascript">// In Gemini Curator node:
@@ -1383,13 +1339,13 @@ Return ONLY the winning version as valid JSON.
 const response = await gemini.generate(prompt);</code></pre>
         </div>
 
-        <h3>📊 Automated Quality Gate</h3>
+        <h3>Automated Quality Gate</h3>
 
         <p>The MVP uses human preview as the quality gate. For true automation at scale, add automated quality scoring:</p>
 
         <div class="code-wrapper">
             <div class="code-header">
-                <span>📋 Quality Rubric</span>
+                <span>Quality Rubric</span>
                 <span>JavaScript</span>
             </div>
             <pre><code class="language-javascript">// Quality scoring (1-5 scale per dimension)
@@ -1424,7 +1380,7 @@ if (scoredContent.total_score < 16) {
 }</code></pre>
         </div>
 
-        <h3>📈 Pass Thresholds by Platform</h3>
+        <h3>Pass Thresholds by Platform</h3>
 
         <table>
             <tr>
@@ -1449,22 +1405,22 @@ if (scoredContent.total_score < 16) {
             </tr>
         </table>
 
-        <div class="card success">
-            <h4>🎯 Why Quality Gates Matter</h4>
+        <div class="card">
+            <h4>Why Quality Gates Matter</h4>
             <p>Automated quality scoring prevents bad content from reaching your audience while maintaining the efficiency of automation. It's the difference between a content engine and a content spam machine.</p>
         </div>
 
-        <h2>🎉 Final Thoughts</h2>
+        <h2>Final Thoughts</h2>
 
-        <div class="card success">
-            <h4>🏆 Bottom Line</h4>
+        <div class="card">
+            <h4>Bottom Line</h4>
             <p>A 45-minute video can reach <strong>9x more people</strong> across 5 platforms with editorial oversight, maintaining quality while dramatically scaling content reach.</p>
         </div>
 
         <p>The real magic isn't in the automation—it's in the <strong>editorial standards that make content worth reading</strong> even when generated by AI.</p>
 
         <div class="meta-box">
-            <h4>📊 Quick Reference</h4>
+            <h4>Quick Reference</h4>
             <table>
                 <tr>
                     <td><strong>Total Setup Time</strong></td>
@@ -1489,9 +1445,9 @@ if (scoredContent.total_score < 16) {
             </table>
         </div>
 
-        <hr style="margin: 3em 0; border: none; border-top: 2px solid #e2e8f0;">
+        <hr style="margin: 2.5em 0; border: none; border-top: 1px solid var(--border);">
         
-        <p style="text-align: center; font-size: 1.1em; color: var(--dark);"><em>Now go transform that 45-minute video into 9 pieces of platform-perfect content. Your audience (and your calendar) will thank you.</em></p>
+        <p style="text-align: center; color: var(--gray); font-size: 1em;"><em>Now go transform that 45-minute video into 9 pieces of platform-perfect content. Your audience (and your calendar) will thank you.</em></p>
 
         <script>
             // Calculate reading time
